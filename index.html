@@ -986,7 +986,7 @@
 <div id="aboutPage" class="modal-overlay">
   <div class="modal-box" style="text-align: left; max-width: 480px;">
     <h3 class="modal-title" style="text-align: center; font-size: 20px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
-    <p style="text-align: center; font-size: 12px; color: var(--gold); margin-bottom: 20px; font-weight: bold;">版本 v0.08</p>
+    <p style="text-align: center; font-size: 12px; color: var(--gold); margin-bottom: 20px; font-weight: bold;">版本 v0.09</p>
     
     <div style="font-size: 13px; color: var(--text); line-height: 1.6; display: flex; flex-direction: column; gap: 12px;">
       <p>這是一款免安裝的網頁問候圖與祝福卡片設計工具。我們希望透過簡單、直覺的操作介面，陪伴使用者傳遞每日的關懷與溫暖。</p>
@@ -2649,7 +2649,7 @@ function closeQuickEdit() {
   quickEditLayerId = null;
 }
 
-function openInlineTextEditor(layer) {
+function openInlineTextEditor(layer, clickPos = null) {
   if (!enableInlineTextEdit) return;
   const editor = document.getElementById('inlineTextEditor');
   const input = document.getElementById('inlineTextInput');
@@ -2698,8 +2698,53 @@ function openInlineTextEditor(layer) {
   input.style.overflow = 'hidden';
 
   if (wrap) wrap.classList.add('zoom-edit');
+  
   input.focus();
-  input.select();
+
+  // 若提供點擊座標，則精準計算游標置入位置，避開全選藍色反白
+  if (clickPos) {
+    const lines = l.text.split('\n');
+    ctx.save();
+    ctx.font = `${l.size}px "${l.font}", sans-serif`;
+    
+    const lineH = l.size * 1.2;
+    const startY = l.y - ((lines.length - 1) * lineH) / 2;
+    
+    // 1. 推算點擊在第幾行
+    let lineIndex = Math.round((clickPos.y - startY) / lineH);
+    lineIndex = Math.max(0, Math.min(lines.length - 1, lineIndex));
+    
+    const lineText = lines[lineIndex] || '';
+    
+    // 2. 投影計算在該行內最接近哪兩個字元的中間
+    let closestCharIdx = 0;
+    let minDiff = Infinity;
+    const totalLineW = ctx.measureText(lineText).width;
+    const lineStartX = l.x - totalLineW / 2;
+
+    for (let c = 0; c <= lineText.length; c++) {
+      const sub = lineText.substring(0, c);
+      const subW = ctx.measureText(sub).width;
+      const charX = lineStartX + subW;
+      const diff = Math.abs(clickPos.x - charX);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestCharIdx = c;
+      }
+    }
+    ctx.restore();
+
+    // 3. 計算出總字串中的游標定位點 (需包含換行符 \n 的字數補償)
+    let overallCaretIdx = 0;
+    for (let j = 0; j < lineIndex; j++) {
+      overallCaretIdx += lines[j].length + 1;
+    }
+    overallCaretIdx += closestCharIdx;
+
+    input.setSelectionRange(overallCaretIdx, overallCaretIdx);
+  } else {
+    input.select(); // 如果沒有座標（例如鍵盤直接喚醒），則採用預設全選
+  }
 }
 
 function closeInlineTextEditor() {
@@ -3202,7 +3247,7 @@ function handleMove(pos) {
 
 function handleEnd() { 
   if (pendingInlineEdit && pendingInlineEditStart) {
-    openInlineTextEditor(pendingInlineEdit);
+    openInlineTextEditor(pendingInlineEdit, pendingInlineEditStart);
   }
   pendingInlineEdit = null;
   pendingInlineEditStart = null;
@@ -3263,7 +3308,7 @@ canvas.addEventListener('dblclick', e => {
   if (enableQuickEdit) {
     openQuickEdit(hit);
   } else if (enableInlineTextEdit) {
-    openInlineTextEditor(hit);
+    openInlineTextEditor(hit, pos);
   }
 });
 
