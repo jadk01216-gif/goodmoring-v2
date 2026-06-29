@@ -230,9 +230,15 @@
     overflow: hidden;
   }
 
+  /* 修改為僅隱藏側邊欄與畫布區，確保 Header 匯出按鈕不受影響 */
   .workspace.not-started .side-panel,
   .workspace.not-started .canvas-area {
     display: none !important;
+  }
+  
+  /* 確保 Header 在任何狀態下都能點擊 */
+  header {
+    pointer-events: auto !important;
   }
   .workspace.started .welcome-screen {
     display: none !important;
@@ -658,6 +664,36 @@
     position: relative;
     z-index: 100;
   }
+
+  /* 💾 頂部下拉式匯出選單樣式 */
+  .header-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    z-index: 500;
+    min-width: 140px;
+    overflow: hidden;
+    animation: modalFadeIn 0.15s ease;
+  }
+  .header-dropdown-menu .dropdown-item {
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    text-align: left;
+    white-space: nowrap;
+  }
+  .header-dropdown-menu .dropdown-item:hover {
+    background: var(--surface2);
+    color: var(--gold);
+  }
   .drag-splitter::after {
     content: "";
     width: 36px;
@@ -684,14 +720,24 @@
 <header style="justify-content: space-between; flex-wrap: nowrap; gap: 8px; padding: 12px 16px;">
   <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
     <div class="logo" style="width: 32px; height: 32px; font-size: 16px;">🌅</div>
-    <h1 style="font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">早安圖製作工具</h1>
+    <h1 style="font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px;">早安圖製作工具</h1>
   </div>
   
-  <!-- 快捷操作：僅保留上一步、下一步與更多設定，大幅節省手機版高度 -->
-  <div style="display: flex; gap: 6px; align-items: center; flex-shrink: 0;">
-    <button onclick="undo()" id="undoBtn" class="history-btn" style="padding: 6px 10px; font-size: 12px;" disabled>↩️ 上一步</button>
-    <button onclick="redo()" id="redoBtn" class="history-btn" style="padding: 6px 10px; font-size: 12px;" disabled>↪️ 下一步</button>
-    <button onclick="openMoreSettings()" class="theme-btn active" style="padding: 6px 10px; font-size: 12px;">⚙️ 更多</button>
+  <!-- 快捷操作：整合縮小按鈕、新增頂部下拉式匯出功能 -->
+  <div style="display: flex; gap: 5px; align-items: center; flex-shrink: 0;">
+    <button onclick="undo()" id="undoBtn" class="history-btn" style="padding: 6px 8px; font-size: 12px;" title="上一步" disabled>↩️</button>
+    <button onclick="redo()" id="redoBtn" class="history-btn" style="padding: 6px 8px; font-size: 12px;" title="下一步" disabled>↪️</button>
+    
+    <div class="header-export-container" style="position: relative; display: inline-block;">
+      <button onclick="toggleHeaderExportMenu()" class="theme-btn active" style="padding: 6px 10px; font-size: 12px; font-weight: bold;">💾 匯出</button>
+      <div id="headerExportMenu" class="header-dropdown-menu" style="display: none;">
+        <div class="dropdown-item" onclick="triggerHeaderExport('png')">🖼️ 匯出為 PNG</div>
+        <div class="dropdown-item" onclick="triggerHeaderExport('jpeg')">📸 匯出為 JPG</div>
+        <div class="dropdown-item" onclick="triggerHeaderExport('webp')">⚡ 匯出為 WebP</div>
+      </div>
+    </div>
+
+    <button onclick="openMoreSettings()" class="theme-btn" style="padding: 6px 8px; font-size: 12px;" title="設定">⚙️</button>
   </div>
 </header>
 
@@ -772,6 +818,9 @@
     <div class="panel-section">
       <div class="section-title">畫布比例與裁切</div>
       <button id="btnEnterCrop" class="align-btn" style="width:100%; padding:10px; background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text); font-weight:bold; cursor:pointer;">✂️ 進入圖片裁切模式</button>
+      
+      <!-- ↕️ 上下比例一鍵重置按鈕 -->
+      <button onclick="resetSplitterRatio()" class="align-btn" style="width:100%; padding:8px; background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text-muted); font-size:12px; margin-top:8px; cursor:pointer;">↕️ 重置視窗拖曳比例</button>
       
       <div id="cropMenu" style="display:none; margin-top:10px; background:rgba(255,255,255,0.03); padding:12px; border-radius:8px; border:1px solid var(--border);">
         <p style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">1. 選擇裁切比例</p>
@@ -1025,7 +1074,16 @@
 <div id="aboutPage" class="modal-overlay">
   <div class="modal-box" style="text-align: left; max-width: 480px;">
     <h3 class="modal-title" style="text-align: center; font-size: 20px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
-    <p style="text-align: center; font-size: 12px; color: var(--gold); margin-bottom: 20px; font-weight: bold;">版本 v1.03</p>
+    <p style="text-align: center; font-size: 12px; color: var(--gold); margin-bottom: 20px; font-weight: bold;">版本 v1.04
+  .workspace.not-started .side-panel,
+  .workspace.not-started .canvas-area {
+    display: none !important;
+  }
+  
+  /* 確保 Header 在任何狀態下都能點擊 */
+  header {
+    pointer-events: auto !important;
+  }</p>
     
     <div style="font-size: 13px; color: var(--text); line-height: 1.6; display: flex; flex-direction: column; gap: 12px;">
       <p>這是一款免安裝的網頁問候圖與祝福卡片設計工具。我們希望透過簡單、直覺的操作介面，陪伴使用者傳遞每日的關懷與溫暖。</p>
@@ -1781,7 +1839,7 @@ async function checkPwaSharedImage() {
   }
 }
 
-// ↕️ 上下比例拖曳分割條初始化與控制邏輯
+// ↕️ 上下比例拖曳分割條初始化與控制邏輯 (支援持久儲存、雙擊還原)
 function initDragSplitter() {
   const splitter = document.getElementById('dragSplitter');
   const canvasArea = document.querySelector('.canvas-area');
@@ -1792,6 +1850,12 @@ function initDragSplitter() {
   let isDragging = false;
   let startY = 0;
   let startHeight = 0;
+
+  // 1. 初始化時，自動從本地還原上一次拉動的高度比例
+  const savedHeight = localStorage.getItem('gm_split_height');
+  if (savedHeight && window.innerWidth < 1024) {
+    canvasArea.style.height = `${savedHeight}px`;
+  }
 
   const onDragStart = (e) => {
     isDragging = true;
@@ -1804,15 +1868,13 @@ function initDragSplitter() {
 
   const onDragMove = (e) => {
     if (!isDragging) return;
-    
-    // 行動裝置拖曳時，阻止瀏覽器預設的下拉重新整理或頁面滾動行為
-    if (e.cancelable) e.preventDefault(); 
+    if (e.cancelable) e.preventDefault(); // 阻止行動裝置滾動
 
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     const deltaY = clientY - startY;
     let newHeight = startHeight + deltaY;
 
-    // 限制拖曳範圍：最小高度限制為 150px，最大高度為當前工作區總高度的 75%
+    // 限制拖曳範圍：150px 至 工作區總高度的 75%
     const wsHeight = workspace.getBoundingClientRect().height;
     const minHeight = 150;
     const maxHeight = wsHeight * 0.75;
@@ -1828,9 +1890,12 @@ function initDragSplitter() {
     isDragging = false;
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
+    
+    // 2. 拖曳結束時，自動將高度存入本機儲存空間
+    const currentHeight = canvasArea.getBoundingClientRect().height;
+    localStorage.setItem('gm_split_height', currentHeight);
   };
 
-  // 監聽滑鼠與觸控事件
   splitter.addEventListener('mousedown', onDragStart);
   splitter.addEventListener('touchstart', onDragStart, { passive: true });
 
@@ -1839,7 +1904,44 @@ function initDragSplitter() {
 
   window.addEventListener('mouseup', onDragEnd);
   window.addEventListener('touchend', onDragEnd);
+
+  // 3. 雙擊分割條，快速重置視窗高度比例
+  splitter.addEventListener('dblclick', resetSplitterRatio);
 }
+
+// ↕️ 上下比例高度重置邏輯
+function resetSplitterRatio() {
+  const canvasArea = document.querySelector('.canvas-area');
+  if (canvasArea) {
+    canvasArea.style.height = ''; // 清除行內高度，回復預設 CSS 比例
+    localStorage.removeItem('gm_split_height');
+    showToast("已重置視窗比例！");
+  }
+}
+
+// 💾 頂部下拉式匯出選單控制邏輯
+function toggleHeaderExportMenu() {
+  const menu = document.getElementById('headerExportMenu');
+  if (!menu) return;
+  const isVisible = menu.style.display === 'block';
+  menu.style.display = isVisible ? 'none' : 'block';
+}
+
+function triggerHeaderExport(format) {
+  const menu = document.getElementById('headerExportMenu');
+  if (menu) menu.style.display = 'none';
+  exportImage(format);
+}
+
+// 點擊外部自動收起選單
+window.addEventListener('click', (e) => {
+  const menu = document.getElementById('headerExportMenu');
+  if (menu && menu.style.display === 'block') {
+    if (!e.target.closest('#headerExportMenu') && !e.target.closest('.header-export-container')) {
+      menu.style.display = 'none';
+    }
+  }
+});
 
 /**
  * 將讀取到的 Blob/File 轉換並渲染至現有的 Canvas 畫布與工作區中
@@ -1890,66 +1992,6 @@ function loadSharedBlobAsBackground(file) {
 function saveSettings() {
   const data = { canvasWidth: canvas.width, canvasHeight: canvas.height, layers, layerCounter };
   localStorage.setItem('gm_pro_settings', JSON.stringify(data));
-}
-
-// ↕️ 上下比例拖曳分割條初始化與控制邏輯
-function initDragSplitter() {
-  const splitter = document.getElementById('dragSplitter');
-  const canvasArea = document.querySelector('.canvas-area');
-  const workspace = document.getElementById('workspace');
-
-  if (!splitter || !canvasArea || !workspace) return;
-
-  let isDragging = false;
-  let startY = 0;
-  let startHeight = 0;
-
-  const onDragStart = (e) => {
-    isDragging = true;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    startY = clientY;
-    startHeight = canvasArea.getBoundingClientRect().height;
-    document.body.style.cursor = 'ns-resize';
-    document.body.style.userSelect = 'none';
-  };
-
-  const onDragMove = (e) => {
-    if (!isDragging) return;
-    
-    // 行動裝置拖曳時，阻止瀏覽器預設的下拉重新整理或頁面滾動行為
-    if (e.cancelable) e.preventDefault(); 
-
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    const deltaY = clientY - startY;
-    let newHeight = startHeight + deltaY;
-
-    // 限制拖曳範圍：最小高度限制為 150px，最大高度為當前工作區總高度的 75%
-    const wsHeight = workspace.getBoundingClientRect().height;
-    const minHeight = 150;
-    const maxHeight = wsHeight * 0.75;
-
-    if (newHeight < minHeight) newHeight = minHeight;
-    if (newHeight > maxHeight) newHeight = maxHeight;
-
-    canvasArea.style.height = `${newHeight}px`;
-  };
-
-  const onDragEnd = () => {
-    if (!isDragging) return;
-    isDragging = false;
-    document.body.style.cursor = '';
-    document.body.style.userSelect = '';
-  };
-
-  // 監聽滑鼠與觸控事件
-  splitter.addEventListener('mousedown', onDragStart);
-  splitter.addEventListener('touchstart', onDragStart, { passive: true });
-
-  window.addEventListener('mousemove', onDragMove);
-  window.addEventListener('touchmove', onDragMove, { passive: false });
-
-  window.addEventListener('mouseup', onDragEnd);
-  window.addEventListener('touchend', onDragEnd);
 }
 
 /* ─────────────── 圖片上傳控制 ─────────────── */
@@ -3737,6 +3779,12 @@ function closeCropMenu() {
 let currentExportFormat = 'png';
 
 function exportImage(fmt) {
+  // 防呆機制：若未上傳圖片，則不執行匯出
+  if (!bgImage && layers.length === 0) {
+    showToast("請先上傳圖片或建立內容後再匯出！");
+    return;
+  }
+  
   currentExportFormat = fmt;
   
   // 自動填入預設檔名：[原圖片名稱]-goodmorning
