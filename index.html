@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
@@ -20,18 +20,52 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg:          #0f0f1a;
-    --surface:     #1a1a2e;
-    --surface2:    #22223a;
-    --border:      rgba(255,255,255,.08);
-    --gold:        #f5a623;
-    --gold2:       #ff6b35;
-    --text:        #e8e8f0;
-    --text-muted:  #7a7a9a;
-    --active:      #f5a623;
-    --radius:      12px;
-    --radius-sm:   8px;
-    --shadow:      0 4px 24px rgba(0,0,0,.4);
+    --bg:             #f7f7f9;
+    --surface:        #ffffff;
+    --surface2:       #f0f0f5;
+    --border:         rgba(0,0,0,.08);
+    --gold:           #d4891a;
+    --gold2:          #c94f1f;
+    --text:           #1a1a1a;
+    --text-muted:     #666680;
+    --active:         #d4891a;
+    --radius:         12px;
+    --radius-sm:      8px;
+    --shadow:         0 4px 24px rgba(0,0,0,.08);
+    --modal-overlay-bg: rgba(0,0,0,0.3);
+    --overlay-bg:     rgba(0,0,0,0.4);
+  }
+
+  :root[data-theme="dark"] {
+    --bg:             #0f0f1a;
+    --surface:        #1a1a2e;
+    --surface2:       #22223a;
+    --border:         rgba(255,255,255,.08);
+    --gold:           #f5a623;
+    --gold2:          #ff6b35;
+    --text:           #e8e8f0;
+    --text-muted:     #7a7a9a;
+    --active:         #f5a623;
+    --shadow:         0 4px 24px rgba(0,0,0,.4);
+    --modal-overlay-bg: rgba(0,0,0,0.6);
+    --overlay-bg:     rgba(0,0,0,0.5);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:             #0f0f1a;
+      --surface:        #1a1a2e;
+      --surface2:       #22223a;
+      --border:         rgba(255,255,255,.08);
+      --gold:           #f5a623;
+      --gold2:          #ff6b35;
+      --text:           #e8e8f0;
+      --text-muted:     #7a7a9a;
+      --active:         #f5a623;
+      --shadow:         0 4px 24px rgba(0,0,0,.4);
+      --modal-overlay-bg: rgba(0,0,0,0.6);
+      --overlay-bg:     rgba(0,0,0,0.5);
+    }
   }
 
   body {
@@ -87,6 +121,33 @@
     gap: 12px;
     line-height: 1.4;
     flex-shrink: 0;
+  }
+  
+  .theme-toggle-group {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .theme-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .theme-btn:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+  .theme-btn.active {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #fff;
   }
   
   .history-btn {
@@ -241,7 +302,7 @@
     position: absolute;
     inset: 0;
     border-radius: 6px;
-    background: rgba(15,15,26,0.78);
+    background: var(--overlay-bg);
     z-index: 20;
     align-items: center;
     justify-content: center;
@@ -357,7 +418,7 @@
   .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(15, 15, 26, 0.85);
+    background: var(--modal-overlay-bg);
     backdrop-filter: blur(8px);
     z-index: 1000;
     display: none;
@@ -538,8 +599,10 @@
     <button onclick="undo()" id="undoBtn" class="history-btn" disabled>↩️ 上一步</button>
     <button onclick="redo()" id="redoBtn" class="history-btn" disabled>↪️ 下一步</button>
   </div>
-  <div style="text-align: right; flex: 1;">
-    💡 提示：按住並拖曳文字可以排版，<b>在畫布文字上快速點擊兩下（雙擊）即可直接修改內容！</b>
+  <div class="theme-toggle-group" id="themeToggleGroup">
+    <button class="theme-btn" data-theme="light" onclick="setTheme('light')">🌞 淺色</button>
+    <button class="theme-btn" data-theme="dark" onclick="setTheme('dark')">🌙 深色</button>
+    <button class="theme-btn" data-theme="system" onclick="setTheme('system')">💻 系統預設</button>
   </div>
 </div>
 
@@ -808,7 +871,7 @@
 <div id="aboutPage" class="modal-overlay">
   <div class="modal-box" style="text-align: left; max-width: 480px;">
     <h3 class="modal-title" style="text-align: center; font-size: 20px; margin-bottom: 4px;">🌅 早安圖產生器 Pro</h3>
-    <p style="text-align: center; font-size: 12px; color: var(--gold); margin-bottom: 20px; font-weight: bold;">版本 v0.0.2</p>
+    <p style="text-align: center; font-size: 12px; color: var(--gold); margin-bottom: 20px; font-weight: bold;">版本 v0.0.3</p>
     
     <div style="font-size: 13px; color: var(--text); line-height: 1.6; display: flex; flex-direction: column; gap: 12px;">
       <p><strong>歡迎使用早安圖產生器 Pro！</strong> 這是一款專為製作高品質問候與祝福圖片而開發的網頁製圖工具。無需下載與安裝，開啟瀏覽器即可一鍵創作。</p>
@@ -1438,14 +1501,16 @@ window.onload = async () => {
     if (defaultTextConfigEl) defaultTextConfigEl.style.display = 'block';
   }
 
-  const savedDefaultTextVal = localStorage.getItem('gm_default_new_text_value');
-  const defaultTextInputEl = document.getElementById('defaultNewTextInput');
-  if (savedDefaultTextVal !== null) {
-    defaultNewTextValue = savedDefaultTextVal;
-    if (defaultTextInputEl) defaultTextInputEl.value = defaultNewTextValue;
-  }
-  
-  layers = [];
+   const savedDefaultTextVal = localStorage.getItem('gm_default_new_text_value');
+   const defaultTextInputEl = document.getElementById('defaultNewTextInput');
+   if (savedDefaultTextVal !== null) {
+     defaultNewTextValue = savedDefaultTextVal;
+     if (defaultTextInputEl) defaultTextInputEl.value = defaultNewTextValue;
+   }
+
+   initTheme();
+   
+   layers = [];
   layerCounter = 0;
   activeLayerId = null;
   
@@ -1657,6 +1722,42 @@ function toggleDefaultNewTextFeature() {
     if (configEl) configEl.style.display = 'none';
   }
   localStorage.setItem('gm_enable_default_new_text', enableDefaultNewText ? 'true' : 'false');
+}
+
+function initTheme() {
+  const saved = localStorage.getItem('gm_theme') || 'system';
+  applyTheme(saved);
+}
+
+function setTheme(mode) {
+  localStorage.setItem('gm_theme', mode);
+  applyTheme(mode);
+}
+
+function applyTheme(mode) {
+  const root = document.documentElement;
+  if (mode === 'system') {
+    root.removeAttribute('data-theme');
+  } else {
+    root.setAttribute('data-theme', mode);
+  }
+  updateThemeButtons(mode);
+}
+
+function updateThemeButtons(activeMode) {
+  const btns = document.querySelectorAll('#themeToggleGroup .theme-btn');
+  btns.forEach(btn => {
+    if (btn.dataset.theme === activeMode) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+}
+
+function isDarkMode() {
+  const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+  return bg === '#0f0f1a';
 }
 
 function updateDefaultNewText(val) {
@@ -2537,7 +2638,7 @@ function drawCanvas() {
 
   if (isCropping && cropRect) {
     ctx.save();
-    ctx.fillStyle = 'rgba(15, 15, 26, 0.65)';
+    ctx.fillStyle = isDarkMode() ? 'rgba(15, 15, 26, 0.65)' : 'rgba(0, 0, 0, 0.25)';
     ctx.fillRect(0, 0, canvas.width, cropRect.y);
     ctx.fillRect(0, cropRect.y + cropRect.h, canvas.width, canvas.height - (cropRect.y + cropRect.h));
     ctx.fillRect(0, cropRect.y, cropRect.x, cropRect.h);
