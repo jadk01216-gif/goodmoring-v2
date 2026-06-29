@@ -729,7 +729,7 @@
     <button onclick="redo()" id="redoBtn" class="history-btn" style="padding: 6px 8px; font-size: 12px;" title="下一步" disabled>↪️</button>
     
     <div class="header-export-container" style="position: relative; display: inline-block;">
-      <button onclick="toggleHeaderExportMenu()" class="theme-btn active" style="padding: 6px 10px; font-size: 12px; font-weight: bold;">💾 匯出</button>
+      <button id="headerExportBtn" onclick="toggleHeaderExportMenu()" class="theme-btn" style="padding: 6px 10px; font-size: 12px; font-weight: bold; opacity: 0.4; cursor: not-allowed;" disabled>💾 匯出</button>
       <div id="headerExportMenu" class="header-dropdown-menu" style="display: none;">
         <div class="dropdown-item" onclick="triggerHeaderExport('png')">🖼️ 匯出為 PNG</div>
         <div class="dropdown-item" onclick="triggerHeaderExport('jpeg')">📸 匯出為 JPG</div>
@@ -1074,7 +1074,7 @@
 <div id="aboutPage" class="modal-overlay">
   <div class="modal-box" style="text-align: left; max-width: 480px;">
     <h3 class="modal-title" style="text-align: center; font-size: 20px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
-    <p style="text-align: center; font-size: 12px; color: var(--gold); margin-bottom: 20px; font-weight: bold;">版本 v1.04
+    <p style="text-align: center; font-size: 12px; color: var(--gold); margin-bottom: 20px; font-weight: bold;">版本 v1.05
   .workspace.not-started .side-panel,
   .workspace.not-started .canvas-area {
     display: none !important;
@@ -1461,6 +1461,7 @@ function restoreState(state) {
       drawCanvas();
       saveSettings();
       updateHistoryButtons();
+      updateExportButtonsState();
     };
     img.src = state.bgImageSrc;
   } else {
@@ -1469,6 +1470,7 @@ function restoreState(state) {
     drawCanvas();
     saveSettings();
     updateHistoryButtons();
+    updateExportButtonsState();
   }
 }
 
@@ -1808,6 +1810,7 @@ window.onload = async () => {
 
   // 初始化上下拖曳比例分割條功能
   initDragSplitter();
+  updateExportButtonsState();
 };
 
 /**
@@ -1921,10 +1924,27 @@ function resetSplitterRatio() {
 
 // 💾 頂部下拉式匯出選單控制邏輯
 function toggleHeaderExportMenu() {
+  if (!bgImage) return;
   const menu = document.getElementById('headerExportMenu');
   if (!menu) return;
   const isVisible = menu.style.display === 'block';
   menu.style.display = isVisible ? 'none' : 'block';
+}
+
+function updateExportButtonsState() {
+  const btn = document.getElementById('headerExportBtn');
+  if (!btn) return;
+  if (bgImage) {
+    btn.disabled = false;
+    btn.classList.add('active');
+    btn.style.opacity = '1';
+    btn.style.cursor = 'pointer';
+  } else {
+    btn.disabled = true;
+    btn.classList.remove('active');
+    btn.style.opacity = '0.4';
+    btn.style.cursor = 'not-allowed';
+  }
 }
 
 function triggerHeaderExport(format) {
@@ -1981,6 +2001,7 @@ function loadSharedBlobAsBackground(file) {
         drawCanvas();
         saveSettings();
         updateHistoryButtons();
+        updateExportButtonsState();
         showToast("已成功載入分享的圖片！");
       };
       img.src = ev.target.result;
@@ -2032,6 +2053,7 @@ function handleBackgroundUpload(e) {
         drawCanvas();
         saveSettings();
         updateHistoryButtons();
+        updateExportButtonsState();
       };
       img.src = ev.target.result;
     };
@@ -3879,6 +3901,7 @@ function resetAllToDefault() {
   
   // 6. 重置縮放
   resetZoom();
+  updateExportButtonsState();
   
   // 7. 更新與重新渲染
   updateHistoryButtons();
