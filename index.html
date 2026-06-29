@@ -199,17 +199,22 @@
     top: 20px;
     left: 50%;
     transform: translateX(-50%) translateY(-20px);
-    background: rgba(245, 166, 35, 0.95);
+    background: linear-gradient(135deg, rgba(255, 203, 110, 0.98), rgba(245, 166, 35, 0.95));
     color: #1a1a2e;
     font-weight: 700;
-    padding: 12px 24px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    padding: 14px 26px;
+    border-radius: 14px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.16);
     z-index: 2000;
     opacity: 0;
     pointer-events: none;
     transition: transform 0.3s ease, opacity 0.3s ease;
     font-size: 13px;
+    min-width: 260px;
+    max-width: calc(100vw - 40px);
+    text-align: center;
+    backdrop-filter: blur(10px);
   }
   #toastNotification.show {
     opacity: 1;
@@ -964,8 +969,13 @@
     </div>
 
     <!-- 4. 關於本程式連結 -->
-    <div style="margin-bottom: 24px;">
+    <div style="margin-bottom: 12px;">
       <button onclick="openAboutPage(); closeMoreSettings();" style="width: 100%; text-align: center; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s;">ℹ️ 關於本程式與版權資訊</button>
+    </div>
+
+    <!-- 5. 回復初始設定 -->
+    <div style="margin-bottom: 24px;">
+      <button onclick="resetAllToDefault(); closeMoreSettings();" style="width: 100%; text-align: center; background: rgba(255, 77, 79, 0.1); border: 1px solid rgba(255, 77, 79, 0.3); border-radius: 8px; color: #ff4d4f; padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s;">🔄 回復初始設定</button>
     </div>
 
     <div class="row-2">
@@ -978,7 +988,7 @@
 <div id="aboutPage" class="modal-overlay">
   <div class="modal-box" style="text-align: left; max-width: 480px;">
     <h3 class="modal-title" style="text-align: center; font-size: 20px; margin-bottom: 4px;">🌅 早安圖產生器 Pro</h3>
-    <p style="text-align: center; font-size: 12px; color: var(--gold); margin-bottom: 20px; font-weight: bold;">版本 v0.05</p>
+    <p style="text-align: center; font-size: 12px; color: var(--gold); margin-bottom: 20px; font-weight: bold;">版本 v0.06</p>
     
     <div style="font-size: 13px; color: var(--text); line-height: 1.6; display: flex; flex-direction: column; gap: 12px;">
       <p><strong>歡迎使用早安圖產生器 Pro！</strong> 這是一款專為製作高品質問候與祝福圖片而開發的網頁製圖工具。無需下載與安裝，開啟瀏覽器即可一鍵創作。</p>
@@ -1964,6 +1974,7 @@ function toggleCloseWarningFeature() {
     toggleEl.classList.toggle('on', enableCloseTabWarning);
   }
   localStorage.setItem('gm_enable_close_tab_warning', enableCloseTabWarning ? 'true' : 'false');
+  showToast(enableCloseTabWarning ? '安全提示已開啟：關閉前若有作品會提醒您匯出' : '安全提示已關閉：關閉前不再顯示提醒');
 }
 
 function setZoomMode(mode) {
@@ -3254,9 +3265,13 @@ window.addEventListener('touchend', () => {
   handleEnd();
 });
 
+function hasUnsavedCanvasWork() {
+  return !!bgImage || layers.length > 0 || undoStack.length > 0 || redoStack.length > 0;
+}
+
 window.addEventListener('beforeunload', (e) => {
   if (!enableCloseTabWarning) return;
-  if (layers.some(l => l.text && l.text.trim())) {
+  if (hasUnsavedCanvasWork()) {
     e.preventDefault();
     e.returnValue = '';
   }
@@ -3427,6 +3442,91 @@ function exportImage(fmt) {
 
 function closeExportModal() {
   document.getElementById('exportModal').classList.remove('active');
+}
+
+// 🔄 回復所有設定與編輯狀態至初始值
+function resetAllToDefault() {
+  if (!confirm("確定要回復初始設定嗎？\n這將會清除您目前畫布上的圖片、所有文字圖層，並將各項功能設定恢復為預設值。")) return;
+  
+  // 1. 清除相關本地端儲存空間 (不影響載入的自訂字體與儲存的模板)
+  localStorage.removeItem('gm_pro_settings');
+  localStorage.removeItem('gm_last_used_styles');
+  localStorage.removeItem('gm_enable_english_fonts');
+  localStorage.removeItem('gm_enable_quick_edit');
+  localStorage.removeItem('gm_enable_quick_edit_responsive');
+  localStorage.removeItem('gm_enable_inline_text_edit');
+  localStorage.removeItem('gm_enable_close_tab_warning');
+  localStorage.removeItem('gm_enable_default_new_text');
+  localStorage.removeItem('gm_default_new_text_value');
+  localStorage.removeItem('gm_selection_box_width');
+  
+  // 2. 恢復核心變數預設值
+  bgImage = null;
+  layers = [];
+  layerCounter = 0;
+  activeLayerId = null;
+  draggingLayer = null;
+  isAddingTextActive = false;
+  enableEnglishFonts = false;
+  enableQuickEdit = false;
+  enableProportionalFontSize = false;
+  enableDefaultNewText = true;
+  enableInlineTextEdit = false;
+  enableCloseTabWarning = true;
+  defaultNewTextValue = '🌞 早安！';
+  currentZoom = 1;
+  zoomMode = 'view';
+  selectionBoxWidth = 3.5;
+  undoStack = [];
+  redoStack = [];
+  lastUsedStyles = { ...defaultStyles };
+  
+  // 3. 重置選取框線設定 UI
+  const slider = document.getElementById('selectionBoxWidthSlider');
+  if (slider) slider.value = 3.5;
+  const label = document.getElementById('selBoxWidthLabel');
+  if (label) label.textContent = '框線粗細（3.5px）';
+  const preview = document.getElementById('selBoxPreview');
+  if (preview) preview.style.borderWidth = '3.5px';
+  
+  // 4. 重置功能開關 UI 狀態
+  const toggleEng = document.getElementById('toggleEnableEnglishFonts');
+  if (toggleEng) toggleEng.classList.remove('on');
+  const toggleQe = document.getElementById('toggleQuickEdit');
+  if (toggleQe) toggleQe.classList.remove('on');
+  const toggleProp = document.getElementById('toggleProportionalFont');
+  if (toggleProp) toggleProp.classList.remove('on');
+  const toggleInline = document.getElementById('toggleInlineTextEdit');
+  if (toggleInline) toggleInline.classList.remove('on');
+  const toggleWarn = document.getElementById('toggleCloseWarn');
+  if (toggleWarn) toggleWarn.classList.add('on');
+  const toggleDefaultText = document.getElementById('toggleDefaultNewText');
+  if (toggleDefaultText) toggleDefaultText.classList.add('on');
+  const defaultTextInput = document.getElementById('defaultNewTextInput');
+  if (defaultTextInput) defaultTextInput.value = '🌞 早安！';
+  const defaultTextConfig = document.getElementById('defaultNewTextConfig');
+  if (defaultTextConfig) defaultTextConfig.style.display = 'block';
+  
+  // 5. 恢復主畫面狀態與隱藏控制
+  const ws = document.getElementById('workspace');
+  if (ws) {
+    ws.classList.remove('started');
+    ws.classList.add('not-started');
+  }
+  const hint = document.getElementById('canvasHint');
+  if (hint) hint.style.display = 'none';
+  const uploadText = document.getElementById('uploadAreaText');
+  if (uploadText) uploadText.textContent = '點擊上傳圖片';
+  
+  // 6. 重置縮放
+  resetZoom();
+  
+  // 7. 更新與重新渲染
+  updateHistoryButtons();
+  renderLayersList();
+  drawCanvas();
+  
+  showToast("已成功回復初始設定！");
 }
 
 function handleSaveToLocal() {
