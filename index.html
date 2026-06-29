@@ -707,6 +707,35 @@
     background: var(--gold);
     opacity: 1;
   }
+
+  #pinchZoomIndicator {
+    display: none;
+    position: fixed;
+    bottom: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15,15,26,0.88);
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    z-index: 900;
+    pointer-events: none;
+    backdrop-filter: blur(6px);
+    transition: opacity .2s;
+    white-space: nowrap;
+  }
+  #pinchZoomIndicator.show {
+    display: block;
+    opacity: 1;
+  }
+
+  .canvas-wrap.pinch-zoom-active {
+    outline: 2px dashed rgba(245,166,35,0.6);
+    outline-offset: 4px;
+    border-radius: 10px;
+  }
   /* 在左右排版的電腦版介面上隱藏分割條 */
   @media (min-width: 1024px) {
     .drag-splitter {
@@ -746,6 +775,7 @@
 <div id="canvasHint" style="display: none !important; height: 0; padding: 0; margin: 0; border: none; overflow: hidden;"></div>
 
 <div id="toastNotification"></div>
+<div id="pinchZoomIndicator"></div>
 
 <div class="workspace not-started" id="workspace">
   
@@ -886,6 +916,12 @@
         <div class="toggle" id="toggleProportionalFont" onclick="toggleProportionalFontFeature()"></div>
       </div>
       <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">開啟後，文字尺寸會依圖片寬度等比縮放（保持 100% 滿版），且裁切時文字位置與比例會自動同步，在手機與電腦版皆無需重複調整！</p>
+      
+      <div class="toggle-row" style="margin-top:10px;">
+        <span class="toggle-label" style="font-size:12px; font-weight:500;">🧪 實驗性：手勢縮放（雙指捏合放大縮小文字）</span>
+        <div class="toggle" id="togglePinchZoom" onclick="togglePinchZoomFeature()"></div>
+      </div>
+      <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">開啟後，在畫布區域用兩指捏合即可直接放大或縮小文字；此模式會暫時關閉拖曳與文字編輯，不會互相干擾</p>
     </div>
 
     <div class="panel-section">
@@ -1075,7 +1111,7 @@
 <div id="aboutPage" class="modal-overlay">
   <div class="modal-box" style="text-align: left; max-width: 480px;">
     <h3 class="modal-title" style="text-align: center; font-size: 20px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
-    <p style="text-align: center; font-size: 12px; color: var(--gold); margin-bottom: 20px; font-weight: bold;">版本 v1.08</p>
+    <p style="text-align: center; font-size: 12px; color: var(--gold); margin-bottom: 20px; font-weight: bold;">版本 v1.09</p>
     
     <div style="font-size: 13px; color: var(--text); line-height: 1.6; display: flex; flex-direction: column; gap: 12px;">
       <p>這是一款免安裝的網頁問候圖與祝福卡片設計工具。我們希望透過簡單、直覺的操作介面，陪伴使用者傳遞每日的關懷與溫暖。</p>
@@ -1139,6 +1175,11 @@ let enableProportionalFontSize = false; // 實驗性功能：自適應比例文�
 let enableDefaultNewText = true; // 新增文字是否帶入預設文字（預設開啟）
 let enableInlineTextEdit = false; // 實驗性功能：在圖片上直接編輯文字
 let enableCloseTabWarning = true; // 未匯出就關閉時提醒
+let enablePinchZoom = false; // 實驗性功能：雙指捏合手勢縮放文字
+let isPinchZooming = false;
+let pinchStartDist = 0;
+let pinchStartZoom = 1;
+let currentPinchZoom = 1;
 let defaultNewTextValue = '🌞 早安！'; // 預設新增文字內容    
 let currentZoom = 1;
 let zoomMode = 'view';
@@ -1775,6 +1816,16 @@ window.onload = async () => {
     if (closeWarnToggleEl) closeWarnToggleEl.classList.add('on');
   }
 
+  const savedPinchZoom = localStorage.getItem('gm_enable_pinch_zoom');
+  const pinchZoomToggleEl = document.getElementById('togglePinchZoom');
+  if (savedPinchZoom === 'true') {
+    enablePinchZoom = true;
+    if (pinchZoomToggleEl) pinchZoomToggleEl.classList.add('on');
+  } else {
+    enablePinchZoom = false;
+    if (pinchZoomToggleEl) pinchZoomToggleEl.classList.remove('on');
+  }
+
   // 還原自訂預設文字設定
   const savedDefaultTextToggle = localStorage.getItem('gm_enable_default_new_text');
   const defaultTextToggleEl = document.getElementById('toggleDefaultNewText');
@@ -1828,6 +1879,7 @@ window.onload = async () => {
 
   // 初始化上下拖曳比例分割條功能
   initDragSplitter();
+  initPinchZoom();
   updateExportButtonsState();
 };
 
@@ -2267,6 +2319,25 @@ function toggleCloseWarningFeature() {
   showToast(enableCloseTabWarning ? '安全提示已開啟：關閉前若有作品會提醒您匯出' : '安全提示已關閉：關閉前不再顯示提醒');
 }
 
+function togglePinchZoomFeature() {
+  enablePinchZoom = !enablePinchZoom;
+  const toggleEl = document.getElementById('togglePinchZoom');
+  const wrap = document.getElementById('canvasWrap');
+  if (toggleEl) {
+    toggleEl.classList.toggle('on', enablePinchZoom);
+  }
+  if (wrap) {
+    wrap.classList.toggle('pinch-zoom-active', enablePinchZoom);
+  }
+  localStorage.setItem('gm_enable_pinch_zoom', enablePinchZoom ? 'true' : 'false');
+  if (!enablePinchZoom) {
+    currentPinchZoom = 1;
+    applyPinchZoomTransform();
+    hidePinchZoomIndicator();
+  }
+  showToast(enablePinchZoom ? '手勢縮放已開啟：雙指捏合控制文字大小，拖曳與編輯已暫停' : '手勢縮放已關閉');
+}
+
 function setZoomMode(mode) {
   zoomMode = mode;
   const wrap = document.getElementById('canvasWrap');
@@ -2300,6 +2371,69 @@ function resetZoom() {
   canvasEl.style.transform = 'scale(1)';
   canvasEl.style.transformOrigin = 'center center';
 }
+
+function getTouchDistance(e) {
+  if (!e.touches || e.touches.length < 2) return 0;
+  const dx = e.touches[0].clientX - e.touches[1].clientX;
+  const dy = e.touches[0].clientY - e.touches[1].clientY;
+  return Math.max(1, Math.sqrt(dx * dx + dy * dy));
+}
+
+function applyPinchZoomTransform() {
+  const canvasEl = document.getElementById('canvas');
+  if (!canvasEl) return;
+  const totalZoom = currentZoom * currentPinchZoom;
+  canvasEl.style.transform = `scale(${totalZoom})`;
+  canvasEl.style.transformOrigin = 'center center';
+}
+
+function showPinchZoomIndicator() {
+  const el = document.getElementById('pinchZoomIndicator');
+  if (!el) return;
+  el.textContent = `🔍 放大縮放模式：${Math.round(currentPinchZoom * 100)}%`;
+  el.classList.add('show');
+}
+
+function hidePinchZoomIndicator() {
+  const el = document.getElementById('pinchZoomIndicator');
+  if (el) el.classList.remove('show');
+}
+
+function handlePinchStart(e) {
+  if (!enablePinchZoom) return;
+  if (e.touches.length !== 2) return;
+  if (inlineEditLayerId) {
+    commitInlineTextEdit();
+  }
+  isPinchZooming = true;
+  pinchStartDist = getTouchDistance(e);
+  pinchStartZoom = currentPinchZoom;
+  draggingLayer = null;
+  showPinchZoomIndicator();
+  e.preventDefault();
+}
+
+function handlePinchMove(e) {
+  if (!isPinchZooming || !enablePinchZoom) return;
+  if (e.touches.length < 2) {
+    handlePinchEnd();
+    return;
+  }
+  const dist = getTouchDistance(e);
+  const scale = dist / pinchStartDist;
+  currentPinchZoom = Math.max(0.3, Math.min(4.0, pinchStartZoom * scale));
+  applyPinchZoomTransform();
+  showPinchZoomIndicator();
+  e.preventDefault();
+}
+
+function handlePinchEnd() {
+  if (!isPinchZooming) return;
+  isPinchZooming = false;
+  hidePinchZoomIndicator();
+}
+
+function initPinchZoom() {}
 
 function initTheme() {
   const saved = localStorage.getItem('gm_theme') || 'system';
@@ -3217,6 +3351,11 @@ function applyColorValueToTarget(val) {
     const l = layers.find(item => item.id === colorTargetLayerId);
     if (l) {
       l[colorTargetProp] = val;
+      // 同步更新「最後使用的樣式」，確保下次新增文字時能記憶文字與描邊顏色
+      if (colorTargetProp in lastUsedStyles) {
+        lastUsedStyles[colorTargetProp] = val;
+        localStorage.setItem('gm_last_used_styles', JSON.stringify(lastUsedStyles));
+      }
       drawCanvas();
     }
   }
@@ -3642,6 +3781,11 @@ function getTouchPos(e) {
 }
 
 canvas.addEventListener('touchstart', e => {
+  if (enablePinchZoom && e.touches && e.touches.length >= 2) {
+    handlePinchStart(e);
+    return;
+  }
+  if (isPinchZooming) return;
   const pos = getTouchPos(e);
   const hit = checkHit(pos);
   const currentTime = Date.now();
@@ -3663,7 +3807,30 @@ canvas.addEventListener('touchstart', e => {
   }
 }, { passive: false });
 
+canvas.addEventListener('touchmove', e => {
+  if (!isPinchZooming) return;
+  handlePinchMove(e);
+}, { passive: false });
+
+canvas.addEventListener('touchend', e => {
+  if (isPinchZooming) {
+    handlePinchEnd();
+    return;
+  }
+  canvas.style.touchAction = 'auto';
+  handleEnd();
+});
+
+canvas.addEventListener('touchcancel', e => {
+  if (isPinchZooming) {
+    isPinchZooming = false;
+    hidePinchZoomIndicator();
+  }
+  canvas.style.touchAction = 'auto';
+});
+
 window.addEventListener('touchmove', e => {
+  if (isPinchZooming) return;
   if (draggingLayer) {
     e.preventDefault();
     handleMove(getTouchPos(e));
@@ -3675,7 +3842,9 @@ window.addEventListener('touchmove', e => {
 
 window.addEventListener('touchend', () => {
   canvas.style.touchAction = 'auto';
-  handleEnd();
+  if (!isPinchZooming) {
+    handleEnd();
+  }
 });
 
 function hasUnsavedCanvasWork() {
@@ -3914,6 +4083,7 @@ function resetAllToDefault() {
   localStorage.removeItem('gm_enable_default_new_text');
   localStorage.removeItem('gm_default_new_text_value');
   localStorage.removeItem('gm_selection_box_width');
+  localStorage.removeItem('gm_enable_pinch_zoom');
   
   // 2. 恢復核心變數預設值
   bgImage = null;
@@ -3928,6 +4098,11 @@ function resetAllToDefault() {
   enableDefaultNewText = true;
   enableInlineTextEdit = false;
   enableCloseTabWarning = true;
+  enablePinchZoom = false;
+  isPinchZooming = false;
+  pinchStartDist = 0;
+  pinchStartZoom = 1;
+  currentPinchZoom = 1;
   defaultNewTextValue = '🌞 早安！';
   currentZoom = 1;
   zoomMode = 'view';
@@ -3960,6 +4135,10 @@ function resetAllToDefault() {
   if (toggleWarn) toggleWarn.classList.add('on');
   const toggleDefaultText = document.getElementById('toggleDefaultNewText');
   if (toggleDefaultText) toggleDefaultText.classList.add('on');
+  const togglePinchZoom = document.getElementById('togglePinchZoom');
+  if (togglePinchZoom) togglePinchZoom.classList.remove('on');
+  const pinchWrap = document.getElementById('canvasWrap');
+  if (pinchWrap) pinchWrap.classList.remove('pinch-zoom-active');
   const defaultTextInput = document.getElementById('defaultNewTextInput');
   if (defaultTextInput) defaultTextInput.value = '🌞 早安！';
   const defaultTextConfig = document.getElementById('defaultNewTextConfig');
@@ -3984,6 +4163,8 @@ function resetAllToDefault() {
   
   // 6. 重置縮放
   resetZoom();
+  const pinchZoomIndicator = document.getElementById('pinchZoomIndicator');
+  if (pinchZoomIndicator) pinchZoomIndicator.classList.remove('show');
   updateExportButtonsState();
   
   // 7. 更新與重新渲染
