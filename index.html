@@ -7,6 +7,8 @@
 <!-- 引入 PWA Manifest 檔案 -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#d4891a">
+<!-- 引入 marked.js 用於解析 Markdown -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- 網站 SVG Favicon 🌅 -->
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌅</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -562,6 +564,57 @@
     cursor: pointer;
   }
 
+  /* ── Changelog 更新通知彈窗 ── */
+  .changelog-modal-box {
+    display: flex;
+    flex-direction: column;
+    max-height: 75vh;
+    overflow-y: hidden;
+    padding: 28px 24px 20px;
+  }
+  .changelog-header {
+    flex-shrink: 0;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .changelog-header .modal-title {
+    margin-bottom: 6px;
+  }
+  .changelog-content {
+    flex: 1;
+    overflow-y: auto;
+    text-align: left;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.7;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+  }
+  .changelog-content h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gold);
+    margin: 12px 0 6px;
+  }
+  .changelog-content h4:first-child {
+    margin-top: 0;
+  }
+  .changelog-content ul {
+    padding-left: 18px;
+    margin: 4px 0;
+  }
+  .changelog-content li {
+    margin-bottom: 4px;
+  }
+  .changelog-footer {
+    flex-shrink: 0;
+    padding-top: 14px;
+    margin-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+
   /* ── Responsive ── */
   @media (max-width: 600px) {
     .canvas-area { height: 35vh; min-height: 180px; padding: 6px; }
@@ -1096,6 +1149,11 @@
       <button onclick="openAboutPage(); closeMoreSettings();" style="width: 100%; text-align: center; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s;">ℹ️ 關於本程式與版權資訊</button>
     </div>
 
+    <!-- 5. 更新日誌連結 -->
+    <div style="margin-bottom: 12px;">
+      <button onclick="openChangelogManual()" style="width: 100%; text-align: center; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s;">📋 更新日誌</button>
+    </div>
+
     <!-- 5. 回復初始設定 -->
     <div style="margin-bottom: 24px;">
       <button onclick="resetAllToDefault(); closeMoreSettings();" style="width: 100%; text-align: center; background: rgba(255, 77, 79, 0.1); border: 1px solid rgba(255, 77, 79, 0.3); border-radius: 8px; color: #ff4d4f; padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s;">🔄 回復初始設定</button>
@@ -1111,7 +1169,7 @@
 <div id="aboutPage" class="modal-overlay">
   <div class="modal-box" style="text-align: left; max-width: 480px;">
     <h3 class="modal-title" style="text-align: center; font-size: 20px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
-    <p style="text-align: center; font-size: 12px; color: var(--gold); margin-bottom: 20px; font-weight: bold;">版本 v1.09</p>
+    <p id="appVersion" data-version="v1.10" style="text-align: center; font-size: 12px; color: var(--gold); margin-bottom: 20px; font-weight: bold;">版本 v1.10</p>
     
     <div style="font-size: 13px; color: var(--text); line-height: 1.6; display: flex; flex-direction: column; gap: 12px;">
       <p>這是一款免安裝的網頁問候圖與祝福卡片設計工具。我們希望透過簡單、直覺的操作介面，陪伴使用者傳遞每日的關懷與溫暖。</p>
@@ -1141,6 +1199,22 @@
     
     <div style="text-align: center; margin-top: 24px;">
       <button onclick="closeAboutPage()" class="modal-btn-primary" style="padding: 10px 24px; min-width: 120px;">關閉頁面</button>
+    </div>
+  </div>
+</div>
+
+<!-- 📢 版本更新內容通知彈窗 -->
+<div id="changelogModal" class="modal-overlay">
+  <div class="modal-box changelog-modal-box">
+    <div class="changelog-header">
+      <h3 class="modal-title">📢 版本更新內容</h3>
+      <p class="modal-subtitle">偵測到新版本，請查看最新更新內容</p>
+    </div>
+    <div class="changelog-footer">
+      <button onclick="closeChangelogModal()" class="modal-btn-primary" style="width:100%; padding:14px; font-size:15px;">確定</button>
+    </div>
+    <div class="changelog-content" id="changelogContent">
+      <p>載入中...</p>
     </div>
   </div>
 </div>
@@ -1395,6 +1469,70 @@ function openAboutPage() {
 }
 function closeAboutPage() {
   document.getElementById('aboutPage').classList.remove('active');
+}
+
+/* ─────────────── Changelog 更新通知控制 ─────────────── */
+function openChangelogModal() {
+  document.getElementById('changelogModal').classList.add('active');
+}
+function closeChangelogModal() {
+  const modal = document.getElementById('changelogModal');
+  if (modal) modal.classList.remove('active');
+  
+  const versionEl = document.getElementById('appVersion');
+  if (versionEl) {
+    const currentVersion = versionEl.getAttribute('data-version');
+    if (currentVersion) {
+      localStorage.setItem('gm_last_seen_version', currentVersion);
+    }
+  }
+}
+
+function openChangelogManual() {
+  const modal = document.getElementById('changelogModal');
+  const contentEl = document.getElementById('changelogContent');
+  if (modal && contentEl) {
+    contentEl.innerHTML = '<p>載入中...</p>';
+    if (typeof marked !== 'undefined' && marked.parse) {
+      fetch('./changelog.md')
+        .then(res => res.text())
+        .then(text => { contentEl.innerHTML = marked.parse(text); })
+        .catch(() => { contentEl.innerHTML = '<p>暫無更新內容</p>'; });
+    } else {
+      contentEl.innerHTML = '<p>暫無更新內容</p>';
+    }
+    modal.classList.add('active');
+  }
+}
+
+function checkVersionUpdate() {
+  const versionEl = document.getElementById('appVersion');
+  if (!versionEl) return;
+  
+  const currentVersion = versionEl.getAttribute('data-version');
+  const lastSeenVersion = localStorage.getItem('gm_last_seen_version');
+  
+  if (!lastSeenVersion || lastSeenVersion !== currentVersion) {
+    const modal = document.getElementById('changelogModal');
+    const contentEl = document.getElementById('changelogContent');
+    if (modal && contentEl) {
+      if (typeof marked !== 'undefined' && marked.parse) {
+        fetch('./changelog.md')
+          .then(res => res.text())
+          .then(text => {
+            contentEl.innerHTML = marked.parse(text);
+            modal.classList.add('active');
+          })
+          .catch(() => {
+            contentEl.innerHTML = '<p>暫無更新內容</p>';
+            modal.classList.add('active');
+          });
+      } else {
+        contentEl.innerHTML = '<p>暫無更新內容</p>';
+        modal.classList.add('active');
+      }
+    }
+  }
 }
 
 /* ─────────────── 更多設定視窗控制 ─────────────── */
@@ -1881,6 +2019,7 @@ window.onload = async () => {
   initDragSplitter();
   initPinchZoom();
   updateExportButtonsState();
+  checkVersionUpdate();
 };
 
 /**
