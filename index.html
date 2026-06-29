@@ -717,15 +717,16 @@
 </head>
 <body>
 
-<header style="justify-content: space-between; flex-wrap: nowrap; gap: 8px; padding: 12px 16px;">
-  <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
-    <div class="logo" style="width: 32px; height: 32px; font-size: 16px;">🌅</div>
-    <h1 style="font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px;">早安圖製作工具</h1>
+<header style="justify-content: space-between; flex-wrap: nowrap; gap: 6px; padding: 10px 12px;">
+  <div style="display: flex; align-items: center; gap: 4px; min-width: 0;">
+    <div class="logo" style="width: 26px; height: 26px; font-size: 13px;">🌅</div>
+    <h1 style="font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px;">早安圖製作工具</h1>
   </div>
   
   <!-- 快捷操作：整合縮小按鈕、新增頂部下拉式匯出功能 -->
-  <div style="display: flex; gap: 5px; align-items: center; flex-shrink: 0;">
-    <button onclick="undo()" id="undoBtn" class="history-btn" style="padding: 6px 8px; font-size: 12px;" title="上一步" disabled>↩️</button>
+  <div style="display: flex; gap: 4px; align-items: center; flex-shrink: 0;">
+    <button onclick="onAddLayerClick()" id="headerAddLayerBtn" class="theme-btn" style="padding: 6px 6px; font-size: 11px; font-weight: bold; opacity: 0.4; cursor: not-allowed;" title="新增文字" disabled>✍️＋</button>
+    <button onclick="undo()" id="undoBtn" class="history-btn" style="padding: 6px 6px; font-size: 11px;" title="上一步" disabled>↩️</button>
     <button onclick="redo()" id="redoBtn" class="history-btn" style="padding: 6px 8px; font-size: 12px;" title="下一步" disabled>↪️</button>
     
     <div class="header-export-container" style="position: relative; display: inline-block;">
@@ -1074,7 +1075,7 @@
 <div id="aboutPage" class="modal-overlay">
   <div class="modal-box" style="text-align: left; max-width: 480px;">
     <h3 class="modal-title" style="text-align: center; font-size: 20px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
-    <p style="text-align: center; font-size: 12px; color: var(--gold); margin-bottom: 20px; font-weight: bold;">版本 v1.07</p>
+    <p style="text-align: center; font-size: 12px; color: var(--gold); margin-bottom: 20px; font-weight: bold;">版本 v1.08</p>
     
     <div style="font-size: 13px; color: var(--text); line-height: 1.6; display: flex; flex-direction: column; gap: 12px;">
       <p>這是一款免安裝的網頁問候圖與祝福卡片設計工具。我們希望透過簡單、直覺的操作介面，陪伴使用者傳遞每日的關懷與溫暖。</p>
@@ -1444,10 +1445,20 @@ function restoreState(state) {
   layers = state.layers;
   activeLayerId = state.activeLayerId;
   
+  const ws = document.getElementById('workspace');
+  const hint = document.getElementById('canvasHint');
+
   if (state.bgImageSrc) {
     const img = new Image();
     img.onload = () => {
       bgImage = img;
+      if (ws) {
+        ws.classList.remove('not-started');
+        ws.classList.add('started');
+      }
+      if (hint) {
+        hint.style.setProperty('display', 'flex', 'important');
+      }
       renderLayersList();
       drawCanvas();
       saveSettings();
@@ -1457,6 +1468,13 @@ function restoreState(state) {
     img.src = state.bgImageSrc;
   } else {
     bgImage = null;
+    if (ws) {
+      ws.classList.remove('started');
+      ws.classList.add('not-started');
+    }
+    if (hint) {
+      hint.style.setProperty('display', 'none', 'important');
+    }
     renderLayersList();
     drawCanvas();
     saveSettings();
@@ -1933,17 +1951,46 @@ function toggleHeaderExportMenu() {
 
 function updateExportButtonsState() {
   const btn = document.getElementById('headerExportBtn');
-  if (!btn) return;
+  const addBtn = document.getElementById('headerAddLayerBtn');
+  const sidebarAddBtn = document.getElementById('addLayerBtn');
+  
   if (bgImage) {
-    btn.disabled = false;
-    btn.classList.add('active');
-    btn.style.opacity = '1';
-    btn.style.cursor = 'pointer';
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.add('active');
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+    }
+    if (addBtn) {
+      addBtn.disabled = false;
+      addBtn.style.opacity = '1';
+      addBtn.style.cursor = 'pointer';
+    }
+    if (sidebarAddBtn) {
+      sidebarAddBtn.disabled = false;
+      sidebarAddBtn.style.opacity = '1';
+      sidebarAddBtn.style.cursor = 'pointer';
+    }
   } else {
-    btn.disabled = true;
-    btn.classList.remove('active');
-    btn.style.opacity = '0.4';
-    btn.style.cursor = 'not-allowed';
+    // 重置可能殘留的新增文字選取狀態
+    resetAddTextState();
+
+    if (btn) {
+      btn.disabled = true;
+      btn.classList.remove('active');
+      btn.style.opacity = '0.4';
+      btn.style.cursor = 'not-allowed';
+    }
+    if (addBtn) {
+      addBtn.disabled = true;
+      addBtn.style.opacity = '0.4';
+      addBtn.style.cursor = 'not-allowed';
+    }
+    if (sidebarAddBtn) {
+      sidebarAddBtn.disabled = true;
+      sidebarAddBtn.style.opacity = '0.4';
+      sidebarAddBtn.style.cursor = 'not-allowed';
+    }
   }
 }
 
@@ -2059,6 +2106,8 @@ function handleBackgroundUpload(e) {
     };
     reader.readAsDataURL(file);
   }
+  // 關鍵防呆：處理完畢後立即清除路徑紀錄，確保下次選取相同檔案時仍能正常觸發 onchange
+  e.target.value = "";
 }
 
 /* 🚫 Vercel 網頁版佈署：將 Capacitor 接收外部 App 分享圖片的機制註解掉
@@ -2612,11 +2661,20 @@ function resetToCenter(id) {
 function onAddLayerClick() {
   isAddingTextActive = !isAddingTextActive;
   const btn = document.getElementById('addLayerBtn');
+  const headerBtn = document.getElementById('headerAddLayerBtn');
   if (isAddingTextActive) {
-    btn.style.background = 'rgba(245,166,35,0.15)';
-    btn.style.borderColor = 'var(--gold)';
-    btn.style.color = 'var(--gold)';
-    btn.textContent = '⚡ 請點擊圖片任意處新增... (點此取消)';
+    if (btn) {
+      btn.style.background = 'rgba(245,166,35,0.15)';
+      btn.style.borderColor = 'var(--gold)';
+      btn.style.color = 'var(--gold)';
+      btn.textContent = '⚡ 請點擊圖片任意處新增... (點此取消)';
+    }
+    if (headerBtn) {
+      headerBtn.style.background = 'var(--gold)';
+      headerBtn.style.color = '#fff';
+      headerBtn.style.borderColor = 'var(--gold)';
+      headerBtn.textContent = '⚡❌';
+    }
   } else {
     resetAddTextState();
   }
@@ -2625,10 +2683,19 @@ function onAddLayerClick() {
 function resetAddTextState() {
   isAddingTextActive = false;
   const btn = document.getElementById('addLayerBtn');
-  btn.style.background = 'transparent';
-  btn.style.borderColor = 'var(--border)';
-  btn.style.color = 'var(--gold)';
-  btn.textContent = '+ 新增文字';
+  const headerBtn = document.getElementById('headerAddLayerBtn');
+  if (btn) {
+    btn.style.background = 'transparent';
+    btn.style.borderColor = 'var(--border)';
+    btn.style.color = 'var(--gold)';
+    btn.textContent = '+ 新增文字';
+  }
+  if (headerBtn) {
+    headerBtn.style.background = 'var(--surface2)';
+    headerBtn.style.color = 'var(--text)';
+    headerBtn.style.borderColor = 'var(--border)';
+    headerBtn.textContent = '✍️＋';
+  }
 }
 
 function addLayerAt(x, y) {
@@ -3904,6 +3971,12 @@ function resetAllToDefault() {
     ws.classList.remove('started');
     ws.classList.add('not-started');
   }
+  
+  // 主動清除上傳欄位的值
+  const fWelcome = document.getElementById('imageUploadWelcome');
+  if (fWelcome) fWelcome.value = "";
+  const fUpload = document.getElementById('imageUpload');
+  if (fUpload) fUpload.value = "";
   const hint = document.getElementById('canvasHint');
   if (hint) hint.style.display = 'none';
   const uploadText = document.getElementById('uploadAreaText');
