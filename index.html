@@ -988,7 +988,7 @@
 <div id="aboutPage" class="modal-overlay">
   <div class="modal-box" style="text-align: left; max-width: 480px;">
     <h3 class="modal-title" style="text-align: center; font-size: 20px; margin-bottom: 4px;">🌅 早安圖產生器 Pro</h3>
-    <p style="text-align: center; font-size: 12px; color: var(--gold); margin-bottom: 20px; font-weight: bold;">版本 v0.06</p>
+    <p style="text-align: center; font-size: 12px; color: var(--gold); margin-bottom: 20px; font-weight: bold;">版本 v0.07</p>
     
     <div style="font-size: 13px; color: var(--text); line-height: 1.6; display: flex; flex-direction: column; gap: 12px;">
       <p><strong>歡迎使用早安圖產生器 Pro！</strong> 這是一款專為製作高品質問候與祝福圖片而開發的網頁製圖工具。無需下載與安裝，開啟瀏覽器即可一鍵創作。</p>
@@ -1028,6 +1028,7 @@ const PRESET_COLORS = [
 
 let bgImage = null;
 let layers = [];
+let hasUnsavedChanges = false;
 let layerCounter = 0;
 let activeLayerId = null;
 let draggingLayer = null;
@@ -1281,6 +1282,7 @@ function showToast(msg) {
 
 /* ─────────────── 狀態撤銷與重做 (Undo / Redo) 核心邏輯 ─────────────── */
 function pushToUndo() {
+  hasUnsavedChanges = true;
   const state = {
     layers: JSON.parse(JSON.stringify(layers)),
     canvasWidth: canvas.width,
@@ -2307,6 +2309,7 @@ function saveCurrentAsTemplate() {
 async function applyTemplate(id) {
   const t = savedTemplates.find(item => item.id === id);
   if (t) {
+    hasUnsavedChanges = true;
     layers = JSON.parse(JSON.stringify(t.layers)); 
     activeLayerId = layers.length ? layers[layers.length - 1].id : null;
     
@@ -2542,6 +2545,7 @@ async function updateProp(id, p, v) {
   const l = layers.find(l => l.id === id);
   if (l) { 
     l[p] = v; 
+    hasUnsavedChanges = true; 
     
     if (p in lastUsedStyles) {
       lastUsedStyles[p] = v;
@@ -3266,7 +3270,7 @@ window.addEventListener('touchend', () => {
 });
 
 function hasUnsavedCanvasWork() {
-  return !!bgImage || layers.length > 0 || undoStack.length > 0 || redoStack.length > 0;
+  return hasUnsavedChanges && (!!bgImage || layers.length > 0);
 }
 
 window.addEventListener('beforeunload', (e) => {
@@ -3479,6 +3483,9 @@ function resetAllToDefault() {
   selectionBoxWidth = 3.5;
   undoStack = [];
   redoStack = [];
+  hasUnsavedChanges = false;
+  
+  // 3. 重置選取框線設定 UI
   lastUsedStyles = { ...defaultStyles };
   
   // 3. 重置選取框線設定 UI
@@ -3546,6 +3553,8 @@ function handleSaveToLocal() {
   link.href = canvas.toDataURL(`image/${fmt}`);
   link.click();
   
+  hasUnsavedChanges = false;
+  
   activeLayerId = originalActiveId;
   isCropping = originalIsCropping;
   drawCanvas();
@@ -3605,6 +3614,7 @@ async function handleSaveToCloud() {
         title: '我的早安圖',
         text: '分享自製早安圖'
       });
+      hasUnsavedChanges = false;
       closeExportModal();
     } else {
       const downloadUrl = URL.createObjectURL(blob);
@@ -3613,6 +3623,7 @@ async function handleSaveToCloud() {
       link.href = downloadUrl;
       link.click();
       
+      hasUnsavedChanges = false;
       alert('您的設備不支援系統直接上傳。已先自動下載檔案，隨即為您開啟「Google 相簿」網頁，方便您直接上傳或拖曳！');
       window.open('https://photos.google.com/', '_blank');
       closeExportModal();
