@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>早安圖產生器 Pro - 完整功能版</title>
+<title>早安圖製作工具 - 完整功能版</title>
 <!-- 引入 PWA Manifest 檔案 -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#d4891a">
@@ -322,13 +322,11 @@
   .inline-text-editor {
     position: absolute;
     z-index: 60;
-    min-width: 180px;
-    max-width: 280px;
-    background: rgba(10, 10, 18, 0.9);
-    border: 1px solid rgba(245,166,35,0.45);
-    border-radius: 10px;
-    padding: 8px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    overflow: visible;
   }
   .inline-text-editor textarea {
     width: 100%;
@@ -650,7 +648,7 @@
 <header style="justify-content: space-between; flex-wrap: nowrap; gap: 8px; padding: 12px 16px;">
   <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
     <div class="logo" style="width: 32px; height: 32px; font-size: 16px;">🌅</div>
-    <h1 style="font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">早安圖 Pro</h1>
+    <h1 style="font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">早安圖製作工具</h1>
   </div>
   
   <!-- 快捷操作：僅保留上一步、下一步與更多設定，大幅節省手機版高度 -->
@@ -987,22 +985,33 @@
 <!-- 關於本程式 額外彈出頁面 -->
 <div id="aboutPage" class="modal-overlay">
   <div class="modal-box" style="text-align: left; max-width: 480px;">
-    <h3 class="modal-title" style="text-align: center; font-size: 20px; margin-bottom: 4px;">🌅 早安圖產生器 Pro</h3>
-    <p style="text-align: center; font-size: 12px; color: var(--gold); margin-bottom: 20px; font-weight: bold;">版本 v0.07</p>
+    <h3 class="modal-title" style="text-align: center; font-size: 20px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
+    <p style="text-align: center; font-size: 12px; color: var(--gold); margin-bottom: 20px; font-weight: bold;">版本 v0.08</p>
     
     <div style="font-size: 13px; color: var(--text); line-height: 1.6; display: flex; flex-direction: column; gap: 12px;">
-      <p><strong>歡迎使用早安圖產生器 Pro！</strong> 這是一款專為製作高品質問候與祝福圖片而開發的網頁製圖工具。無需下載與安裝，開啟瀏覽器即可一鍵創作。</p>
+      <p>這是一款免安裝的網頁問候圖與祝福卡片設計工具。我們希望透過簡單、直覺的操作介面，陪伴使用者傳遞每日的關懷與溫暖。</p>
       
-      <p><strong>💡 本版本特色：</strong></p>
-      <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 4px;">
-        <li><strong>文字新增優化：</strong>點擊新增文字按鈕亮起後，直接點選圖片任意位置進行精準定位新增。</li>
-        <li><strong>高精確圖層控制：</strong>選取文字圖層時，直接以選取框精準呈現，保持操作精細度。</li>
-        <li><strong>精選字體管理：</strong>預載 50+ 款完美支援繁中之字型。並將英文字型與中文字型分離管理，保持清爽。</li>
-        <li><strong>本機字體永久儲存：</strong>支援匯入 Google Fonts 或本機 TTF/OTF 字型檔案永久保存。</li>
-        <li><strong>智慧位置儲存：</strong>下載可選擇透過系統直接傳送分享或是下載至本機。</li>
-      </ul>
+      <div style="background: var(--surface2); padding: 12px; border-radius: 8px; border: 1px solid var(--border); margin-top: 4px;">
+        <p style="font-weight: 700; color: var(--gold); margin-bottom: 6px; font-size: 13px;">🎁 開源資源與授權致謝 (Open Source)</p>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">本工具之功能與字型庫採用了多項由優秀開源社群維護的資源：</p>
+        <ul style="padding-left: 16px; font-size: 12px; color: var(--text); display: flex; flex-direction: column; gap: 4px;">
+          <li><strong>開放字型庫：</strong>感謝 Google Fonts 託管與分發之思源黑體/明體、粉圓體、芫荽體、霞鶩文楷，以及多款日系手寫字體與藝術英文字型。這些字體均遵循 <strong>SIL Open Font License 1.1</strong> 或 <strong>Apache License 2.0</strong> 授權釋出。</li>
+          <li><strong>Web API 與本地儲存：</strong>字型本機永久儲存技術由 W3C IndexedDB 標準支援；離線與快取技術則採用 Service Worker 與 Web App Manifest 實現。</li>
+        </ul>
+      </div>
+
+      <div style="background: var(--surface2); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+        <p style="font-weight: 700; color: var(--gold); margin-bottom: 6px; font-size: 13px;">🔒 系統內建與專有字型聲明 (Proprietary)</p>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">為確保平台無縫運作與字體未載入時的退路，本工具亦宣告呼叫部分系統內建字型：</p>
+        <ul style="padding-left: 16px; font-size: 12px; color: var(--text); display: flex; flex-direction: column; gap: 4px;">
+          <li><strong>微軟正黑體 (Microsoft JhengHei)：</strong>版權屬於 <strong>Microsoft Corporation</strong> 所有。</li>
+          <li><strong>蘋方體-繁 (PingFang TC)：</strong>版權屬於 <strong>Apple Inc.</strong> 所有。</li>
+          <li><strong>標楷體、新細明體：</strong>版權屬於其對應之原始開發單位所有。</li>
+        </ul>
+        <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">* 本程式僅進行 CSS 渲染宣告，不包含任何上述閉源字型檔案的複製、散佈或商業再利用行為。</p>
+      </div>
       
-      <p style="font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 12px; text-align: center;">© 2026 早安圖產生器 Pro 團隊 | 傳遞每日第一聲溫暖</p>
+      <p style="font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 12px; text-align: center;">傳遞每日第一聲溫暖</p>
     </div>
     
     <div style="text-align: center; margin-top: 24px;">
@@ -2651,8 +2660,43 @@ function openInlineTextEditor(layer) {
   inlineEditLayerId = l.id;
   input.value = l.text;
   editor.style.display = 'block';
-  editor.style.left = `${Math.min(Math.max(10, (l.x / canvas.width) * rect.width - 80), rect.width - 200)}px`;
-  editor.style.top = `${Math.min(Math.max(10, (l.y / canvas.height) * rect.height - 60), rect.height - 120)}px`;
+
+  // 計算畫布相對於其外層容器 (wrap) 的偏移量
+  const wrapRect = wrap.getBoundingClientRect();
+  const offsetX = rect.left - wrapRect.left;
+  const offsetY = rect.top - wrapRect.top;
+
+  const scaleX = rect.width / canvas.width;
+  const scaleY = rect.height / canvas.height;
+  const box = getLayerBoundingBox(l);
+  
+  // 將輸入框加上偏移量，使其能精準重疊於畫布上的文字
+  editor.style.left = `${offsetX + box.x * scaleX}px`;
+  editor.style.top = `${offsetY + box.y * scaleY}px`;
+  editor.style.width = `${box.w * scaleX}px`;
+  editor.style.height = `${box.h * scaleY}px`;
+  
+  // 完全去除便條紙背景與外框，使其與畫布上的字型、顏色、對齊完全融為一體
+  editor.style.background = 'transparent';
+  editor.style.border = 'none';
+  editor.style.boxShadow = 'none';
+  editor.style.padding = '0';
+  editor.style.minWidth = '10px';
+  editor.style.maxWidth = '100%';
+
+  input.style.width = '100%';
+  input.style.height = '100%';
+  input.style.fontSize = `${l.size * scaleY}px`;
+  input.style.fontFamily = `"${l.font}", sans-serif`;
+  input.style.color = l.color;
+  input.style.textAlign = l.align || 'center';
+  input.style.lineHeight = '1.2';
+  input.style.background = 'transparent';
+  input.style.border = 'none';
+  input.style.outline = 'none';
+  input.style.resize = 'none';
+  input.style.overflow = 'hidden';
+
   if (wrap) wrap.classList.add('zoom-edit');
   input.focus();
   input.select();
@@ -2915,6 +2959,7 @@ function drawCanvas() {
 
   layers.forEach(l => {
     if (!l.visible) return;
+    if (inlineEditLayerId === l.id) return; // 正在編輯時，不渲染此層至畫布，防止重複疊影
     ctx.save();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -3298,6 +3343,32 @@ if (inlineTextInputEl) {
     const l = layers.find(item => item.id === inlineEditLayerId);
     if (!l) return;
     l.text = inlineTextInputEl.value;
+    
+    // 🔄 動態計算輸入框大小與位置，隨打字內容即時伸縮外框
+    const editor = document.getElementById('inlineTextEditor');
+    const wrap = document.getElementById('canvasWrap');
+    const rect = canvas.getBoundingClientRect();
+    
+    let offsetX = 0;
+    let offsetY = 0;
+    if (wrap) {
+      const wrapRect = wrap.getBoundingClientRect();
+      offsetX = rect.left - wrapRect.left;
+      offsetY = rect.top - wrapRect.top;
+    }
+
+    const scaleX = rect.width / canvas.width;
+    const scaleY = rect.height / canvas.height;
+    const box = getLayerBoundingBox(l);
+    
+    if (editor) {
+      editor.style.left = `${offsetX + box.x * scaleX}px`;
+      editor.style.top = `${offsetY + box.y * scaleY}px`;
+      editor.style.width = `${box.w * scaleX}px`;
+      editor.style.height = `${box.h * scaleY}px`;
+      inlineTextInputEl.style.fontSize = `${l.size * scaleY}px`;
+    }
+
     renderLayersList();
     drawCanvas();
   });
