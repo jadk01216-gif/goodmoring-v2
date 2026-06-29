@@ -1,0 +1,33 @@
+{
+  "short_name": "早安圖產生器",
+  "name": "早安圖產生器 Pro - 完整功能版",
+  "description": "每日問候與祝福圖片自製排版工具",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌅</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#0f0f1a",
+  "theme_color": "#d4891a",
+  "display": "standalone",
+  "orientation": "any",
+  "share_target": {
+    "action": "./index.html",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "files": [
+        {
+          "name": "shared_image",
+          "accept": [
+            "image/*"
+          ]
+        }
+      ]
+    }
+  }
+}

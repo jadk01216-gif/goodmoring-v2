@@ -4,10 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>早安圖產生器 Pro - 完整功能版</title>
+<!-- 引入 PWA Manifest 檔案 -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#d4891a">
 <!-- 網站 SVG Favicon 🌅 -->
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌅</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<script>
+(function () {
+  try {
+    const savedTheme = localStorage.getItem('gm_theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    let mode = savedTheme || 'system';
+    if (mode === 'system') mode = prefersDark ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', mode);
+    document.documentElement.style.colorScheme = mode;
+  } catch (e) {}
+})();
+</script>
 
 <!-- Google Fonts 1: 官方託管的所有繁體中文 (含台灣、香港、注音) 核心字體 -->
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+HK&family=Noto+Serif+HK&family=Huninn&family=Bpmf+Huninn&family=Bpmf+Iansui&family=LXGW+WenKai+TC&family=LXGW+WenKai+Mono+TC&family=Chiron+Hei+HK&family=Chiron+Sung+HK&family=Chiron+GoRound+TC&family=WDXL+Lubrifont+TC&family=Iansui&family=Cactus+Classical+Serif&family=Chocolate+Classical+Sans&family=UoqMunThenKhung&family=ChenYuluoyan&family=Zhi+Mang+Xing&family=Liu+Jian+Mao+Cao&family=Ma+Shan+Zheng&family=ZCOOL+Xingkai&family=ZCOOL+XiaoWei&family=ZCOOL+KuaiLe&family=ZCOOL+QingKe+HuangYou&family=Long+Cang&display=swap" rel="stylesheet">
@@ -127,6 +143,16 @@
     display: flex;
     gap: 6px;
     align-items: center;
+  }
+  .switch-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 6px 0;
+  }
+  .switch-row .toggle-label {
+    flex: 1;
   }
   .theme-btn {
     background: var(--surface2);
@@ -281,7 +307,35 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    height: 100%; 
+    height: 100%;
+    transition: width 0.15s ease, height 0.15s ease;
+    overflow: hidden;
+  }
+  .canvas-wrap.zoom-edit {
+    overflow: visible;
+  }
+  .inline-text-editor {
+    position: absolute;
+    z-index: 60;
+    min-width: 180px;
+    max-width: 280px;
+    background: rgba(10, 10, 18, 0.9);
+    border: 1px solid rgba(245,166,35,0.45);
+    border-radius: 10px;
+    padding: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  }
+  .inline-text-editor textarea {
+    width: 100%;
+    min-height: 56px;
+    resize: both;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: #fff;
+    font-size: 13px;
+    line-height: 1.4;
+    font-family: inherit;
   }
   canvas { 
     max-width: 100%; 
@@ -591,7 +645,21 @@
 <header>
   <div class="logo">🌅</div>
   <h1 style="flex: 1;">早安圖產生器 Pro</h1>
-  <button onclick="openAboutPage()" style="background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); padding: 6px 12px; font-size: 12px; cursor: pointer; transition: background 0.2s;">ℹ️ 關於本程式</button>
+  <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
+    <div class="theme-toggle-group" id="themeToggleGroup">
+      <button class="theme-btn" data-theme="light" onclick="setTheme('light')">🌞 淺色</button>
+      <button class="theme-btn" data-theme="dark" onclick="setTheme('dark')">🌙 深色</button>
+      <button class="theme-btn" data-theme="system" onclick="setTheme('system')">💻 系統預設</button>
+    </div>
+    <div class="theme-toggle-group" id="zoomControls">
+      <button class="theme-btn" onclick="setZoomMode('view')">🔍 檢視</button>
+      <button class="theme-btn" onclick="setZoomMode('edit')">✏️ 編輯</button>
+      <button class="theme-btn" onclick="changeZoom(1.1)">＋</button>
+      <button class="theme-btn" onclick="changeZoom(0.9)">－</button>
+      <button class="theme-btn" onclick="resetZoom()">重設</button>
+    </div>
+    <button onclick="openAboutPage()" style="background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); padding: 6px 12px; font-size: 12px; cursor: pointer; transition: background 0.2s;">ℹ️ 關於本程式</button>
+  </div>
 </header>
 
 <div id="canvasHint">
@@ -599,10 +667,9 @@
     <button onclick="undo()" id="undoBtn" class="history-btn" disabled>↩️ 上一步</button>
     <button onclick="redo()" id="redoBtn" class="history-btn" disabled>↪️ 下一步</button>
   </div>
-  <div class="theme-toggle-group" id="themeToggleGroup">
-    <button class="theme-btn" data-theme="light" onclick="setTheme('light')">🌞 淺色</button>
-    <button class="theme-btn" data-theme="dark" onclick="setTheme('dark')">🌙 深色</button>
-    <button class="theme-btn" data-theme="system" onclick="setTheme('system')">💻 系統預設</button>
+  <div class="switch-row" style="margin: 0; min-width: 220px;">
+    <span class="toggle-label" style="font-size:11px; font-weight:600; color:var(--text)">未匯出就關閉分頁時提醒</span>
+    <div class="toggle on" id="toggleCloseWarn" onclick="toggleCloseWarningFeature()"></div>
   </div>
 </div>
 
@@ -621,8 +688,11 @@
   </div>
 
   <main class="canvas-area">
-    <div class="canvas-wrap">
+    <div class="canvas-wrap" id="canvasWrap">
       <canvas id="canvas" width="1200" height="675"></canvas>
+      <div id="inlineTextEditor" class="inline-text-editor" style="display:none;">
+        <textarea id="inlineTextInput" placeholder="直接在圖片上編輯文字…"></textarea>
+      </div>
       <div id="fontLoadingOverlay">
         <div class="font-spinner"></div>
         <span class="font-loading-text">字體載入中…</span>
@@ -640,6 +710,10 @@
         <div class="toggle-row" style="margin-top: 0; margin-bottom: 8px;">
           <span class="toggle-label" style="font-size:11px; font-weight:600; color:var(--text)">✍️ 新增時帶入預設文字</span>
           <div class="toggle on" id="toggleDefaultNewText" onclick="toggleDefaultNewTextFeature()"></div>
+        </div>
+        <div class="toggle-row" style="margin-top: 0; margin-bottom: 8px;">
+          <span class="toggle-label" style="font-size:11px; font-weight:600; color:var(--text)">🧪 實驗性：直接在圖片上編輯文字</span>
+          <div class="toggle" id="toggleInlineTextEdit" onclick="toggleInlineTextEditFeature()"></div>
         </div>
         <div id="defaultNewTextConfig" style="display: block;">
           <label class="field-label" style="margin-top:0; font-size:10px; color:var(--text-muted)">自訂新增時的預設文字</label>
@@ -871,7 +945,7 @@
 <div id="aboutPage" class="modal-overlay">
   <div class="modal-box" style="text-align: left; max-width: 480px;">
     <h3 class="modal-title" style="text-align: center; font-size: 20px; margin-bottom: 4px;">🌅 早安圖產生器 Pro</h3>
-    <p style="text-align: center; font-size: 12px; color: var(--gold); margin-bottom: 20px; font-weight: bold;">版本 v0.0.3</p>
+    <p style="text-align: center; font-size: 12px; color: var(--gold); margin-bottom: 20px; font-weight: bold;">版本 v0.04</p>
     
     <div style="font-size: 13px; color: var(--text); line-height: 1.6; display: flex; flex-direction: column; gap: 12px;">
       <p><strong>歡迎使用早安圖產生器 Pro！</strong> 這是一款專為製作高品質問候與祝福圖片而開發的網頁製圖工具。無需下載與安裝，開啟瀏覽器即可一鍵創作。</p>
@@ -921,7 +995,15 @@ let enableEnglishFonts = false;
 let enableQuickEdit = false; // 預設關閉快速編輯    
 let enableProportionalFontSize = false; // 實驗性功能：自適應比例文字大小    
 let enableDefaultNewText = true; // 新增文字是否帶入預設文字（預設開啟）
+let enableInlineTextEdit = false; // 實驗性功能：在圖片上直接編輯文字
+let enableCloseTabWarning = true; // 未匯出就關閉時提醒
 let defaultNewTextValue = '🌞 早安！'; // 預設新增文字內容    
+let currentZoom = 1;
+let zoomMode = 'view';
+let inlineEditLayerId = null;
+let inlineEditOffset = {x:0, y:0};
+let pendingInlineEdit = null;
+let pendingInlineEditStart = null;
 
 // 歷史還原狀態機制 (Undo / Redo Stack)
 let undoStack = [];
@@ -1428,6 +1510,13 @@ function moveLayerToBottom(id) {
 
 /* ─────────────── Init ─────────────── */
 window.onload = async () => {
+  // 註冊 PWA Service Worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('Service Worker 註冊成功:', reg.scope))
+      .catch(err => console.error('Service Worker 註冊失敗:', err));
+  }
+
   if (document.fonts) {
     document.fonts.addEventListener('loadingdone', () => {
       drawCanvas();
@@ -1487,6 +1576,26 @@ window.onload = async () => {
     if (qePropToggleEl) qePropToggleEl.classList.remove('on');
   }
 
+  const savedInlineEdit = localStorage.getItem('gm_enable_inline_text_edit');
+  const inlineEditToggleEl = document.getElementById('toggleInlineTextEdit');
+  if (savedInlineEdit === 'true') {
+    enableInlineTextEdit = true;
+    if (inlineEditToggleEl) inlineEditToggleEl.classList.add('on');
+  } else {
+    enableInlineTextEdit = false;
+    if (inlineEditToggleEl) inlineEditToggleEl.classList.remove('on');
+  }
+
+  const savedCloseWarn = localStorage.getItem('gm_enable_close_tab_warning');
+  const closeWarnToggleEl = document.getElementById('toggleCloseWarn');
+  if (savedCloseWarn === 'false') {
+    enableCloseTabWarning = false;
+    if (closeWarnToggleEl) closeWarnToggleEl.classList.remove('on');
+  } else {
+    enableCloseTabWarning = true;
+    if (closeWarnToggleEl) closeWarnToggleEl.classList.add('on');
+  }
+
   // 還原自訂預設文字設定
   const savedDefaultTextToggle = localStorage.getItem('gm_enable_default_new_text');
   const defaultTextToggleEl = document.getElementById('toggleDefaultNewText');
@@ -1534,7 +1643,81 @@ window.onload = async () => {
   /* 🚫 Vercel 網頁版佈署：將 Capacitor 接收機制調用註解掉
   checkSharedIntent();
   */
+
+  // 偵測並處理來自 PWA 分享管道的圖片
+  checkPwaSharedImage();
 };
+
+/**
+ * 檢查是否有經由 PWA 管道分享進入的圖片快取
+ */
+async function checkPwaSharedImage() {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('hasImage') === 'true') {
+    try {
+      const cache = await caches.open('pwa-photo-cache');
+      const response = await cache.match('/shared-image.jpg');
+      if (response) {
+        const blob = await response.blob();
+        const file = new File([blob], "shared-image.jpg", { type: blob.type || "image/jpeg" });
+        
+        // 呼叫下方建立的共用載入函式，將圖片載入到畫布中
+        loadSharedBlobAsBackground(file);
+        
+        // 清除網址列上的 ?hasImage=true 參數，避免使用者重整網頁時重複載入舊圖
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    } catch (err) {
+      console.error("從 PWA 快取中讀取分享圖片時發生錯誤:", err);
+    }
+  }
+}
+
+/**
+ * 將讀取到的 Blob/File 轉換並渲染至現有的 Canvas 畫布與工作區中
+ */
+function loadSharedBlobAsBackground(file) {
+  if (file) {
+    uploadedFileName = 'pwa-shared';
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        pushToUndo(); 
+        bgImage = img;
+        canvas.width = img.width;
+        canvas.height = img.height;
+        
+        layers = [];
+        layerCounter = 0;
+        activeLayerId = null;
+        
+        const uploadText = document.getElementById('uploadAreaText');
+        if (uploadText) {
+          uploadText.textContent = '點擊重新上傳圖片';
+        }
+        
+        const ws = document.getElementById('workspace');
+        if (ws) {
+          ws.classList.remove('not-started');
+          ws.classList.add('started');
+        }
+        const hint = document.getElementById('canvasHint');
+        if (hint) {
+          hint.style.display = 'flex';
+        }
+        
+        renderLayersList();
+        drawCanvas();
+        saveSettings();
+        updateHistoryButtons();
+        showToast("已成功載入分享的圖片！");
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+}
 
 function saveSettings() {
   const data = { canvasWidth: canvas.width, canvasHeight: canvas.height, layers, layerCounter };
@@ -1722,6 +1905,58 @@ function toggleDefaultNewTextFeature() {
     if (configEl) configEl.style.display = 'none';
   }
   localStorage.setItem('gm_enable_default_new_text', enableDefaultNewText ? 'true' : 'false');
+}
+
+function toggleInlineTextEditFeature() {
+  enableInlineTextEdit = !enableInlineTextEdit;
+  const toggleEl = document.getElementById('toggleInlineTextEdit');
+  if (toggleEl) {
+    toggleEl.classList.toggle('on', enableInlineTextEdit);
+  }
+  localStorage.setItem('gm_enable_inline_text_edit', enableInlineTextEdit ? 'true' : 'false');
+}
+
+function toggleCloseWarningFeature() {
+  enableCloseTabWarning = !enableCloseTabWarning;
+  const toggleEl = document.getElementById('toggleCloseWarn');
+  if (toggleEl) {
+    toggleEl.classList.toggle('on', enableCloseTabWarning);
+  }
+  localStorage.setItem('gm_enable_close_tab_warning', enableCloseTabWarning ? 'true' : 'false');
+}
+
+function setZoomMode(mode) {
+  zoomMode = mode;
+  const wrap = document.getElementById('canvasWrap');
+  const canvasEl = document.getElementById('canvas');
+  if (!wrap || !canvasEl) return;
+  wrap.classList.toggle('zoom-edit', mode === 'edit');
+  if (mode === 'view') {
+    currentZoom = 1;
+  } else {
+    currentZoom = 1.08;
+  }
+  canvasEl.style.transform = `scale(${currentZoom})`;
+  canvasEl.style.transformOrigin = 'center center';
+}
+
+function changeZoom(delta) {
+  currentZoom = Math.max(0.8, Math.min(2.2, currentZoom * delta));
+  const canvasEl = document.getElementById('canvas');
+  if (!canvasEl) return;
+  canvasEl.style.transform = `scale(${currentZoom})`;
+  canvasEl.style.transformOrigin = 'center center';
+}
+
+function resetZoom() {
+  currentZoom = 1;
+  zoomMode = 'view';
+  const wrap = document.getElementById('canvasWrap');
+  const canvasEl = document.getElementById('canvas');
+  if (!wrap || !canvasEl) return;
+  wrap.classList.remove('zoom-edit');
+  canvasEl.style.transform = 'scale(1)';
+  canvasEl.style.transformOrigin = 'center center';
 }
 
 function initTheme() {
@@ -2349,6 +2584,47 @@ function closeQuickEdit() {
   quickEditLayerId = null;
 }
 
+function openInlineTextEditor(layer) {
+  if (!enableInlineTextEdit) return;
+  const editor = document.getElementById('inlineTextEditor');
+  const input = document.getElementById('inlineTextInput');
+  const wrap = document.getElementById('canvasWrap');
+  const rect = canvas.getBoundingClientRect();
+  const l = layers.find(item => item.id === layer.id);
+  if (!editor || !input || !l) return;
+  inlineEditLayerId = l.id;
+  input.value = l.text;
+  editor.style.display = 'block';
+  editor.style.left = `${Math.min(Math.max(10, (l.x / canvas.width) * rect.width - 80), rect.width - 200)}px`;
+  editor.style.top = `${Math.min(Math.max(10, (l.y / canvas.height) * rect.height - 60), rect.height - 120)}px`;
+  if (wrap) wrap.classList.add('zoom-edit');
+  input.focus();
+  input.select();
+}
+
+function closeInlineTextEditor() {
+  const editor = document.getElementById('inlineTextEditor');
+  if (editor) editor.style.display = 'none';
+  inlineEditLayerId = null;
+  pendingInlineEdit = null;
+  pendingInlineEditStart = null;
+}
+
+function commitInlineTextEdit() {
+  const input = document.getElementById('inlineTextInput');
+  if (!inlineEditLayerId || !input) return;
+  const l = layers.find(item => item.id === inlineEditLayerId);
+  if (!l) return;
+  const text = input.value;
+  pushToUndo();
+  l.text = text;
+  renderLayersList();
+  drawCanvas();
+  saveSettings();
+  updateHistoryButtons();
+  closeInlineTextEditor();
+}
+
 /* ─────────────── 頂級精美調色盤核心邏輯與即時更新 ─────────────── */
 let colorTargetLayerId = null; 
 let colorTargetProp = null;     
@@ -2703,6 +2979,10 @@ function checkHit(pos) {
 }
 
 function handleStart(pos) {
+  if (inlineEditLayerId) {
+    commitInlineTextEdit();
+  }
+
   if (isAddingTextActive) {
     addLayerAt(pos.x, pos.y);
     resetAddTextState();
@@ -2722,6 +3002,11 @@ function handleStart(pos) {
 
   const hit = checkHit(pos);
   if (hit) {
+    if (enableInlineTextEdit && !isCropping) {
+      pendingInlineEdit = hit;
+      pendingInlineEditStart = { x: pos.x, y: pos.y };
+      return;
+    }
     pushToUndo(); 
     draggingLayer = { id: hit.id, ox: pos.x - hit.x, oy: pos.y - hit.y };
     activeLayerId = hit.id;
@@ -2747,6 +3032,24 @@ function handleStart(pos) {
 }
 
 function handleMove(pos) {
+  if (inlineEditLayerId) {
+    return;
+  }
+
+  if (pendingInlineEdit && pendingInlineEditStart) {
+    const dx = pos.x - pendingInlineEditStart.x;
+    const dy = pos.y - pendingInlineEditStart.y;
+    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+      const layer = pendingInlineEdit;
+      pushToUndo(); 
+      draggingLayer = { id: layer.id, ox: pos.x - layer.x, oy: pos.y - layer.y };
+      activeLayerId = layer.id;
+      renderLayersList();
+      pendingInlineEdit = null;
+      pendingInlineEditStart = null;
+    }
+  }
+
   if (isCropping && cropDragging && cropStart) {
     const dx = pos.x - cropStart.x;
     const dy = pos.y - cropStart.y;
@@ -2797,6 +3100,11 @@ function handleMove(pos) {
 }
 
 function handleEnd() { 
+  if (pendingInlineEdit && pendingInlineEditStart) {
+    openInlineTextEditor(pendingInlineEdit);
+  }
+  pendingInlineEdit = null;
+  pendingInlineEditStart = null;
   draggingLayer = null; 
   cropDragging = null;
   cropStart = null;
@@ -2848,11 +3156,13 @@ window.addEventListener('mousemove', e => {
 window.addEventListener('mouseup', () => handleEnd());
 
 canvas.addEventListener('dblclick', e => {
-  if (!enableQuickEdit) return; 
   const pos = getPos(e);
   const hit = checkHit(pos);
-  if (hit) {
+  if (!hit) return;
+  if (enableQuickEdit) {
     openQuickEdit(hit);
+  } else if (enableInlineTextEdit) {
+    openInlineTextEditor(hit);
   }
 });
 
@@ -2902,6 +3212,41 @@ window.addEventListener('touchend', () => {
   canvas.style.touchAction = 'auto';
   handleEnd();
 });
+
+window.addEventListener('beforeunload', (e) => {
+  if (!enableCloseTabWarning) return;
+  if (layers.some(l => l.text && l.text.trim())) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+
+function handleInlineEditorKeydown(e) {
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+    e.preventDefault();
+    commitInlineTextEdit();
+  } else if (e.key === 'Escape') {
+    e.preventDefault();
+    closeInlineTextEditor();
+  }
+}
+
+const inlineTextInputEl = document.getElementById('inlineTextInput');
+if (inlineTextInputEl) {
+  inlineTextInputEl.addEventListener('keydown', handleInlineEditorKeydown);
+  inlineTextInputEl.addEventListener('input', () => {
+    const l = layers.find(item => item.id === inlineEditLayerId);
+    if (!l) return;
+    l.text = inlineTextInputEl.value;
+    renderLayersList();
+    drawCanvas();
+  });
+  inlineTextInputEl.addEventListener('blur', () => {
+    if (inlineEditLayerId) {
+      commitInlineTextEdit();
+    }
+  });
+}
 
 /* ─────────────── 全新單鍵裁剪機制 ─────────────── */
 let currentCropRatio = 'free';
