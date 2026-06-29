@@ -568,7 +568,7 @@
     }
     .canvas-area {
       flex: 1;
-      height: 100%;
+      height: 100% !important; /* 強制覆寫拖曳產生的行內像素高度，確保電腦版版面正常 */
       min-height: auto;
       position: relative;
       top: 0;
@@ -641,6 +641,42 @@
     z-index: 5;
     border-color: var(--gold);
   }
+
+  /* ↕️ 上下比例拖曳分割條樣式 */
+  .drag-splitter {
+    height: 12px;
+    background: var(--surface2);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    cursor: ns-resize;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    touch-action: none;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 100;
+  }
+  .drag-splitter::after {
+    content: "";
+    width: 36px;
+    height: 4px;
+    background: var(--text-muted);
+    border-radius: 99px;
+    opacity: 0.5;
+    transition: background 0.2s, opacity 0.2s;
+  }
+  .drag-splitter:hover::after, .drag-splitter:active::after {
+    background: var(--gold);
+    opacity: 1;
+  }
+  /* 在左右排版的電腦版介面上隱藏分割條 */
+  @media (min-width: 1024px) {
+    .drag-splitter {
+      display: none !important;
+    }
+  }
 </style>
 </head>
 <body>
@@ -688,6 +724,9 @@
       </div>
     </div>
   </main>
+
+  <!-- ↕️ 上下比例拖曳分割條 (僅在手機/直式平板版面顯示) -->
+  <div id="dragSplitter" class="drag-splitter"></div>
 
   <aside class="side-panel" ondragover="handlePanelDragOver(event)" ondragleave="clearAutoScroll()">
     <div class="panel-section layers-section">
@@ -986,7 +1025,7 @@
 <div id="aboutPage" class="modal-overlay">
   <div class="modal-box" style="text-align: left; max-width: 480px;">
     <h3 class="modal-title" style="text-align: center; font-size: 20px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
-    <p style="text-align: center; font-size: 12px; color: var(--gold); margin-bottom: 20px; font-weight: bold;">版本 v1.02</p>
+    <p style="text-align: center; font-size: 12px; color: var(--gold); margin-bottom: 20px; font-weight: bold;">版本 v1.03</p>
     
     <div style="font-size: 13px; color: var(--text); line-height: 1.6; display: flex; flex-direction: column; gap: 12px;">
       <p>這是一款免安裝的網頁問候圖與祝福卡片設計工具。我們希望透過簡單、直覺的操作介面，陪伴使用者傳遞每日的關懷與溫暖。</p>
@@ -1708,6 +1747,9 @@ window.onload = async () => {
 
   // 偵測並處理來自 PWA 分享管道的圖片
   checkPwaSharedImage();
+
+  // 初始化上下拖曳比例分割條功能
+  initDragSplitter();
 };
 
 /**
@@ -1737,6 +1779,66 @@ async function checkPwaSharedImage() {
       console.error("從 PWA 快取中讀取分享圖片時發生錯誤:", err);
     }
   }
+}
+
+// ↕️ 上下比例拖曳分割條初始化與控制邏輯
+function initDragSplitter() {
+  const splitter = document.getElementById('dragSplitter');
+  const canvasArea = document.querySelector('.canvas-area');
+  const workspace = document.getElementById('workspace');
+
+  if (!splitter || !canvasArea || !workspace) return;
+
+  let isDragging = false;
+  let startY = 0;
+  let startHeight = 0;
+
+  const onDragStart = (e) => {
+    isDragging = true;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    startY = clientY;
+    startHeight = canvasArea.getBoundingClientRect().height;
+    document.body.style.cursor = 'ns-resize';
+    document.body.style.userSelect = 'none';
+  };
+
+  const onDragMove = (e) => {
+    if (!isDragging) return;
+    
+    // 行動裝置拖曳時，阻止瀏覽器預設的下拉重新整理或頁面滾動行為
+    if (e.cancelable) e.preventDefault(); 
+
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const deltaY = clientY - startY;
+    let newHeight = startHeight + deltaY;
+
+    // 限制拖曳範圍：最小高度限制為 150px，最大高度為當前工作區總高度的 75%
+    const wsHeight = workspace.getBoundingClientRect().height;
+    const minHeight = 150;
+    const maxHeight = wsHeight * 0.75;
+
+    if (newHeight < minHeight) newHeight = minHeight;
+    if (newHeight > maxHeight) newHeight = maxHeight;
+
+    canvasArea.style.height = `${newHeight}px`;
+  };
+
+  const onDragEnd = () => {
+    if (!isDragging) return;
+    isDragging = false;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  };
+
+  // 監聽滑鼠與觸控事件
+  splitter.addEventListener('mousedown', onDragStart);
+  splitter.addEventListener('touchstart', onDragStart, { passive: true });
+
+  window.addEventListener('mousemove', onDragMove);
+  window.addEventListener('touchmove', onDragMove, { passive: false });
+
+  window.addEventListener('mouseup', onDragEnd);
+  window.addEventListener('touchend', onDragEnd);
 }
 
 /**
@@ -1788,6 +1890,66 @@ function loadSharedBlobAsBackground(file) {
 function saveSettings() {
   const data = { canvasWidth: canvas.width, canvasHeight: canvas.height, layers, layerCounter };
   localStorage.setItem('gm_pro_settings', JSON.stringify(data));
+}
+
+// ↕️ 上下比例拖曳分割條初始化與控制邏輯
+function initDragSplitter() {
+  const splitter = document.getElementById('dragSplitter');
+  const canvasArea = document.querySelector('.canvas-area');
+  const workspace = document.getElementById('workspace');
+
+  if (!splitter || !canvasArea || !workspace) return;
+
+  let isDragging = false;
+  let startY = 0;
+  let startHeight = 0;
+
+  const onDragStart = (e) => {
+    isDragging = true;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    startY = clientY;
+    startHeight = canvasArea.getBoundingClientRect().height;
+    document.body.style.cursor = 'ns-resize';
+    document.body.style.userSelect = 'none';
+  };
+
+  const onDragMove = (e) => {
+    if (!isDragging) return;
+    
+    // 行動裝置拖曳時，阻止瀏覽器預設的下拉重新整理或頁面滾動行為
+    if (e.cancelable) e.preventDefault(); 
+
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const deltaY = clientY - startY;
+    let newHeight = startHeight + deltaY;
+
+    // 限制拖曳範圍：最小高度限制為 150px，最大高度為當前工作區總高度的 75%
+    const wsHeight = workspace.getBoundingClientRect().height;
+    const minHeight = 150;
+    const maxHeight = wsHeight * 0.75;
+
+    if (newHeight < minHeight) newHeight = minHeight;
+    if (newHeight > maxHeight) newHeight = maxHeight;
+
+    canvasArea.style.height = `${newHeight}px`;
+  };
+
+  const onDragEnd = () => {
+    if (!isDragging) return;
+    isDragging = false;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  };
+
+  // 監聽滑鼠與觸控事件
+  splitter.addEventListener('mousedown', onDragStart);
+  splitter.addEventListener('touchstart', onDragStart, { passive: true });
+
+  window.addEventListener('mousemove', onDragMove);
+  window.addEventListener('touchmove', onDragMove, { passive: false });
+
+  window.addEventListener('mouseup', onDragEnd);
+  window.addEventListener('touchend', onDragEnd);
 }
 
 /* ─────────────── 圖片上傳控制 ─────────────── */
@@ -3165,16 +3327,19 @@ function handleStart(pos) {
 
   const hit = checkHit(pos);
   if (hit) {
-    if (enableInlineTextEdit && !isCropping) {
-      pendingInlineEdit = hit;
-      pendingInlineEditStart = { x: pos.x, y: pos.y };
-      return;
-    }
+    // 1. 按下瞬間立即啟動選取外框並準備拖曳，給予最即時的反饋
     pushToUndo(); 
     draggingLayer = { id: hit.id, ox: pos.x - hit.x, oy: pos.y - hit.y };
     activeLayerId = hit.id;
-    renderLayersList();
     
+    // 2. 如果啟用了直接編輯，先記錄點擊起點與目標圖層
+    if (enableInlineTextEdit && !isCropping) {
+      pendingInlineEdit = hit;
+      pendingInlineEditStart = { x: pos.x, y: pos.y };
+    }
+    
+    // 3. 展開對應的側邊欄清單
+    renderLayersList();
     const el = document.getElementById('layersList');
     el.querySelectorAll('.layer-card').forEach(c => c.classList.remove('editor-open'));
     const hitCard = el.querySelector(`.layer-card[data-id="${hit.id}"]`);
@@ -3199,15 +3364,11 @@ function handleMove(pos) {
     return;
   }
 
+  // 判斷是否正在拖曳文字：若移動位移超過 8px，則視為「要移動位置」，取消放開後的直接編輯狀態
   if (pendingInlineEdit && pendingInlineEditStart) {
     const dx = pos.x - pendingInlineEditStart.x;
     const dy = pos.y - pendingInlineEditStart.y;
     if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
-      const layer = pendingInlineEdit;
-      pushToUndo(); 
-      draggingLayer = { id: layer.id, ox: pos.x - layer.x, oy: pos.y - layer.y };
-      activeLayerId = layer.id;
-      renderLayersList();
       pendingInlineEdit = null;
       pendingInlineEditStart = null;
     }
