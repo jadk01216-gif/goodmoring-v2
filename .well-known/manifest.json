@@ -1,0 +1,39 @@
+{
+  "short_name": "早安圖製作工具",
+  "name": "早安圖製作工具",
+  "description": "每日問候與祝福圖片自製排版工具",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#0f0f1a",
+  "theme_color": "#d4891a",
+  "display": "standalone",
+  "orientation": "any",
+  "share_target": {
+    "action": "./index.html",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "files": [
+        {
+          "name": "shared_image",
+          "accept": [
+            "image/*"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,4417 @@
+﻿<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>早安圖製作工具 </title>
+<!-- 引入 PWA Manifest 檔案 -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#d4891a">
+<!-- 引入 marked.js 用於解析 Markdown -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<!-- 網站 SVG Favicon 🌅 -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌅</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<script>
+(function () {
+  try {
+    const savedTheme = localStorage.getItem('gm_theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    let mode = savedTheme || 'system';
+    if (mode === 'system') mode = prefersDark ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', mode);
+    document.documentElement.style.colorScheme = mode;
+  } catch (e) {}
+})();
+</script>
+
+<!-- Google Fonts 1: 官方託管的所有繁體中文 (含台灣、香港、注音) 核心字體 -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+HK&family=Noto+Serif+HK&family=Huninn&family=Bpmf+Huninn&family=Bpmf+Iansui&family=LXGW+WenKai+TC&family=LXGW+WenKai+Mono+TC&family=Chiron+Hei+HK&family=Chiron+Sung+HK&family=Chiron+GoRound+TC&family=WDXL+Lubrifont+TC&family=Iansui&family=Cactus+Classical+Serif&family=Chocolate+Classical+Sans&family=UoqMunThenKhung&family=ChenYuluoyan&family=Zhi+Mang+Xing&family=Liu+Jian+Mao+Cao&family=Ma+Shan+Zheng&family=ZCOOL+Xingkai&family=ZCOOL+XiaoWei&family=ZCOOL+KuaiLe&family=ZCOOL+QingKe+HuangYou&family=Long+Cang&display=swap" rel="stylesheet">
+<!-- Google Fonts 2: 官方託管之日系 CJK 優秀手寫、黑體與明朝體 (提供繁中文字缺字時完美之字型退路) -->
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic&family=Zen+Old+Mincho&family=Klee+One&family=Dela+Gothic+One&family=DotGothic16&family=Hachi+Maru+Pop&family=Hina+Mincho&family=Kaisei+Decol&family=Kaisei+Tokumin&family=Kiwi+Maru&family=Kosugi&family=Kosugi+Maru&family=M+PLUS+1p&family=M+PLUS+Rounded+1c&family=Mochiy+Pop+One&family=Murecho&family=Potta+One&family=Rampart+One&family=Reggae+One&family=RocknRoll+One&family=Sawarabi+Gothic&family=Sawarabi+Mincho&family=Shippori+Mincho&family=Stick&family=Train+One&family=Yomogi&family=Yusei+Magic&family=Zen+Kaku+Gothic+New&family=BIZ+UDGothic&family=BIZ+UDPMincho&family=Darumadrop+One&display=swap" rel="stylesheet">
+<!-- Google Fonts 3: 藝術與特殊英文字體 (在設定中開啟才顯示於下拉選單) -->
+<link href="https://fonts.googleapis.com/css2?family=Chango&family=Silkscreen&family=Amatic+SC&family=Caveat&family=Cinzel&family=Dancing+Script&family=Great+Vibes&family=Lobster&family=Montserrat&family=Oswald&family=Pacifico&family=Playfair+Display&family=Playpen+Sans&family=Righteous&family=Sacramento&family=Shadows+Into+Light&family=Special+Elite&family=Lilita+One&family=Bangers&family=Comfortaa&family=Architects+Daughter&family=Creepster&family=Satisfy&family=Permanent+Marker&family=Kaushan+Script&family=Gloria+Hallelujah&family=Abril+Fatface&family=Patua+One&family=Courgette&family=Acme&family=Cookie&family=Chewy&display=swap" rel="stylesheet">
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:             #f7f7f9;
+    --surface:        #ffffff;
+    --surface2:       #f0f0f5;
+    --border:         rgba(0,0,0,.08);
+    --gold:           #d4891a;
+    --gold2:          #c94f1f;
+    --text:           #1a1a1a;
+    --text-muted:     #666680;
+    --active:         #d4891a;
+    --radius:         12px;
+    --radius-sm:      8px;
+    --shadow:         0 4px 24px rgba(0,0,0,.08);
+    --modal-overlay-bg: rgba(0,0,0,0.3);
+    --overlay-bg:     rgba(0,0,0,0.4);
+  }
+
+  :root[data-theme="dark"] {
+    --bg:             #0f0f1a;
+    --surface:        #1a1a2e;
+    --surface2:       #22223a;
+    --border:         rgba(255,255,255,.08);
+    --gold:           #f5a623;
+    --gold2:          #ff6b35;
+    --text:           #e8e8f0;
+    --text-muted:     #7a7a9a;
+    --active:         #f5a623;
+    --shadow:         0 4px 24px rgba(0,0,0,.4);
+    --modal-overlay-bg: rgba(0,0,0,0.6);
+    --overlay-bg:     rgba(0,0,0,0.5);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:             #0f0f1a;
+      --surface:        #1a1a2e;
+      --surface2:       #22223a;
+      --border:         rgba(255,255,255,.08);
+      --gold:           #f5a623;
+      --gold2:          #ff6b35;
+      --text:           #e8e8f0;
+      --text-muted:     #7a7a9a;
+      --active:         #f5a623;
+      --shadow:         0 4px 24px rgba(0,0,0,.4);
+      --modal-overlay-bg: rgba(0,0,0,0.6);
+      --overlay-bg:     rgba(0,0,0,0.5);
+    }
+  }
+
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto; 
+  }
+
+  /* ── Header ── */
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 24px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    z-index: 200;
+  }
+  header .logo {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  header h1 {
+    font-size: 18px;
+    font-weight: 700;
+    background: linear-gradient(90deg, var(--gold), var(--gold2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* 提示與 Undo/Redo 橫幅 */
+  #canvasHint {
+    background: rgba(245, 166, 35, 0.08);
+    border-bottom: 1px solid rgba(245, 166, 35, 0.15);
+    color: var(--gold);
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    display: none; 
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    line-height: 1.4;
+    flex-shrink: 0;
+  }
+  
+  .theme-toggle-group {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .switch-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 6px 0;
+  }
+  .switch-row .toggle-label {
+    flex: 1;
+  }
+  .theme-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .theme-btn:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+  .theme-btn.active {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #fff;
+  }
+  
+  .history-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: not-allowed;
+    opacity: 0.4;
+    transition: all 0.2s;
+  }
+  .history-btn:not([disabled]):hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--gold);
+  }
+
+  /* 現代化 Toast 提示 */
+  #toastNotification {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: linear-gradient(135deg, rgba(255, 203, 110, 0.98), rgba(245, 166, 35, 0.95));
+    color: #1a1a2e;
+    font-weight: 700;
+    padding: 14px 26px;
+    border-radius: 14px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    z-index: 2000;
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    font-size: 13px;
+    min-width: 260px;
+    max-width: calc(100vw - 40px);
+    text-align: center;
+    backdrop-filter: blur(10px);
+  }
+  #toastNotification.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+  }
+
+  /* ── Workspace ── */
+  .workspace {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* 修改為僅隱藏側邊欄與畫布區，確保 Header 匯出按鈕不受影響 */
+  .workspace.not-started .side-panel,
+  .workspace.not-started .canvas-area {
+    display: none !important;
+  }
+  
+  /* 確保 Header 在任何狀態下都能點擊 */
+  header {
+    pointer-events: auto !important;
+  }
+  .workspace.started .welcome-screen {
+    display: none !important;
+  }
+
+  /* ── 無干擾歡迎介面 ── */
+  .welcome-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    z-index: 100;
+  }
+  .welcome-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 48px 32px;
+    text-align: center;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: var(--shadow);
+  }
+  .welcome-logo {
+    font-size: 48px;
+    margin-bottom: 16px;
+  }
+  .welcome-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+  .welcome-subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 28px;
+  }
+  .welcome-btn {
+    padding: 12px 28px;
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    border: none;
+    border-radius: var(--radius-sm);
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 14px;
+    box-shadow: 0 4px 15px rgba(245,166,35,0.3);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .welcome-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(245,166,35,0.4);
+  }
+
+  /* ── Canvas Area ── */
+  .canvas-area { 
+    position: relative;
+    top: 0;
+    z-index: 10;
+    height: 42vh; 
+    min-height: 250px;
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    padding: 12px; 
+    background: var(--bg); 
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    overflow: auto; 
+  }
+  .canvas-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    transition: width 0.15s ease, height 0.15s ease;
+    overflow: hidden;
+  }
+  .canvas-wrap.zoom-edit {
+    overflow: visible;
+  }
+  .inline-text-editor {
+    position: absolute;
+    z-index: 60;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    overflow: visible;
+  }
+  .inline-text-editor textarea {
+    width: 100%;
+    min-height: 56px;
+    resize: both;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: #fff;
+    font-size: 13px;
+    line-height: 1.4;
+    font-family: inherit;
+  }
+  canvas { 
+    max-width: 100%; 
+    max-height: 100%; 
+    width: auto; 
+    height: auto; 
+    object-fit: contain; 
+    border-radius: 6px; 
+    box-shadow: 0 8px 40px rgba(0,0,0,.6); 
+    cursor: default; 
+    display: block; 
+    touch-action: auto; 
+  }
+
+  /* 字體載入 overlay */
+  #fontLoadingOverlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    border-radius: 6px;
+    background: var(--overlay-bg);
+    z-index: 20;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+  }
+  #fontLoadingOverlay.show { display: flex; }
+  .font-spinner {
+    width: 36px; height: 36px;
+    border: 3.5px solid rgba(245,166,35,0.25);
+    border-top-color: #f5a623;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .font-loading-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: #f5a623;
+    letter-spacing: 0.03em;
+  }
+
+  /* ── Side Panel (滾動區域) ── */
+  .side-panel {
+    width: 100%;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto; 
+    padding-bottom: 40px;
+    flex: 1;
+  }
+
+  .panel-section { 
+    padding: 14px 16px; 
+    border-bottom: 1px solid var(--border);
+  }
+  
+  .panel-section.layers-section {
+    flex: none;
+  }
+  .section-title { font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; }
+
+  /* ── UI Controls ── */
+  label.field-label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; margin-top: 10px; }
+  input[type=text], textarea, select {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text); font-size: 13px; padding: 8px 10px; outline: none;
+  }
+  input[type=range] { width: 100%; accent-color: var(--gold); cursor: pointer; }
+  input[type=color] { width: 100%; height: 36px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface2); cursor: pointer; padding: 2px 4px; }
+
+  /* ── Layer List ── */
+  .layers-list { display: flex; flex-direction: column; gap: 8px; }
+  .layer-card { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; cursor: grab; transition: opacity 0.15s; }
+  .layer-card:active { cursor: grabbing; }
+  .layer-card.active-layer { border-color: var(--gold); }
+  .layer-card-head { display: flex; align-items: center; padding: 8px 10px; cursor: pointer; gap: 8px; }
+  .layer-thumb { width: 32px; height: 32px; border-radius: 6px; background: #333; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .layer-info { flex: 1; overflow: hidden; }
+  .layer-name { font-size: 12px; font-weight: 500; }
+  .layer-preview { font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .layer-actions { display: flex; gap: 4px; }
+  .layer-btn { width: 26px; height: 26px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+  .layer-btn:hover { background: rgba(255,255,255,.08); color: var(--text); }
+  .layer-btn.danger:hover { background: rgba(255,80,80,.15); color: #ff6060; }
+  .layer-editor { padding: 12px; border-top: 1px solid var(--border); display: none; }
+  .layer-card.editor-open .layer-editor { display: block; }
+
+  /* ── Toggle ── */
+  .toggle-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+  .toggle-label { font-size: 12px; color: var(--text-muted); flex: 1; }
+  .toggle { width: 36px; height: 20px; background: var(--surface2); border: 1px solid var(--border); border-radius: 99px; cursor: pointer; position: relative; transition: background .2s; }
+  .toggle.on { background: var(--gold); border-color: var(--gold); }
+  .toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: #fff; border-radius: 50%; transition: transform .2s; }
+  .toggle.on::after { transform: translateX(16px); }
+
+  /* ── Template Cards ── */
+  .template-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+  }
+  .template-name {
+    font-weight: 500;
+    cursor: pointer;
+    flex: 1;
+    color: var(--text);
+    transition: color 0.2s;
+  }
+  .template-name:hover {
+    color: var(--gold);
+  }
+  .template-delete-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 2px 6px;
+    transition: color 0.2s;
+  }
+  .template-delete-btn:hover {
+    color: #ff6060;
+  }
+
+  /* ── 模態彈窗 ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--modal-overlay-bg);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.active {
+    display: flex;
+  }
+  .modal-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px 24px;
+    max-width: 400px;
+    width: 90%;
+    max-height: 85vh; /* 防止彈出視窗被截斷 */
+    overflow-y: auto;  /* 開啟捲動 */
+    text-align: center;
+    box-shadow: var(--shadow);
+    animation: modalFadeIn 0.3s ease;
+  }
+  @keyframes modalFadeIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .modal-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 12px;
+  }
+  .modal-subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+  .modal-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .modal-btn-primary {
+    padding: 14px;
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    color: white;
+    font-weight: 700;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .modal-btn-primary:hover {
+    transform: translateY(-1px);
+  }
+  .modal-btn-secondary {
+    padding: 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .modal-btn-secondary:hover {
+    background: rgba(255,255,255,.05);
+  }
+  .modal-close-link {
+    margin-top: 16px;
+    display: inline-block;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  /* ── Changelog 更新通知彈窗 ── */
+  .changelog-modal-box {
+    display: flex;
+    flex-direction: column;
+    max-height: 88vh;
+    overflow: hidden;
+    padding: 28px 24px 20px;
+  }
+  .changelog-header {
+    flex-shrink: 0;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .changelog-header .modal-title {
+    margin-bottom: 6px;
+  }
+  .changelog-content {
+    flex: 1;
+    overflow-y: auto;
+    text-align: left;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.7;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    min-height: 0;
+  }
+  .changelog-content h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gold);
+    margin: 12px 0 6px;
+  }
+  .changelog-content h4:first-child {
+    margin-top: 0;
+  }
+  .changelog-content ul {
+    padding-left: 18px;
+    margin: 4px 0;
+  }
+  .changelog-content li {
+    margin-bottom: 4px;
+  }
+  .changelog-footer {
+    flex-shrink: 0;
+    padding-top: 14px;
+    margin-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .canvas-area { height: 35vh; min-height: 180px; padding: 6px; }
+  }
+
+  @media (min-width: 1024px) {
+    .workspace {
+      flex-direction: row;
+      height: 100%;
+    }
+    .canvas-area {
+      flex: 1;
+      height: 100% !important; /* 強制覆寫拖曳產生的行內像素高度，確保電腦版版面正常 */
+      min-height: auto;
+      position: relative;
+      top: 0;
+      border-bottom: none;
+      border-right: 1px solid var(--border);
+      padding: 24px;
+    }
+    .side-panel {
+      width: 380px;
+      height: 100%;
+      overflow-y: auto;
+      padding-bottom: 40px;
+      flex-shrink: 0;
+    }
+  }
+
+  .sp-btn { padding: 6px 12px; font-size: 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface2); color: var(--text-muted); cursor: pointer; flex: 1; text-align: center; }
+  .sp-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(245,166,35,.08); }
+  .size-presets { display: flex; gap: 6px; flex-wrap: wrap; }
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .add-layer-btn { width: 100%; padding: 10px; background: transparent; border: 1.5px dashed var(--border); border-radius: var(--radius-sm); color: var(--gold); font-size: 13px; cursor: pointer; margin-top: 8px; transition: all 0.2s; }
+  .dl-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .dl-btn { padding: 12px 4px; border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 700; cursor: pointer; color: #fff; }
+  .dl-btn.png { background: linear-gradient(135deg, #f5a623, #ff6b35); }
+  .dl-btn.jpg { background: linear-gradient(135deg, #667eea, #764ba2); }
+  .dl-btn.webp { background: linear-gradient(135deg, #11998e, #38ef7d); }
+
+  /* 顏色面板美化與 36 色色盤樣式 */
+  .color-control-group {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 8px;
+  }
+  .color-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .custom-color-preview {
+    flex: 1;
+    height: 32px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    font-size: 11px;
+    font-family: monospace;
+    background: var(--surface);
+    color: var(--text-muted);
+  }
+  .compact-color-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 3px;
+    margin-top: 8px;
+  }
+  .compact-swatch {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 3px;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: transform 0.1s;
+  }
+  .compact-swatch:hover {
+    transform: scale(1.25);
+    z-index: 5;
+    border-color: var(--gold);
+  }
+
+  /* ↕️ 上下比例拖曳分割條樣式 */
+  .drag-splitter {
+    height: 12px;
+    background: var(--surface2);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    cursor: ns-resize;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    touch-action: none;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 100;
+  }
+
+  /* 💾 頂部下拉式匯出選單樣式 */
+  .header-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    z-index: 500;
+    min-width: 140px;
+    overflow: hidden;
+    animation: modalFadeIn 0.15s ease;
+  }
+  .header-dropdown-menu .dropdown-item {
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    text-align: left;
+    white-space: nowrap;
+  }
+  .header-dropdown-menu .dropdown-item:hover {
+    background: var(--surface2);
+    color: var(--gold);
+  }
+  .drag-splitter::after {
+    content: "";
+    width: 36px;
+    height: 4px;
+    background: var(--text-muted);
+    border-radius: 99px;
+    opacity: 0.5;
+    transition: background 0.2s, opacity 0.2s;
+  }
+  .drag-splitter:hover::after, .drag-splitter:active::after {
+    background: var(--gold);
+    opacity: 1;
+  }
+
+  #pinchZoomIndicator {
+    display: none;
+    position: fixed;
+    bottom: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15,15,26,0.88);
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    z-index: 900;
+    pointer-events: none;
+    backdrop-filter: blur(6px);
+    transition: opacity .2s;
+    white-space: nowrap;
+  }
+  #pinchZoomIndicator.show {
+    display: block;
+    opacity: 1;
+  }
+
+  .canvas-wrap.pinch-zoom-active {
+    cursor: zoom-in;
+  }
+  /* 在左右排版的電腦版介面上隱藏分割條 */
+  @media (min-width: 1024px) {
+    .drag-splitter {
+      display: none !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header style="justify-content: space-between; flex-wrap: nowrap; gap: 6px; padding: 10px 12px;">
+  <div style="display: flex; align-items: center; gap: 4px; min-width: 0;">
+    <div class="logo" style="width: 26px; height: 26px; font-size: 13px;">🌅</div>
+    <h1 style="font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px;">早安圖製作工具</h1>
+  </div>
+  
+  <!-- 快捷操作：整合縮小按鈕、新增頂部下拉式匯出功能 -->
+  <div style="display: flex; gap: 4px; align-items: center; flex-shrink: 0;">
+    <button onclick="onAddLayerClick()" id="headerAddLayerBtn" class="theme-btn" style="padding: 6px 6px; font-size: 11px; font-weight: bold; opacity: 0.4; cursor: not-allowed;" title="新增文字" disabled>✍️＋</button>
+    <button onclick="undo()" id="undoBtn" class="history-btn" style="padding: 6px 6px; font-size: 11px;" title="上一步" disabled>↩️</button>
+    <button onclick="redo()" id="redoBtn" class="history-btn" style="padding: 6px 8px; font-size: 12px;" title="下一步" disabled>↪️</button>
+    
+    <div class="header-export-container" style="position: relative; display: inline-block;">
+      <button id="headerExportBtn" onclick="toggleHeaderExportMenu()" class="theme-btn" style="padding: 6px 10px; font-size: 12px; font-weight: bold; opacity: 0.4; cursor: not-allowed;" disabled>💾 匯出</button>
+      <div id="headerExportMenu" class="header-dropdown-menu" style="display: none;">
+        <div class="dropdown-item" onclick="triggerHeaderExport('png')">🖼️ 匯出為 PNG</div>
+        <div class="dropdown-item" onclick="triggerHeaderExport('jpeg')">📸 匯出為 JPG</div>
+        <div class="dropdown-item" onclick="triggerHeaderExport('webp')">⚡ 匯出為 WebP</div>
+      </div>
+    </div>
+
+    <button onclick="openMoreSettings()" class="theme-btn" style="padding: 6px 8px; font-size: 12px;" title="設定">⚙️</button>
+  </div>
+</header>
+
+<!-- 隱藏原有的提示橫幅，將空間釋放給畫布與編輯區 -->
+<div id="canvasHint" style="display: none !important; height: 0; padding: 0; margin: 0; border: none; overflow: hidden;"></div>
+
+<div id="toastNotification"></div>
+<div id="pinchZoomIndicator"></div>
+
+<div class="workspace not-started" id="workspace">
+  
+  <div class="welcome-screen" id="welcomeScreen">
+    <div class="welcome-box">
+      <div class="welcome-logo">🌅</div>
+      <h2 class="welcome-title">歡迎請上傳圖片</h2>
+      <p class="welcome-subtitle">請上傳您的圖片以開啟編輯與排版功能</p>
+      <button onclick="document.getElementById('imageUploadWelcome').click()" class="welcome-btn">立即上傳圖片</button>
+      <input type="file" id="imageUploadWelcome" accept="image/*" style="display:none">
+    </div>
+  </div>
+
+  <main class="canvas-area">
+    <div class="canvas-wrap" id="canvasWrap">
+      <canvas id="canvas" width="1200" height="675"></canvas>
+      <div id="inlineTextEditor" class="inline-text-editor" style="display:none;">
+        <textarea id="inlineTextInput" placeholder="直接在圖片上編輯文字…"></textarea>
+      </div>
+      <div id="fontLoadingOverlay">
+        <div class="font-spinner"></div>
+        <span class="font-loading-text">字體載入中…</span>
+      </div>
+    </div>
+  </main>
+
+  <!-- ↕️ 上下比例拖曳分割條 (僅在手機/直式平板版面顯示) -->
+  <div id="dragSplitter" class="drag-splitter"></div>
+
+  <aside class="side-panel" ondragover="handlePanelDragOver(event)" ondragleave="clearAutoScroll()">
+    <div class="panel-section layers-section">
+      <div class="section-title">文字圖層</div>
+      <button class="add-layer-btn" id="addLayerBtn" onclick="onAddLayerClick()" style="margin-top: 0; margin-bottom: 12px;">+ 新增文字</button>
+      
+      <!-- 新增文字預設設定面板 -->
+      <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 10px; border-radius: 8px; margin-bottom: 12px;">
+        <div class="toggle-row" style="margin-top: 0; margin-bottom: 8px;">
+          <span class="toggle-label" style="font-size:11px; font-weight:600; color:var(--text)">✍️ 新增時帶入預設文字</span>
+          <div class="toggle on" id="toggleDefaultNewText" onclick="toggleDefaultNewTextFeature()"></div>
+        </div>
+        <div class="toggle-row" style="margin-top: 0; margin-bottom: 8px;">
+          <span class="toggle-label" style="font-size:11px; font-weight:600; color:var(--text)">🧪 實驗性：直接在圖片上編輯文字</span>
+          <div class="toggle" id="toggleInlineTextEdit" onclick="toggleInlineTextEditFeature()"></div>
+        </div>
+        <div id="defaultNewTextConfig" style="display: block;">
+          <label class="field-label" style="margin-top:0; font-size:10px; color:var(--text-muted)">自訂新增時的預設文字</label>
+          <input type="text" id="defaultNewTextInput" value="🌞 早安！" oninput="updateDefaultNewText(this.value)" style="font-size:12px; padding:6px 8px;">
+        </div>
+      </div>
+
+      <div id="layersList" class="layers-list"></div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title">圖片</div>
+      <div id="uploadArea" style="border:2px dashed var(--border); padding:20px; text-align:center; border-radius:12px; cursor:pointer;">
+        <input type="file" id="imageUpload" accept="image/*" style="display:none">
+        <div style="font-size:24px; margin-bottom:5px;">🖼️</div>
+        <p id="uploadAreaText" style="font-size:12px; color:var(--text-muted);">點擊上傳圖片</p>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title">字型選單管理</div>
+      <div class="toggle-row">
+        <span class="toggle-label" style="font-size:12px; font-weight:500;">啟用英文字型選單</span>
+        <div class="toggle" id="toggleEnableEnglishFonts" onclick="toggleEnglishFonts()"></div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title">畫布比例與裁切</div>
+      <button id="btnEnterCrop" class="align-btn" style="width:100%; padding:10px; background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text); font-weight:bold; cursor:pointer;">✂️ 進入圖片裁切模式</button>
+      
+      <!-- ↕️ 上下比例一鍵重置按鈕 -->
+      <button onclick="resetSplitterRatio()" class="align-btn" style="width:100%; padding:8px; background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text-muted); font-size:12px; margin-top:8px; cursor:pointer;">↕️ 重置視窗拖曳比例</button>
+      
+      <div id="cropMenu" style="display:none; margin-top:10px; background:rgba(255,255,255,0.03); padding:12px; border-radius:8px; border:1px solid var(--border);">
+        <p style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">1. 選擇裁切比例</p>
+        <div class="size-presets" id="cropRatios">
+          <button class="sp-btn active" data-ratio="free">自由大小</button>
+          <button class="sp-btn" data-ratio="1">1:1 (正方)</button>
+          <button class="sp-btn" data-ratio="1.7778">16:9 (橫式)</button>
+          <button class="sp-btn" data-ratio="0.5625">9:16 (直式)</button>
+        </div>
+        <p style="font-size:11px; color:var(--gold); margin-top:12px; margin-bottom:8px;">2. 拖曳畫布上的虛線框調整範圍</p>
+        <div class="row-2">
+          <button class="align-btn" onclick="cancelCrop()" style="padding:10px; background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text); cursor:pointer;">取消</button>
+          <button class="align-btn" onclick="applyDirectCrop()" style="padding:10px; background:var(--gold); border:none; border-radius:6px; color:#fff; font-weight:bold; cursor:pointer;">確認套用裁切</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title">載入自訂字體</div>
+      <p style="font-size:11px; color:var(--text-muted); margin-bottom:12px;">您可以貼上 Google Fonts 連結，或上傳自己電腦中的字型檔。字體會永久儲存在您的本機瀏覽器中。</p>
+      
+      <div style="margin-bottom:12px;">
+        <label class="field-label" style="margin-top:0;">1. Google Fonts 連結</label>
+        <div style="display:flex; gap:6px;">
+          <input type="text" id="gfontUrl" placeholder="貼上 Noto / Roboto 連結..." style="font-size:12px;">
+          <button onclick="addGoogleFont()" style="padding:8px 12px; background:var(--gold); border:none; border-radius:6px; color:white; font-weight:bold; font-size:12px; cursor:pointer;">載入</button>
+        </div>
+      </div>
+      
+      <div>
+        <label class="field-label" style="margin-top:0;">2. 上傳本機字體檔</label>
+        <input type="file" id="fontFileInput" accept=".ttf,.otf,.woff,.woff2" style="display:none;" onchange="loadLocalFontFile(this)">
+        <button onclick="document.getElementById('fontFileInput').click()" style="width:100%; padding:8px; background:var(--surface2); border:1.5px dashed var(--border); border-radius:6px; color:var(--text); font-size:12px; cursor:pointer; font-weight:500;">📂 選擇電腦中的字體檔案 (.ttf, .otf)</button>
+      </div>
+      
+      <div id="customFontsList" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:12px;"></div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title">我的模板庫</div>
+      <p style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">設計好您的排版與文字後，可在下方儲存。下次上傳新圖片時即可一鍵套用！</p>
+      <div id="templateList" style="display:flex; flex-direction:column; gap:6px;"></div>
+      <div style="margin-top:10px; display:flex; gap:6px;">
+        <input type="text" id="newTemplateName" placeholder="輸入模板名稱..." style="flex:1;">
+        <button onclick="saveCurrentAsTemplate()" style="padding:8px 12px; background:var(--gold); border:none; border-radius:6px; color:white; font-weight:bold; font-size:12px; cursor:pointer; white-space:nowrap;">儲存設計</button>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title">快速編輯功能</div>
+      <div class="toggle-row">
+        <span class="toggle-label" style="font-size:12px; font-weight:500;">啟用雙擊快速編輯</span>
+        <div class="toggle" id="toggleQuickEdit" onclick="toggleQuickEditFeature()"></div>
+      </div>
+      <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">開啟後，在畫布文字上「快速點擊兩下（雙擊）」即可跳出快速編輯面板</p>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title">實驗性操作設定</div>
+      <div class="toggle-row">
+        <span class="toggle-label" style="font-size:12px; font-weight:500;">啟用自適應文字比例</span>
+        <div class="toggle" id="toggleProportionalFont" onclick="toggleProportionalFontFeature()"></div>
+      </div>
+      <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">開啟後，文字尺寸會依圖片寬度等比縮放（保持 100% 滿版），且裁切時文字位置與比例會自動同步，在手機與電腦版皆無需重複調整！</p>
+      
+      <div class="toggle-row" style="margin-top:10px;">
+        <span class="toggle-label" style="font-size:12px; font-weight:500;">🧪 實驗性：手勢縮放（雙指捏合放大縮小文字）</span>
+        <div class="toggle" id="togglePinchZoom" onclick="togglePinchZoomFeature()"></div>
+      </div>
+      <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">開啟後，在畫布區域用兩指捏合即可直接放大或縮小文字；此模式會暫時關閉拖曳與文字編輯，不會互相干擾</p>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title">選取框線設定</div>
+      <label class="field-label" style="margin-top:0;" id="selBoxWidthLabel">框線粗細（3.5px）</label>
+      <input type="range" id="selectionBoxWidthSlider" min="1" max="12" step="0.5" value="3.5"
+        oninput="selectionBoxWidth=+this.value; localStorage.setItem('gm_selection_box_width', this.value); document.getElementById('selBoxWidthLabel').textContent='框線粗細（'+this.value+'px）'; document.getElementById('selBoxPreview').style.borderWidth=this.value+'px'; drawCanvas();">
+      <div style="display:flex; gap:6px; margin-top:10px;">
+        <div style="flex:1; height:24px; border-radius:4px; background:var(--surface2); border:1px solid var(--border); position:relative; overflow:hidden;">
+          <div id="selBoxPreview" style="position:absolute; inset:4px; border:3.5px dashed #f5a623; border-radius:3px; pointer-events:none;"></div>
+        </div>
+      </div>
+      <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">拖曳選取文字圖層時所顯示的虛線外框粗細</p>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title">匯出儲存</div>
+      <div class="dl-row">
+        <button class="dl-btn png" onclick="exportImage('png')">PNG</button>
+        <button class="dl-btn jpg" onclick="exportImage('jpeg')">JPG</button>
+        <button class="dl-btn webp" onclick="exportImage('webp')">WebP</button>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- 下載與分享智慧選擇彈窗 -->
+<div id="exportModal" class="modal-overlay">
+  <div class="modal-box">
+    <h3 class="modal-title">儲存與分享設定</h3>
+    <p class="modal-subtitle">系統已準備好您的早安圖！</p>
+    
+    <!-- 檔名輸入框 -->
+    <div style="text-align: left; margin-bottom: 16px;">
+      <label class="field-label" style="margin-top:0; font-weight:600; color:var(--text); margin-bottom: 6px;">💾 自訂匯出檔案名稱</label>
+      <input type="text" id="exportFileNameInput" placeholder="輸入自訂檔名..." style="font-weight:600; padding:8px 10px;">
+    </div>
+
+    <div class="modal-options">
+      <button onclick="handleSaveToCloud()" class="modal-btn-primary">📸 使用裝置分享 (可分享至 Google 相簿 / LINE / IG)</button>
+      <button onclick="handleSaveToLocal()" class="modal-btn-secondary">📁 直接下載到本機「下載」資料夾</button>
+    </div>
+    <span onclick="closeExportModal()" class="modal-close-link">關閉取消</span>
+  </div>
+</div>
+
+<!-- 現代化快速編輯文字彈窗 -->
+<div id="quickEditModal" class="modal-overlay">
+  <div class="modal-box" style="text-align: left; max-width: 380px; padding: 24px;">
+    <h3 class="modal-title" style="font-size: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">✏️ 快速編輯文字</h3>
+    
+    <label class="field-label" style="margin-top:0;">文字內容</label>
+    <textarea id="qeText" style="margin-bottom:10px; min-height:60px; line-height:1.4;"></textarea>
+    
+    <label class="field-label" style="margin-top:0;">字體</label>
+    <select id="qeFont" style="margin-bottom:10px;"></select>
+    
+    <label class="field-label" style="margin-top:0;" id="qeSizeLabel">大小 (60px)</label>
+    <input type="range" id="qeSize" min="10" max="500" style="margin-bottom:10px;">
+    
+    <!-- 快速編輯調色盤按鈕組 -->
+    <div class="row-2" style="margin-bottom:15px; margin-top:10px;">
+      <div onclick="openColorPaletteModal('quickedit', 'color')" style="cursor:pointer; background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 8px; border-radius: 8px; display: flex; align-items: center; gap: 8px; transition: border-color 0.2s;" onmouseenter="this.style.borderColor='var(--gold)'" onmouseleave="this.style.borderColor='var(--border)'">
+        <div id="qeColorIndicator" style="width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.25); background: #ffffff; flex-shrink:0;"></div>
+        <div style="overflow:hidden;">
+          <div style="font-size: 11px; font-weight: 600; color: var(--text)">🎨 文字顏色</div>
+          <div id="qeColorPreviewText" style="font-size: 9px; font-family: monospace; color: var(--text-muted)">#FFFFFF</div>
+        </div>
+      </div>
+      <div onclick="openColorPaletteModal('quickedit', 'strokeColor')" style="cursor:pointer; background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 8px; border-radius: 8px; display: flex; align-items: center; gap: 8px; transition: border-color 0.2s;" onmouseenter="this.style.borderColor='var(--gold)'" onmouseleave="this.style.borderColor='var(--border)'">
+        <div id="qeStrokeColorIndicator" style="width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.25); background: #000000; flex-shrink:0;"></div>
+        <div style="overflow:hidden;">
+          <div style="font-size: 11px; font-weight: 600; color: var(--text)">🖌️ 描邊顏色</div>
+          <div id="qeStrokeColorPreviewText" style="font-size: 9px; font-family: monospace; color: var(--text-muted)">#000000</div>
+        </div>
+      </div>
+    </div>
+    <input type="hidden" id="qeColor" value="#ffffff">
+    <input type="hidden" id="qeStrokeColor" value="#000000">
+    
+    <div class="toggle-row" style="margin-bottom:6px;">
+      <span class="toggle-label">顯示描邊</span>
+      <div class="toggle" id="qeStroke"></div>
+    </div>
+    
+    <div class="toggle-row" style="margin-bottom:12px;">
+      <span class="toggle-label">文字陰影</span>
+      <div class="toggle" id="qeShadow"></div>
+    </div>
+    
+    <div class="row-2" style="margin-top: 15px;">
+      <button class="modal-btn-secondary" onclick="closeQuickEdit()" style="padding:10px;">取消</button>
+      <button class="modal-btn-primary" onclick="applyQuickEdit()" style="padding:10px;">確定套用</button>
+    </div>
+  </div>
+</div>
+
+<!-- 🎨 頂級精美獨立調色盤彈出視窗 -->
+<div id="colorPaletteModal" class="modal-overlay">
+  <div class="modal-box" style="text-align: left; max-width: 400px; padding: 24px;">
+    <h3 class="modal-title" style="font-size: 18px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">🎨 精緻調色盤</h3>
+    <p id="colorModalTargetLabel" style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">正在設定：圖層顏色</p>
+    
+    <div style="display: flex; align-items: center; gap: 16px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 12px; border-radius: 10px; margin-bottom: 16px;">
+      <div id="colorModalPreviewCircle" style="width: 52px; height: 52px; border-radius: 50%; border: 2px solid #fff; box-shadow: var(--shadow); background: #ffffff;"></div>
+      <div style="flex: 1;">
+        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">HEX 色碼</div>
+        <input type="text" id="colorModalHexInput" style="font-size: 16px; font-weight: bold; font-family: monospace; padding: 4px 8px; border-radius: 6px; width: 110px; margin-top: 2px;" oninput="syncColorFromHexInput(this.value)">
+      </div>
+      <input type="color" id="colorModalPicker" style="width: 42px; height: 42px; border: none; padding: 0; cursor: pointer; border-radius: 50%; overflow: hidden; background: transparent;" oninput="syncColorFromPicker(this.value)">
+    </div>
+
+    <div style="margin-bottom: 16px;">
+      <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">推薦色系 (36色)</div>
+      <div class="compact-color-grid" id="presetColorsModalGrid"></div>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+        <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">自訂收藏色系</span>
+        <button onclick="saveCurrentToMyColors()" style="background: rgba(245,166,35,0.15); border: 1px solid var(--gold); border-radius: 6px; color: var(--gold); padding: 2px 8px; font-size: 11px; font-weight: bold; cursor: pointer;">+ 收藏當前色</button>
+      </div>
+      <div class="compact-color-grid" id="myColorsModalGrid" style="min-height: 24px;"></div>
+      <p style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">💡 提示：點擊色塊套用，在自訂色塊上按「滑鼠右鍵」即可刪除收藏。</p>
+    </div>
+
+    <div class="row-2">
+      <button class="modal-btn-secondary" onclick="closeColorPaletteModal(false)" style="padding:10px;">取消</button>
+      <button class="modal-btn-primary" onclick="closeColorPaletteModal(true)" style="padding:10px;">確定套用</button>
+    </div>
+  </div>
+</div>
+
+<!-- ⚙️ 更多設定彈出視窗 -->
+<div id="moreSettingsModal" class="modal-overlay">
+  <div class="modal-box" style="text-align: left; max-width: 400px; padding: 24px;">
+    <h3 class="modal-title" style="font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">⚙️ 更多功能設定</h3>
+    
+    <!-- 1. 主題設定 -->
+    <div style="margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+      <label class="field-label" style="margin-top:0; font-weight:600; color:var(--text); margin-bottom: 8px;">🎨 介面主題</label>
+      <div class="theme-toggle-group" id="themeToggleGroup" style="display: flex; gap: 6px; flex-wrap: wrap;">
+        <button class="theme-btn" data-theme="light" onclick="setTheme('light')">🌞 淺色</button>
+        <button class="theme-btn" data-theme="dark" onclick="setTheme('dark')">🌙 深色</button>
+        <button class="theme-btn" data-theme="system" onclick="setTheme('system')">💻 系統預設</button>
+      </div>
+    </div>
+
+    <!-- 2. 畫面縮放與編輯模式 -->
+    <div style="margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+      <label class="field-label" style="margin-top:0; font-weight:600; color:var(--text); margin-bottom: 8px;">🔍 畫布檢視與編輯模式</label>
+      <div class="theme-toggle-group" id="zoomControls" style="display: flex; gap: 6px; flex-wrap: wrap;">
+        <button class="theme-btn" onclick="setZoomMode('view')">🔍 檢視</button>
+        <button class="theme-btn" onclick="setZoomMode('edit')">✏️ 編輯</button>
+        <button class="theme-btn" onclick="changeZoom(1.1)">＋</button>
+        <button class="theme-btn" onclick="changeZoom(0.9)">－</button>
+        <button class="theme-btn" onclick="resetZoom()">重設</button>
+      </div>
+    </div>
+
+    <!-- 3. 安全防護設定 -->
+    <div style="margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+      <label class="field-label" style="margin-top:0; font-weight:600; color:var(--text); margin-bottom: 6px;">🛡️ 安全提示</label>
+      <div class="switch-row" style="margin: 0; padding: 4px 0;">
+        <span class="toggle-label" style="font-size:12px; color:var(--text)">未匯出就關閉分頁時提醒</span>
+        <div class="toggle on" id="toggleCloseWarn" onclick="toggleCloseWarningFeature()"></div>
+      </div>
+    </div>
+
+    <!-- 4. 關於本程式連結 -->
+    <div style="margin-bottom: 12px;">
+      <button onclick="openAboutPage(); closeMoreSettings();" style="width: 100%; text-align: center; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s;">ℹ️ 關於本程式與版權資訊</button>
+    </div>
+
+    <!-- 5. 更新日誌連結 -->
+    <div style="margin-bottom: 12px;">
+      <button onclick="openChangelogManual()" style="width: 100%; text-align: center; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s;">📋 更新日誌</button>
+    </div>
+
+    <!-- 5. 回復初始設定 -->
+    <div style="margin-bottom: 24px;">
+      <button onclick="resetAllToDefault(); closeMoreSettings();" style="width: 100%; text-align: center; background: rgba(255, 77, 79, 0.1); border: 1px solid rgba(255, 77, 79, 0.3); border-radius: 8px; color: #ff4d4f; padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s;">🔄 回復初始設定</button>
+    </div>
+
+    <div class="row-2">
+      <button class="modal-btn-primary" onclick="closeMoreSettings()" style="padding:12px; width: 100%; grid-column: span 2;">確定並返回</button>
+    </div>
+  </div>
+</div>
+
+<!-- 關於本程式 額外彈出頁面 -->
+<div id="aboutPage" class="modal-overlay">
+  <div class="modal-box" style="text-align: left; max-width: 480px; font-size: 12px;">
+    <h3 class="modal-title" style="text-align: center; font-size: 18px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
+    <p id="appVersion" data-version="v1.17" style="text-align: center; font-size: 11px; color: var(--gold); margin-bottom: 16px; font-weight: bold;">版本 v1.17 </p>
+    
+    <div style="font-size: 12px; color: var(--text); line-height: 1.5; display: flex; flex-direction: column; gap: 10px;">
+      <p>這款工具可直接在網頁上使用，也能安裝成 PWA 離線使用。即可攜帶、免安裝的問候圖與祝福卡片設計工具，陪伴您傳遞每日的關懷與溫暖。</p>
+      
+      <div style="background: var(--surface2); padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-top: 4px;">
+        <p style="font-weight: 700; color: var(--gold); margin-bottom: 4px; font-size: 12px;">🎁 開源資源與授權致謝 (Open Source)</p>
+        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">本工具之功能與字型庫採用了多項由優秀開源社群維護的資源：</p>
+        <ul style="padding-left: 14px; font-size: 11px; color: var(--text); display: flex; flex-direction: column; gap: 3px;">
+          <li><strong>開放字型庫：</strong>感謝 Google Fonts 託管與分發之思源黑體/明體、粉圓體、芫荽體、霞鶩文楷，以及多款日系手寫字體與藝術英文字型。這些字體均遵循 <strong>SIL Open Font License 1.1</strong> 或 <strong>Apache License 2.0</strong> 授權釋出。</li>
+          <li><strong>Web API 與本地儲存：</strong>字型本機永久儲存技術由 W3C IndexedDB 標準支援；離線與快取技術則採用 Service Worker 與 Web App Manifest 實現。</li>
+        </ul>
+      </div>
+
+      <div style="background: var(--surface2); padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
+        <p style="font-weight: 700; color: var(--gold); margin-bottom: 4px; font-size: 12px;">🔒 系統內建與專有字型聲明 (Proprietary)</p>
+        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">為確保平台無縫運作與字體未載入時的退路，本工具亦宣告呼叫部分系統內建字型：</p>
+        <ul style="padding-left: 14px; font-size: 11px; color: var(--text); display: flex; flex-direction: column; gap: 3px;">
+          <li><strong>微軟正黑體 (Microsoft JhengHei)：</strong>版權屬於 <strong>Microsoft Corporation</strong> 所有。</li>
+          <li><strong>蘋方體-繁 (PingFang TC)：</strong>版權屬於 <strong>Apple Inc.</strong> 所有。</li>
+          <li><strong>標楷體、新細明體：</strong>版權屬於其對應之原始開發單位所有。</li>
+        </ul>
+        <p style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">* 本程式僅進行 CSS 渲染宣告，不包含任何上述閉源字型檔案的複製、散佈或商業再利用行為。</p>
+      </div>
+      
+      <p style="font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 10px; text-align: center;">傳遞每日第一聲溫暖</p>
+    </div>
+    
+    <div style="text-align: center; margin-top: 16px;">
+      <button onclick="closeAboutPage()" class="modal-btn-primary" style="padding: 8px 20px; min-width: 100px; font-size: 13px;">關閉頁面</button>
+    </div>
+  </div>
+</div>
+
+<!-- 📢 版本更新內容通知彈窗 -->
+<div id="changelogModal" class="modal-overlay">
+  <div class="modal-box changelog-modal-box" style="max-width: 520px;">
+    <div class="changelog-header">
+      <h3 class="modal-title">📢 版本更新內容</h3>
+      <p class="modal-subtitle">偵測到新版本，請查看最新更新內容</p>
+    </div>
+    <div class="changelog-content" id="changelogContent">
+      <p>載入中...</p>
+    </div>
+    <div class="changelog-footer">
+      <button onclick="closeChangelogModal()" class="modal-btn-primary" style="width:100%; padding:14px; font-size:15px;">確定</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─────────────── State ─────────────── */
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+// 36種精選早安與祝福常用色盤
+const PRESET_COLORS = [
+  '#ffffff', '#f5f5f5', '#d3d3d3', '#8c8c8c', '#333333', '#000000',
+  '#ff4d4f', '#cf1322', '#f5222d', '#ff7a45', '#ffa940', '#ffc53d',
+  '#ffec3d', '#fffb8f', '#bae637', '#73d13d', '#52c41a', '#389e0d',
+  '#13c2c2', '#096dd9', '#1890ff', '#69c0ff', '#adc6ff', '#2f54eb',
+  '#722ed1', '#b37feb', '#f759ab', '#ff9c6e', '#ffb7c5', '#fff0f6',
+  '#f5e3b3', '#d4b106', '#874d00', '#4d2d00', '#faf0e6', '#fdf5e6'
+];
+
+let bgImage = null;
+let layers = [];
+let hasUnsavedChanges = false;
+let layerCounter = 0;
+let activeLayerId = null;
+let draggingLayer = null;
+
+// 控制變數
+let isAddingTextActive = false;    
+let enableEnglishFonts = false;    
+let enableQuickEdit = false; // 預設關閉快速編輯    
+let enableProportionalFontSize = false; // 實驗性功能：自適應比例文字大小    
+let enableDefaultNewText = true; // 新增文字是否帶入預設文字（預設開啟）
+let enableInlineTextEdit = false; // 實驗性功能：在圖片上直接編輯文字
+let enableCloseTabWarning = true; // 未匯出就關閉時提醒
+let enablePinchZoom = false; // 實驗性功能：雙指捏合手勢縮放文字
+let isPinchZooming = false;
+let pinchStartDist = 0;
+let pinchStartZoom = 1;
+let currentPinchZoom = 1;
+let defaultNewTextValue = '🌞 早安！'; // 預設新增文字內容    
+let currentZoom = 1;
+let zoomMode = 'view';
+let inlineEditLayerId = null;
+let inlineEditOffset = {x:0, y:0};
+let pendingInlineEdit = null;
+let pendingInlineEditStart = null;
+
+// 歷史還原狀態機制 (Undo / Redo Stack)
+let undoStack = [];
+let redoStack = [];
+const maxHistory = 30;
+
+// 拖曳排序暫存變數
+let draggedLayerId = null;
+
+// 預設樣式基本模板
+const defaultStyles = {
+  font: 'Noto Sans TC',
+  size: 60,
+  color: '#ffffff',
+  strokeColor: '#000000',
+  strokeWidth: 6,
+  stroke: false,
+  shadow: false,
+  align: 'center' 
+};
+
+// 記憶樣式初始化
+let lastUsedStyles = { ...defaultStyles };
+
+// 彈窗編輯器狀態變數
+let quickEditLayerId = null;
+
+// 雙點擊時間記錄
+let lastTapTime = 0;
+
+// 選取框線粗細 
+let selectionBoxWidth = 3.5;
+
+// 字體就緒旗標
+let fontsReady = false;
+
+// 裁剪備份與位置拖曳控制機制
+let isCropping = false;
+let isPreviewingCrop = false;
+let cropStart = null;
+let cropRect = null;
+let cropDragging = null; 
+let cropDragStartRect = null;
+
+let bgImageBackup = null;
+let canvasWidthBackup = 1200;
+let canvasHeightBackup = 675;
+let layersBackup = [];
+
+let uploadedFileName = 'morning'; 
+let savedTemplates = [];
+
+// 所有 Google Fonts 
+const CHINESE_FONTS = [
+  { value: 'Noto Sans TC', label: 'Noto Sans (思源繁中黑體)' },
+  { value: 'Noto Serif TC', label: 'Noto Serif (思源繁中明體)' },
+  { value: 'Noto Sans HK', label: 'Noto Sans HK (港澳思源黑體)' },
+  { value: 'Noto Serif HK', label: 'Noto Serif HK (港澳思源宋體)' },
+  { value: 'Huninn', label: 'Huninn (粉圓體)' },
+  { value: 'Bpmf Huninn', label: '注音粉圓體' },
+  { value: 'Bpmf Iansui', label: '注音芫荽體' },
+  { value: 'LXGW WenKai TC', label: '霞鶩文楷 TC (人氣楷書)' },
+  { value: 'LXGW WenKai Mono TC', label: '霞鶩文楷等寬 TC' },
+  { value: 'Chiron Hei HK', label: '昭源黑體 HK (官方標準)' },
+  { value: 'Chiron Sung HK', label: '昭源宋體 HK (傳統鉛字)' },
+  { value: 'Chiron GoRound TC', label: '昭源圓體 TC (溫潤古典圓)' },
+  { value: 'WDXL Lubrifont TC', label: '學體 TC (緊湊藝術設計)' },
+  { value: 'Iansui', label: '芫荽體 (硬筆圓潤楷書)' },
+  { value: 'Cactus Classical Serif', label: '仙人掌古典宋體 (清秀)' },
+  { value: 'Chocolate Classical Sans', label: '巧克力古典黑體 (厚實)' },
+  { value: 'UoqMunThenKhung', label: '開星繁中改版 (文藝風)' },
+  { value: 'ChenYuluoyan', label: '辰宇落雁體 (溫慢手寫)' }, 
+  { value: 'Zhi Mang Xing', label: '之芒行書 (藝術書法)' }, 
+  { value: 'Liu Jian Mao Cao', label: '劉建毛草書 (狂草字風)' }, 
+  { value: 'Ma Shan Zheng', label: '馬善政楷書 (遒勁毛筆)' }, 
+  { value: 'ZCOOL Xingkai', label: '站酷行楷 (行雲流水)' }, 
+  { value: 'ZCOOL XiaoWei', label: '站酷小薇體 (細緻秀雅)' }, 
+  { value: 'ZCOOL KuaiLe', label: '站酷快樂體 (美術趣味)' },
+  { value: 'ZCOOL QingKe HuangYou', label: '站酷黃油體 (復古老標題)' },
+  { value: 'Long Cang', label: '龍藏草書 (行草書法)' },
+  { value: 'Zen Maru Gothic', label: 'Zen Maru (日系圓體)' },
+  { value: 'Zen Old Mincho', label: 'Zen Old (古禪明朝)' },
+  { value: 'Klee One', label: 'Klee (日系硬筆書體)' },
+  { value: 'Dela Gothic One', label: 'Dela (特粗黑體)' },
+  { value: 'DotGothic16', label: '點陣復古像素體' },
+  { value: 'Hachi Maru Pop', label: '八分圓少女手寫' },
+  { value: 'Hina Mincho', label: '雛明朝 (古典細緻明體)' },
+  { value: 'Kaisei Decol', label: '開星 Decol (清新藝術體)' },
+  { value: 'Kaisei Tokumin', label: '開星 Tokumin (端莊名片體)' },
+  { value: 'Kiwi Maru', label: '奇異果圓體 (萌趣風)' },
+  { value: 'Kosugi', label: '小杉黑體 (極簡幾何體)' },
+  { value: 'Kosugi Maru', label: '小杉圓體 (通用大眾圓)' },
+  { value: 'M PLUS 1p', label: 'M PLUS 簡約多重重黑' },
+  { value: 'M PLUS Rounded 1c', label: 'M PLUS 可愛幼圓' },
+  { value: 'Mochiy Pop One', label: '麻糬手寫胖體' },
+  { value: 'Murecho', label: 'Murecho 柔細黑體' },
+  { value: 'Potta One', label: '波塔粗墨體 (漫畫風格)' },
+  { value: 'Rampart One', label: '石壁立體陰影' },
+  { value: 'Reggae One', label: '雷鬼搖滾硬筆漆書' },
+  { value: 'RocknRoll One', label: '動漫搖滾速度體' },
+  { value: 'Sawarabi Gothic', label: '蕨黑體' },
+  { value: 'Sawarabi Mincho', label: '蕨明體' },
+  { value: 'Shippori Mincho', label: '潮汐優雅明朝' },
+  { value: 'Stick', label: '枯枝幾何拼接' },
+  { value: 'Train One', label: '火車雙軌雙線體' },
+  { value: 'Yomogi', label: '蓬草日常手寫' },
+  { value: 'Yusei Magic', label: '麥克筆手繪體' },
+  { value: 'Zen Kaku Gothic New', label: '禪角現代新黑體' },
+  { value: 'BIZ UDGothic', label: 'BIZ 經典設計黑體' },
+  { value: 'BIZ UDPMincho', label: 'BIZ 經典明朝體' },
+  { value: 'Darumadrop One', label: '達摩落體 (手稿美術)' },
+  { value: 'Microsoft JhengHei', label: '微軟正黑體 (本機系統)' },
+  { value: 'DFKai-SB', label: '標楷體 (本機系統)' },
+  { value: 'PingFang TC', label: '蘋方-繁 (本機系統)' },
+  { value: 'PMingLiU', label: '新細明體 (本機系統)' }
+];
+
+const ENGLISH_FONTS = [
+  { value: 'Chango', label: 'Chango 胖胖積木體' },
+  { value: 'Silkscreen', label: '像素方塊字型' },
+  { value: 'Amatic SC', label: '手寫高瘦英文' },
+  { value: 'Caveat', label: '藝術原子筆手寫' },
+  { value: 'Cinzel', label: '典雅羅馬襯線' },
+  { value: 'Dancing Script', label: '活潑鋼筆英草' },
+  { value: 'Great Vibes', label: '秘書優雅英文花體' },
+  { value: 'Lobster', label: '經典粗體連筆英草' },
+  { value: 'Montserrat', label: '現代幾何無襯線' },
+  { value: 'Oswald', label: '精緻窄版英文字' },
+  { value: 'Pacifico', label: '加州休閒復古風' },
+  { value: 'Playfair Display', label: '高端雜誌襯線體' },
+  { value: 'Playpen Sans', label: '英文稚嫩手寫體' },
+  { value: 'Righteous', label: '裝飾未來科技感' },
+  { value: 'Sacramento', label: '精細簽名鋼筆字' },
+  { value: 'Shadows Into Light', label: '美式簡約英寫' },
+  { value: 'Special Elite', label: '復古打字機斑駁體' },
+  { value: 'Lilita One', label: '軟萌胖胖英文裝飾' },
+  { value: 'Bangers', label: '美式熱血漫畫體' },
+  { value: 'Comfortaa', label: '英式極簡正圓無襯' },
+  { value: 'Architects Daughter', label: '建築師草圖手稿' },
+  { value: 'Creepster', label: '搞怪恐怖萬聖體' },
+  { value: 'Satisfy', label: '流暢綢緞英文字' },
+  { value: 'Permanent Marker', label: '英式油性麥克筆' },
+  { value: 'Kaushan Script', label: '藝術刷毛草書' },
+  { value: 'Gloria Hallelujah', label: '校園粉筆塗鴉英文' },
+  { value: 'Abril Fatface', label: '時尚海報英文襯線' },
+  { value: 'Patua One', label: '工整圓潤英文粗體' },
+  { value: 'Courgette', label: '優美水彩畫英文寫' },
+  { value: 'Acme', label: '生動英文硬筆體' },
+  { value: 'Cookie', label: '甜美英文復古海報' },
+  { value: 'Chewy', label: 'Q彈圓飽果凍英文' }
+];
+
+let customFonts = [];
+
+/* ─────────────── IndexedDB ─────────────── */
+const dbName = "FontDB";
+const storeName = "fonts";
+let db;
+
+function initDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(dbName, 1);
+    request.onupgradeneeded = e => {
+      const db = e.target.result;
+      db.createObjectStore(storeName, { keyPath: "name" });
+    };
+    request.onsuccess = e => {
+      db = e.target.result;
+      resolve(db);
+    };
+    request.onerror = e => reject(e);
+  });
+}
+
+function saveFontToDB(name, data, type) {
+  return new Promise((resolve) => {
+    const transaction = db.transaction(storeName, "readwrite");
+    const store = transaction.objectStore(storeName);
+    const request = store.put({ name, data, type });
+    request.onsuccess = () => resolve();
+  });
+}
+
+function deleteFontFromDB(name) {
+  return new Promise((resolve) => {
+    const transaction = db.transaction(storeName, "readwrite");
+    const store = transaction.objectStore(storeName);
+    const request = store.delete(name);
+    request.onsuccess = () => resolve();
+  });
+}
+
+function getAllFontsFromDB() {
+  return new Promise((resolve) => {
+    const transaction = db.transaction(storeName, "readonly");
+    const store = transaction.objectStore(storeName);
+    const request = store.getAll();
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => resolve([]);
+  });
+}
+
+/* ─────────────── About 控制 ─────────────── */
+function openAboutPage() {
+  document.getElementById('aboutPage').classList.add('active');
+}
+function closeAboutPage() {
+  document.getElementById('aboutPage').classList.remove('active');
+}
+
+/* ─────────────── Changelog 更新通知控制 ─────────────── */
+function openChangelogModal() {
+  document.getElementById('changelogModal').classList.add('active');
+}
+function closeChangelogModal() {
+  const modal = document.getElementById('changelogModal');
+  if (modal) modal.classList.remove('active');
+  
+  const versionEl = document.getElementById('appVersion');
+  if (versionEl) {
+    const currentVersion = versionEl.getAttribute('data-version');
+    if (currentVersion) {
+      localStorage.setItem('gm_last_seen_version', currentVersion);
+    }
+  }
+}
+
+function openChangelogManual() {
+  const modal = document.getElementById('changelogModal');
+  const contentEl = document.getElementById('changelogContent');
+  if (modal && contentEl) {
+    contentEl.innerHTML = '<p>載入中...</p>';
+    if (typeof marked !== 'undefined' && marked.parse) {
+      fetch('./changelog.md')
+        .then(res => res.text())
+        .then(text => { contentEl.innerHTML = marked.parse(text); })
+        .catch(() => { contentEl.innerHTML = '<p>暫無更新內容</p>'; });
+    } else {
+      contentEl.innerHTML = '<p>暫無更新內容</p>';
+    }
+    modal.classList.add('active');
+  }
+}
+
+function checkVersionUpdate() {
+  const versionEl = document.getElementById('appVersion');
+  if (!versionEl) return;
+  
+  const currentVersion = versionEl.getAttribute('data-version');
+  const lastSeenVersion = localStorage.getItem('gm_last_seen_version');
+  
+  if (!lastSeenVersion || lastSeenVersion !== currentVersion) {
+    const modal = document.getElementById('changelogModal');
+    const contentEl = document.getElementById('changelogContent');
+    if (modal && contentEl) {
+      if (typeof marked !== 'undefined' && marked.parse) {
+        fetch('./changelog.md')
+          .then(res => res.text())
+          .then(text => {
+            contentEl.innerHTML = marked.parse(text);
+            modal.classList.add('active');
+          })
+          .catch(() => {
+            contentEl.innerHTML = '<p>暫無更新內容</p>';
+            modal.classList.add('active');
+          });
+      } else {
+        contentEl.innerHTML = '<p>暫無更新內容</p>';
+        modal.classList.add('active');
+      }
+    }
+  }
+}
+
+/* ─────────────── 更多設定視窗控制 ─────────────── */
+function openMoreSettings() {
+  document.getElementById('moreSettingsModal').classList.add('active');
+}
+function closeMoreSettings() {
+  document.getElementById('moreSettingsModal').classList.remove('active');
+}
+
+/* ─────────────── 現代化 Toast 提示 ─────────────── */
+let toastTimer = null;
+function showToast(msg) {
+  const toast = document.getElementById('toastNotification');
+  if (!toast) return;
+  toast.textContent = msg;
+  toast.classList.add('show');
+  
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toast.classList.remove('show');
+  }, 3500);
+}
+
+/* ─────────────── 狀態撤銷與重做 (Undo / Redo) 核心邏輯 ─────────────── */
+function pushToUndo() {
+  hasUnsavedChanges = true;
+  const state = {
+    layers: JSON.parse(JSON.stringify(layers)),
+    canvasWidth: canvas.width,
+    canvasHeight: canvas.height,
+    activeLayerId: activeLayerId,
+    bgImageSrc: bgImage ? bgImage.src : null
+  };
+  
+  if (undoStack.length > 0) {
+    const last = undoStack[undoStack.length - 1];
+    if (JSON.stringify(last.layers) === JSON.stringify(state.layers) &&
+        last.canvasWidth === state.canvasWidth &&
+        last.canvasHeight === state.canvasHeight &&
+        last.bgImageSrc === state.bgImageSrc) {
+      return;
+    }
+  }
+
+  undoStack.push(state);
+  if (undoStack.length > maxHistory) {
+    undoStack.shift();
+  }
+  redoStack = []; 
+  updateHistoryButtons();
+}
+
+function undo() {
+  if (undoStack.length === 0) return;
+  
+  const currentState = {
+    layers: JSON.parse(JSON.stringify(layers)),
+    canvasWidth: canvas.width,
+    canvasHeight: canvas.height,
+    activeLayerId: activeLayerId,
+    bgImageSrc: bgImage ? bgImage.src : null
+  };
+  redoStack.push(currentState);
+  
+  const previousState = undoStack.pop();
+  restoreState(previousState);
+}
+
+function redo() {
+  if (redoStack.length === 0) return;
+  
+  const currentState = {
+    layers: JSON.parse(JSON.stringify(layers)),
+    canvasWidth: canvas.width,
+    canvasHeight: canvas.height,
+    activeLayerId: activeLayerId,
+    bgImageSrc: bgImage ? bgImage.src : null
+  };
+  undoStack.push(currentState);
+  
+  const nextState = redoStack.pop();
+  restoreState(nextState);
+}
+
+function restoreState(state) {
+  canvas.width = state.canvasWidth;
+  canvas.height = state.canvasHeight;
+  layers = state.layers;
+  activeLayerId = state.activeLayerId;
+  
+  const ws = document.getElementById('workspace');
+  const hint = document.getElementById('canvasHint');
+
+  if (state.bgImageSrc) {
+    const img = new Image();
+    img.onload = () => {
+      bgImage = img;
+      if (ws) {
+        ws.classList.remove('not-started');
+        ws.classList.add('started');
+      }
+      if (hint) {
+        hint.style.setProperty('display', 'flex', 'important');
+      }
+      renderLayersList();
+      drawCanvas();
+      saveSettings();
+      updateHistoryButtons();
+      updateExportButtonsState();
+    };
+    img.src = state.bgImageSrc;
+  } else {
+    bgImage = null;
+    if (ws) {
+      ws.classList.remove('started');
+      ws.classList.add('not-started');
+    }
+    if (hint) {
+      hint.style.setProperty('display', 'none', 'important');
+    }
+    renderLayersList();
+    drawCanvas();
+    saveSettings();
+    updateHistoryButtons();
+    updateExportButtonsState();
+  }
+}
+
+function updateHistoryButtons() {
+  const undoBtn = document.getElementById('undoBtn');
+  const redoBtn = document.getElementById('redoBtn');
+  
+  if (undoBtn) {
+    if (undoStack.length > 0) {
+      undoBtn.disabled = false;
+      undoBtn.style.opacity = '1';
+      undoBtn.style.cursor = 'pointer';
+    } else {
+      undoBtn.disabled = true;
+      undoBtn.style.opacity = '0.4';
+      undoBtn.style.cursor = 'not-allowed';
+    }
+  }
+  
+  if (redoBtn) {
+    if (redoStack.length > 0) {
+      redoBtn.disabled = false;
+      redoBtn.style.opacity = '1';
+      redoBtn.style.cursor = 'pointer';
+    } else {
+      redoBtn.disabled = true;
+      redoBtn.style.opacity = '0.4';
+      redoBtn.style.cursor = 'not-allowed';
+    }
+  }
+}
+
+/* ─────────────── 拖曳圖層排序 (Drag & Drop) 及自動滾動邏輯 ─────────────── */
+let autoScrollInterval = null;
+
+function handlePanelDragOver(e) {
+  e.preventDefault();
+  if (draggedLayerId === null) return;
+
+  const panel = document.querySelector('.side-panel');
+  if (!panel) return;
+
+  const rect = panel.getBoundingClientRect();
+  const relativeY = e.clientY - rect.top;
+  const threshold = 60; 
+  const speed = 12;
+
+  if (autoScrollInterval) {
+    clearInterval(autoScrollInterval);
+    autoScrollInterval = null;
+  }
+
+  if (relativeY > rect.height - threshold) {
+    autoScrollInterval = setInterval(() => {
+      panel.scrollTop += speed;
+    }, 20);
+  } else if (relativeY < threshold) {
+    autoScrollInterval = setInterval(() => {
+      panel.scrollTop -= speed;
+    }, 20);
+  }
+}
+
+function clearAutoScroll() {
+  if (autoScrollInterval) {
+    clearInterval(autoScrollInterval);
+    autoScrollInterval = null;
+  }
+}
+
+function handleLayerDragStart(e, id) {
+  const targetTag = e.target.tagName.toLowerCase();
+  if (e.target.closest('.layer-editor') || ['input', 'textarea', 'select', 'button'].includes(targetTag)) {
+    e.preventDefault();
+    return;
+  }
+  draggedLayerId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', id);
+  e.currentTarget.style.opacity = '0.4';
+}
+
+function handleLayerDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+}
+
+function handleLayerDrop(e, targetId) {
+  e.preventDefault();
+  clearAutoScroll();
+  if (draggedLayerId === null || draggedLayerId === targetId) return;
+  
+  const dragIdx = layers.findIndex(l => l.id === draggedLayerId);
+  const targetIdx = layers.findIndex(l => l.id === targetId);
+  
+  if (dragIdx !== -1 && targetIdx !== -1) {
+    pushToUndo(); 
+    
+    const oldName = `圖層 ${dragIdx + 1}`;
+    const newName = `圖層 ${targetIdx + 1}`;
+    
+    const [item] = layers.splice(dragIdx, 1);
+    layers.splice(targetIdx, 0, item);
+    
+    renderLayersList();
+    drawCanvas();
+    saveSettings();
+    updateHistoryButtons();
+    
+    showToast(`已移動拖曳！將原 [${oldName}] 移動，其新圖層名稱為 [${newName}]`);
+  }
+}
+
+function handleLayerDragEnd(e) {
+  e.currentTarget.style.opacity = '1';
+  draggedLayerId = null;
+  clearAutoScroll();
+}
+
+/* ─────────────── 圖層上下與最頂/最底移動按鈕邏輯 ─────────────── */
+function moveLayerToTop(id) {
+  const idx = layers.findIndex(l => l.id === id);
+  if (idx !== -1 && idx < layers.length - 1) {
+    pushToUndo();
+    const oldName = `圖層 ${idx + 1}`;
+    const newName = `圖層 ${layers.length}`;
+    
+    const [item] = layers.splice(idx, 1);
+    layers.push(item);
+    
+    renderLayersList();
+    drawCanvas();
+    saveSettings();
+    updateHistoryButtons();
+    
+    showToast(`已將 [${oldName}] 移至最頂，其新圖層名稱為 [${newName}]`);
+  }
+}
+
+function moveLayerUp(id) {
+  const idx = layers.findIndex(l => l.id === id);
+  if (idx !== -1 && idx < layers.length - 1) {
+    pushToUndo();
+    const oldName = `圖層 ${idx + 1}`;
+    const newName = `圖層 ${idx + 2}`;
+    
+    const temp = layers[idx];
+    layers[idx] = layers[idx + 1];
+    layers[idx + 1] = temp;
+    
+    renderLayersList();
+    drawCanvas();
+    saveSettings();
+    updateHistoryButtons();
+    
+    showToast(`已將 [${oldName}] 往上移動，其新圖層名稱為 [${newName}]`);
+  }
+}
+
+function moveLayerDown(id) {
+  const idx = layers.findIndex(l => l.id === id);
+  if (idx !== -1 && idx > 0) {
+    pushToUndo();
+    const oldName = `圖層 ${idx + 1}`;
+    const newName = `圖層 ${idx}`;
+    
+    const temp = layers[idx];
+    layers[idx] = layers[idx - 1];
+    layers[idx - 1] = temp;
+    
+    renderLayersList();
+    drawCanvas();
+    saveSettings();
+    updateHistoryButtons();
+    
+    showToast(`已將 [${oldName}] 往下移動，其新圖層名稱為 [${newName}]`);
+  }
+}
+
+function moveLayerBySteps(id, direction) {
+  const stepInput = document.getElementById(`layer-steps-${id}`);
+  const steps = stepInput ? parseInt(stepInput.value, 10) || 1 : 1;
+  const delta = direction === 'up' ? steps : -steps;
+  
+  const idx = layers.findIndex(l => l.id === id);
+  if (idx === -1) return;
+  
+  let targetIdx = idx + delta;
+  if (targetIdx < 0) targetIdx = 0;
+  if (targetIdx >= layers.length) targetIdx = layers.length - 1;
+  if (idx === targetIdx) return;
+
+  pushToUndo();
+  const oldName = `圖層 ${idx + 1}`;
+  const newName = `圖層 ${targetIdx + 1}`;
+  
+  const [item] = layers.splice(idx, 1);
+  layers.splice(targetIdx, 0, item);
+  
+  renderLayersList();
+  drawCanvas();
+  saveSettings();
+  updateHistoryButtons();
+  
+  showToast(`已將 [${oldName}] 移動 ${Math.abs(delta)} 層，新位置為 [${newName}]`);
+}
+
+/* ─────────────── Init ─────────────── */
+window.onload = async () => {
+  // 註冊 PWA Service Worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('Service Worker 註冊成功:', reg.scope))
+      .catch(err => console.error('Service Worker 註冊失敗:', err));
+  }
+
+  if (document.fonts) {
+    document.fonts.addEventListener('loadingdone', () => {
+      drawCanvas();
+    });
+  }
+
+  const savedBoxWidth = localStorage.getItem('gm_selection_box_width');
+  if (savedBoxWidth) {
+    selectionBoxWidth = parseFloat(savedBoxWidth);
+    const slider = document.getElementById('selectionBoxWidthSlider');
+    if (slider) slider.value = selectionBoxWidth;
+    const label = document.getElementById('selBoxWidthLabel');
+    if (label) label.textContent = `框線粗細（${selectionBoxWidth}px）`;
+    const preview = document.getElementById('selBoxPreview');
+    if (preview) preview.style.borderWidth = `${selectionBoxWidth}px`;
+  }
+
+  const savedStyles = localStorage.getItem('gm_last_used_styles');
+  if (savedStyles) {
+    try {
+      const parsed = JSON.parse(savedStyles);
+      if (parsed && typeof parsed === 'object') {
+        lastUsedStyles = { ...defaultStyles, ...parsed };
+      }
+    } catch (e) {
+      console.error("載入記憶樣式失敗", e);
+    }
+  }
+  
+  const savedEnglishToggle = localStorage.getItem('gm_enable_english_fonts');
+  const toggleEl = document.getElementById('toggleEnableEnglishFonts');
+  if (savedEnglishToggle === 'true') {
+    enableEnglishFonts = true;
+    if (toggleEl) toggleEl.classList.add('on');
+  } else {
+    enableEnglishFonts = false;
+    if (toggleEl) toggleEl.classList.remove('on');
+  }
+
+  const savedQuickEdit = localStorage.getItem('gm_enable_quick_edit');
+  const qeToggleEl = document.getElementById('toggleQuickEdit');
+  if (savedQuickEdit === 'true') {
+    enableQuickEdit = true;
+    if (qeToggleEl) qeToggleEl.classList.add('on');
+  } else {
+    enableQuickEdit = false;
+    if (qeToggleEl) qeToggleEl.classList.remove('on');
+  }
+
+  const savedPropFont = localStorage.getItem('gm_enable_quick_edit_responsive');
+  const qePropToggleEl = document.getElementById('toggleProportionalFont');
+  if (savedPropFont === 'true') {
+    enableProportionalFontSize = true;
+    if (qePropToggleEl) qePropToggleEl.classList.add('on');
+  } else {
+    enableProportionalFontSize = false;
+    if (qePropToggleEl) qePropToggleEl.classList.remove('on');
+  }
+
+  const savedInlineEdit = localStorage.getItem('gm_enable_inline_text_edit');
+  const inlineEditToggleEl = document.getElementById('toggleInlineTextEdit');
+  if (savedInlineEdit === 'true') {
+    enableInlineTextEdit = true;
+    if (inlineEditToggleEl) inlineEditToggleEl.classList.add('on');
+  } else {
+    enableInlineTextEdit = false;
+    if (inlineEditToggleEl) inlineEditToggleEl.classList.remove('on');
+  }
+
+  const savedCloseWarn = localStorage.getItem('gm_enable_close_tab_warning');
+  const closeWarnToggleEl = document.getElementById('toggleCloseWarn');
+  if (savedCloseWarn === 'false') {
+    enableCloseTabWarning = false;
+    if (closeWarnToggleEl) closeWarnToggleEl.classList.remove('on');
+  } else {
+    enableCloseTabWarning = true;
+    if (closeWarnToggleEl) closeWarnToggleEl.classList.add('on');
+  }
+
+  const savedPinchZoom = localStorage.getItem('gm_enable_pinch_zoom');
+  const pinchZoomToggleEl = document.getElementById('togglePinchZoom');
+  if (savedPinchZoom === 'true') {
+    enablePinchZoom = true;
+    if (pinchZoomToggleEl) pinchZoomToggleEl.classList.add('on');
+  } else {
+    enablePinchZoom = false;
+    if (pinchZoomToggleEl) pinchZoomToggleEl.classList.remove('on');
+  }
+
+  // 還原自訂預設文字設定
+  const savedDefaultTextToggle = localStorage.getItem('gm_enable_default_new_text');
+  const defaultTextToggleEl = document.getElementById('toggleDefaultNewText');
+  const defaultTextConfigEl = document.getElementById('defaultNewTextConfig');
+  if (savedDefaultTextToggle === 'false') {
+    enableDefaultNewText = false;
+    if (defaultTextToggleEl) defaultTextToggleEl.classList.remove('on');
+    if (defaultTextConfigEl) defaultTextConfigEl.style.display = 'none';
+  } else {
+    enableDefaultNewText = true;
+    if (defaultTextToggleEl) defaultTextToggleEl.classList.add('on');
+    if (defaultTextConfigEl) defaultTextConfigEl.style.display = 'block';
+  }
+
+   const savedDefaultTextVal = localStorage.getItem('gm_default_new_text_value');
+   const defaultTextInputEl = document.getElementById('defaultNewTextInput');
+   if (savedDefaultTextVal !== null) {
+     defaultNewTextValue = savedDefaultTextVal;
+     if (defaultTextInputEl) defaultTextInputEl.value = defaultNewTextValue;
+   }
+
+   initTheme();
+   
+   layers = [];
+  layerCounter = 0;
+  activeLayerId = null;
+  
+  const qeStroke = document.getElementById('qeStroke');
+  if (qeStroke) qeStroke.onclick = function() { this.classList.toggle('on'); };
+  
+  const qeShadow = document.getElementById('qeShadow');
+  if (qeShadow) qeShadow.onclick = function() { this.classList.toggle('on'); };
+  
+  const qeSize = document.getElementById('qeSize');
+  if (qeSize) {
+    qeSize.oninput = function() {
+      const label = document.getElementById('qeSizeLabel');
+      if (label) label.textContent = `大小 (${this.value}px)`;
+    };
+  }
+  
+  await loadCustomFonts();
+  loadTemplates();
+
+  /* 🚫 Vercel 網頁版佈署：將 Capacitor 接收機制調用註解掉
+  checkSharedIntent();
+  */
+
+  // 偵測並處理來自 PWA 分享管道的圖片
+  checkPwaSharedImage();
+
+  // 初始化上下拖曳比例分割條功能
+  initDragSplitter();
+  initPinchZoom();
+  updateExportButtonsState();
+  checkVersionUpdate();
+};
+
+/**
+ * 檢查是否有經由 PWA 管道分享進入的圖片快取
+ */
+async function checkPwaSharedImage() {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('hasImage') === 'true') {
+    try {
+      const cache = await caches.open('pwa-photo-cache');
+      
+      // 動態產生不帶 query 參數的絕對快取金鑰，與 sw.js 寫入的金鑰完美匹配
+      const cacheKey = new URL('shared-image.jpg', window.location.href).href.split('?')[0];
+      
+      const response = await cache.match(cacheKey);
+      if (response) {
+        const blob = await response.blob();
+        const file = new File([blob], "shared-image.jpg", { type: blob.type || "image/jpeg" });
+        
+        // 載入圖片並隱藏歡迎畫面，展示編輯工作區
+        loadSharedBlobAsBackground(file);
+        
+        // 清除網址列上的 ?hasImage=true 參數，避免重整時重複載入
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    } catch (err) {
+      console.error("從 PWA 快取中讀取分享圖片時發生錯誤:", err);
+    }
+  }
+}
+
+// ↕️ 上下比例拖曳分割條初始化與控制邏輯 (支援持久儲存、雙擊還原)
+function initDragSplitter() {
+  const splitter = document.getElementById('dragSplitter');
+  const canvasArea = document.querySelector('.canvas-area');
+  const workspace = document.getElementById('workspace');
+
+  if (!splitter || !canvasArea || !workspace) return;
+
+  let isDragging = false;
+  let startY = 0;
+  let startHeight = 0;
+
+  // 1. 初始化時，自動從本地還原上一次拉動的高度比例
+  const savedHeight = localStorage.getItem('gm_split_height');
+  if (savedHeight && window.innerWidth < 1024) {
+    canvasArea.style.height = `${savedHeight}px`;
+  }
+
+  const onDragStart = (e) => {
+    isDragging = true;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    startY = clientY;
+    startHeight = canvasArea.getBoundingClientRect().height;
+    document.body.style.cursor = 'ns-resize';
+    document.body.style.userSelect = 'none';
+  };
+
+  const onDragMove = (e) => {
+    if (!isDragging) return;
+    if (e.cancelable) e.preventDefault(); // 阻止行動裝置滾動
+
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const deltaY = clientY - startY;
+    let newHeight = startHeight + deltaY;
+
+    // 限制拖曳範圍：150px 至 工作區總高度的 75%
+    const wsHeight = workspace.getBoundingClientRect().height;
+    const minHeight = 150;
+    const maxHeight = wsHeight * 0.75;
+
+    if (newHeight < minHeight) newHeight = minHeight;
+    if (newHeight > maxHeight) newHeight = maxHeight;
+
+    canvasArea.style.height = `${newHeight}px`;
+  };
+
+  const onDragEnd = () => {
+    if (!isDragging) return;
+    isDragging = false;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+    
+    // 2. 拖曳結束時，自動將高度存入本機儲存空間
+    const currentHeight = canvasArea.getBoundingClientRect().height;
+    localStorage.setItem('gm_split_height', currentHeight);
+  };
+
+  splitter.addEventListener('mousedown', onDragStart);
+  splitter.addEventListener('touchstart', onDragStart, { passive: true });
+
+  window.addEventListener('mousemove', onDragMove);
+  window.addEventListener('touchmove', onDragMove, { passive: false });
+
+  window.addEventListener('mouseup', onDragEnd);
+  window.addEventListener('touchend', onDragEnd);
+
+  // 3. 雙擊分割條，快速重置視窗高度比例
+  splitter.addEventListener('dblclick', resetSplitterRatio);
+}
+
+// ↕️ 上下比例高度重置邏輯
+function resetSplitterRatio() {
+  const canvasArea = document.querySelector('.canvas-area');
+  if (canvasArea) {
+    canvasArea.style.height = ''; // 清除行內高度，回復預設 CSS 比例
+    localStorage.removeItem('gm_split_height');
+    showToast("已重置視窗比例！");
+  }
+}
+
+// 💾 頂部下拉式匯出選單控制邏輯
+function toggleHeaderExportMenu() {
+  if (!bgImage) return;
+  const menu = document.getElementById('headerExportMenu');
+  if (!menu) return;
+  const isVisible = menu.style.display === 'block';
+  menu.style.display = isVisible ? 'none' : 'block';
+}
+
+function updateExportButtonsState() {
+  const btn = document.getElementById('headerExportBtn');
+  const addBtn = document.getElementById('headerAddLayerBtn');
+  const sidebarAddBtn = document.getElementById('addLayerBtn');
+  
+  if (bgImage) {
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.add('active');
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+    }
+    if (addBtn) {
+      addBtn.disabled = false;
+      addBtn.style.opacity = '1';
+      addBtn.style.cursor = 'pointer';
+    }
+    if (sidebarAddBtn) {
+      sidebarAddBtn.disabled = false;
+      sidebarAddBtn.style.opacity = '1';
+      sidebarAddBtn.style.cursor = 'pointer';
+    }
+  } else {
+    // 重置可能殘留的新增文字選取狀態
+    resetAddTextState();
+
+    if (btn) {
+      btn.disabled = true;
+      btn.classList.remove('active');
+      btn.style.opacity = '0.4';
+      btn.style.cursor = 'not-allowed';
+    }
+    if (addBtn) {
+      addBtn.disabled = true;
+      addBtn.style.opacity = '0.4';
+      addBtn.style.cursor = 'not-allowed';
+    }
+    if (sidebarAddBtn) {
+      sidebarAddBtn.disabled = true;
+      sidebarAddBtn.style.opacity = '0.4';
+      sidebarAddBtn.style.cursor = 'not-allowed';
+    }
+  }
+}
+
+function triggerHeaderExport(format) {
+  const menu = document.getElementById('headerExportMenu');
+  if (menu) menu.style.display = 'none';
+  exportImage(format);
+}
+
+// 點擊外部自動收起選單
+window.addEventListener('click', (e) => {
+  const menu = document.getElementById('headerExportMenu');
+  if (menu && menu.style.display === 'block') {
+    if (!e.target.closest('#headerExportMenu') && !e.target.closest('.header-export-container')) {
+      menu.style.display = 'none';
+    }
+  }
+});
+
+/**
+ * 將讀取到的 Blob/File 轉換並渲染至現有的 Canvas 畫布與工作區中
+ */
+function loadSharedBlobAsBackground(file) {
+  if (file) {
+    uploadedFileName = 'pwa-shared';
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        pushToUndo(); 
+        bgImage = img;
+        canvas.width = img.width;
+        canvas.height = img.height;
+        
+        layers = [];
+        layerCounter = 0;
+        activeLayerId = null;
+        
+        const uploadText = document.getElementById('uploadAreaText');
+        if (uploadText) {
+          uploadText.textContent = '點擊重新上傳圖片';
+        }
+        
+        const ws = document.getElementById('workspace');
+        if (ws) {
+          ws.classList.remove('not-started');
+          ws.classList.add('started');
+        }
+        const hint = document.getElementById('canvasHint');
+        if (hint) {
+          hint.style.display = 'flex';
+        }
+        
+        renderLayersList();
+        drawCanvas();
+        saveSettings();
+        updateHistoryButtons();
+        updateExportButtonsState();
+        showToast("已成功載入分享的圖片！");
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function saveSettings() {
+  const data = { canvasWidth: canvas.width, canvasHeight: canvas.height, layers, layerCounter };
+  localStorage.setItem('gm_pro_settings', JSON.stringify(data));
+}
+
+/* ─────────────── 圖片上傳控制 ─────────────── */
+document.getElementById('imageUploadWelcome').onchange = e => handleBackgroundUpload(e);
+document.getElementById('imageUpload').onchange = e => handleBackgroundUpload(e);
+document.getElementById('uploadArea').onclick = () => document.getElementById('imageUpload').click();
+
+function handleBackgroundUpload(e) {
+  const file = e.target.files[0];
+  if (file) {
+    const lastDot = file.name.lastIndexOf('.');
+    uploadedFileName = lastDot !== -1 ? file.name.substring(0, lastDot) : file.name;
+
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        pushToUndo(); 
+        bgImage = img;
+        canvas.width = img.width;
+        canvas.height = img.height;
+        
+        layers = [];
+        layerCounter = 0;
+        activeLayerId = null;
+        
+        const uploadText = document.getElementById('uploadAreaText');
+        if (uploadText) {
+          uploadText.textContent = '點擊重新上傳圖片';
+        }
+        
+        const ws = document.getElementById('workspace');
+        ws.classList.remove('not-started');
+        ws.classList.add('started');
+        document.getElementById('canvasHint').style.display = 'flex';
+        
+        renderLayersList();
+        drawCanvas();
+        saveSettings();
+        updateHistoryButtons();
+        updateExportButtonsState();
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+  // 關鍵防呆：處理完畢後立即清除路徑紀錄，確保下次選取相同檔案時仍能正常觸發 onchange
+  e.target.value = "";
+}
+
+/* 🚫 Vercel 網頁版佈署：將 Capacitor 接收外部 App 分享圖片的機制註解掉
+async function checkSharedIntent() {
+  try {
+    if (window.Capacitor && window.Capacitor.Plugins) {
+      const { SendIntent } = window.Capacitor.Plugins;
+      
+      if (SendIntent) {
+        SendIntent.addListener('appSendIntentReceived', (intent) => {
+          handleSharedIntentData(intent);
+        });
+
+        const result = await SendIntent.checkSendIntentReceived();
+        if (result) {
+          handleSharedIntentData(result);
+          if (SendIntent.finish) {
+            await SendIntent.finish();
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error("讀取分享 Intent 失敗:", err);
+  }
+}
+
+function handleSharedIntentData(intent) {
+  if (!intent) return;
+  
+  let fileUrl = intent.url;
+  if (!fileUrl && intent.extras) {
+    fileUrl = intent.extras['android.intent.extra.STREAM'];
+  }
+  
+  if (fileUrl) {
+    const img = new Image();
+    img.onload = () => {
+      pushToUndo();
+      bgImage = img;
+      canvas.width = img.width;
+      canvas.height = img.height;
+      
+      layers = [];
+      layerCounter = 0;
+      activeLayerId = null;
+      
+      const ws = document.getElementById('workspace');
+      if (ws) {
+        ws.classList.remove('not-started');
+        ws.classList.add('started');
+      }
+      document.getElementById('canvasHint').style.display = 'flex';
+      
+      renderLayersList();
+      drawCanvas();
+      saveSettings();
+      updateHistoryButtons();
+      showToast("成功載入外部分享圖片！");
+    };
+    img.src = window.Capacitor.convertFileSrc(fileUrl);
+  }
+}
+*/
+
+/* ─────────────── 字型選單設定 ─────────────── */
+function getFontsList(currentFont = null) {
+  let list = [...CHINESE_FONTS];
+  if (enableEnglishFonts) {
+    list = list.concat(ENGLISH_FONTS);
+  }
+  
+  customFonts.forEach(cf => {
+    if (!list.some(exist => exist.value === cf.name)) {
+      list.push({ 
+        value: cf.name, 
+        label: cf.type === 'url' ? `☁️ ${cf.name} (自訂Google)` : `📂 ${cf.name} (自訂本機)` 
+      });
+    }
+  });
+
+  if (currentFont && !list.some(exist => exist.value === currentFont)) {
+    const foundInEng = ENGLISH_FONTS.find(exist => exist.value === currentFont);
+    if (foundInEng) {
+      list.push(foundInEng);
+    }
+  }
+  return list;
+}
+
+function toggleEnglishFonts() {
+  enableEnglishFonts = !enableEnglishFonts;
+  const toggleEl = document.getElementById('toggleEnableEnglishFonts');
+  if (enableEnglishFonts) {
+    toggleEl.classList.add('on');
+  } else {
+    toggleEl.classList.remove('on');
+  }
+  localStorage.setItem('gm_enable_english_fonts', enableEnglishFonts ? 'true' : 'false');
+  renderLayersList();
+}
+
+function toggleQuickEditFeature() {
+  enableQuickEdit = !enableQuickEdit;
+  const toggleEl = document.getElementById('toggleQuickEdit');
+  if (enableQuickEdit) {
+    toggleEl.classList.add('on');
+  } else {
+    toggleEl.classList.remove('on');
+  }
+  localStorage.setItem('gm_enable_quick_edit', enableQuickEdit ? 'true' : 'false');
+}
+
+function toggleProportionalFontFeature() {
+  enableProportionalFontSize = !enableProportionalFontSize;
+  const toggleEl = document.getElementById('toggleProportionalFont');
+  if (enableProportionalFontSize) {
+    toggleEl.classList.add('on');
+  } else {
+    toggleEl.classList.remove('on');
+  }
+  localStorage.setItem('gm_enable_quick_edit_responsive', enableProportionalFontSize ? 'true' : 'false');
+  renderLayersList();
+  drawCanvas();
+}
+
+function toggleDefaultNewTextFeature() {
+  enableDefaultNewText = !enableDefaultNewText;
+  const toggleEl = document.getElementById('toggleDefaultNewText');
+  const configEl = document.getElementById('defaultNewTextConfig');
+  if (enableDefaultNewText) {
+    toggleEl.classList.add('on');
+    if (configEl) configEl.style.display = 'block';
+  } else {
+    toggleEl.classList.remove('on');
+    if (configEl) configEl.style.display = 'none';
+  }
+  localStorage.setItem('gm_enable_default_new_text', enableDefaultNewText ? 'true' : 'false');
+}
+
+function toggleInlineTextEditFeature() {
+  enableInlineTextEdit = !enableInlineTextEdit;
+  const toggleEl = document.getElementById('toggleInlineTextEdit');
+  if (toggleEl) {
+    toggleEl.classList.toggle('on', enableInlineTextEdit);
+  }
+  localStorage.setItem('gm_enable_inline_text_edit', enableInlineTextEdit ? 'true' : 'false');
+}
+
+function toggleCloseWarningFeature() {
+  enableCloseTabWarning = !enableCloseTabWarning;
+  const toggleEl = document.getElementById('toggleCloseWarn');
+  if (toggleEl) {
+    toggleEl.classList.toggle('on', enableCloseTabWarning);
+  }
+  localStorage.setItem('gm_enable_close_tab_warning', enableCloseTabWarning ? 'true' : 'false');
+  showToast(enableCloseTabWarning ? '安全提示已開啟：關閉前若有作品會提醒您匯出' : '安全提示已關閉：關閉前不再顯示提醒');
+}
+
+function togglePinchZoomFeature() {
+  enablePinchZoom = !enablePinchZoom;
+  const toggleEl = document.getElementById('togglePinchZoom');
+  const wrap = document.getElementById('canvasWrap');
+  if (toggleEl) {
+    toggleEl.classList.toggle('on', enablePinchZoom);
+  }
+  if (wrap) {
+    wrap.classList.toggle('pinch-zoom-active', enablePinchZoom);
+  }
+  localStorage.setItem('gm_enable_pinch_zoom', enablePinchZoom ? 'true' : 'false');
+  if (!enablePinchZoom) {
+    currentPinchZoom = 1;
+    applyPinchZoomTransform();
+    hidePinchZoomIndicator();
+  }
+  showToast(enablePinchZoom ? '手勢縮放已開啟：雙指捏合控制文字大小，拖曳與編輯已暫停' : '手勢縮放已關閉');
+}
+
+function setZoomMode(mode) {
+  zoomMode = mode;
+  const wrap = document.getElementById('canvasWrap');
+  const canvasEl = document.getElementById('canvas');
+  if (!wrap || !canvasEl) return;
+  wrap.classList.toggle('zoom-edit', mode === 'edit');
+  if (mode === 'view') {
+    currentZoom = 1;
+  } else {
+    currentZoom = 1.08;
+  }
+  canvasEl.style.transform = `scale(${currentZoom})`;
+  canvasEl.style.transformOrigin = 'center center';
+}
+
+function changeZoom(delta) {
+  currentZoom = Math.max(0.8, Math.min(2.2, currentZoom * delta));
+  const canvasEl = document.getElementById('canvas');
+  if (!canvasEl) return;
+  canvasEl.style.transform = `scale(${currentZoom})`;
+  canvasEl.style.transformOrigin = 'center center';
+}
+
+function resetZoom() {
+  currentZoom = 1;
+  zoomMode = 'view';
+  const wrap = document.getElementById('canvasWrap');
+  const canvasEl = document.getElementById('canvas');
+  if (!wrap || !canvasEl) return;
+  wrap.classList.remove('zoom-edit');
+  canvasEl.style.transform = 'scale(1)';
+  canvasEl.style.transformOrigin = 'center center';
+}
+
+function getTouchDistance(e) {
+  if (!e.touches || e.touches.length < 2) return 0;
+  const dx = e.touches[0].clientX - e.touches[1].clientX;
+  const dy = e.touches[0].clientY - e.touches[1].clientY;
+  return Math.max(1, Math.sqrt(dx * dx + dy * dy));
+}
+
+function applyPinchZoomTransform() {
+  const canvasEl = document.getElementById('canvas');
+  if (!canvasEl) return;
+  const totalZoom = currentZoom * currentPinchZoom;
+  canvasEl.style.transform = `scale(${totalZoom})`;
+  canvasEl.style.transformOrigin = 'center center';
+}
+
+function showPinchZoomIndicator() {
+  const el = document.getElementById('pinchZoomIndicator');
+  if (!el) return;
+  el.textContent = `🔍 放大縮放模式：${Math.round(currentPinchZoom * 100)}%`;
+  el.classList.add('show');
+}
+
+function hidePinchZoomIndicator() {
+  const el = document.getElementById('pinchZoomIndicator');
+  if (el) el.classList.remove('show');
+}
+
+function handlePinchStart(e) {
+  if (!enablePinchZoom) return;
+  if (e.touches.length !== 2) return;
+  if (inlineEditLayerId) {
+    commitInlineTextEdit();
+  }
+  isPinchZooming = true;
+  pinchStartDist = getTouchDistance(e);
+  pinchStartZoom = currentPinchZoom;
+  draggingLayer = null;
+  showPinchZoomIndicator();
+  e.preventDefault();
+}
+
+function handlePinchMove(e) {
+  if (!isPinchZooming || !enablePinchZoom) return;
+  if (e.touches.length < 2) {
+    handlePinchEnd();
+    return;
+  }
+  const dist = getTouchDistance(e);
+  const scale = dist / pinchStartDist;
+  currentPinchZoom = Math.max(0.3, Math.min(4.0, pinchStartZoom * scale));
+  applyPinchZoomTransform();
+  showPinchZoomIndicator();
+  e.preventDefault();
+}
+
+function handlePinchEnd() {
+  if (!isPinchZooming) return;
+  isPinchZooming = false;
+  hidePinchZoomIndicator();
+}
+
+function initPinchZoom() {}
+
+function initTheme() {
+  const saved = localStorage.getItem('gm_theme') || 'system';
+  applyTheme(saved);
+}
+
+function setTheme(mode) {
+  localStorage.setItem('gm_theme', mode);
+  applyTheme(mode);
+}
+
+function applyTheme(mode) {
+  const root = document.documentElement;
+  if (mode === 'system') {
+    root.removeAttribute('data-theme');
+  } else {
+    root.setAttribute('data-theme', mode);
+  }
+  updateThemeButtons(mode);
+}
+
+function updateThemeButtons(activeMode) {
+  const btns = document.querySelectorAll('#themeToggleGroup .theme-btn');
+  btns.forEach(btn => {
+    if (btn.dataset.theme === activeMode) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+}
+
+function isDarkMode() {
+  const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+  return bg === '#0f0f1a';
+}
+
+function updateDefaultNewText(val) {
+  defaultNewTextValue = val;
+  localStorage.setItem('gm_default_new_text_value', val);
+}
+
+/* ─────────────── 確保圖層字體就緒 ─────────────── */
+const systemFonts = new Set(['Microsoft JhengHei','DFKai-SB','PingFang TC','PMingLiU']);
+
+async function ensureLayerFontsReady() {
+  const needed = [...new Set(layers.filter(l => l.visible).map(l => l.font))];
+  if (needed.length === 0) return;
+  showFontLoading();
+  for (const fontName of needed) {
+    if (systemFonts.has(fontName)) continue;
+    try {
+      await document.fonts.load(`${layers.find(l=>l.font===fontName)?.size || 16}px "${fontName}"`);
+    } catch(e) {}
+  }
+  hideFontLoading();
+}
+
+/* ─────────────── 字體載入 overlay 控制 ─────────────── */
+function showFontLoading() {
+  fontsReady = false;
+  const overlay = document.getElementById('fontLoadingOverlay');
+  if (overlay) overlay.classList.add('show');
+}
+
+function hideFontLoading() {
+  fontsReady = true;
+  const overlay = document.getElementById('fontLoadingOverlay');
+  if (overlay) overlay.classList.remove('show');
+}
+
+/* ─────────────── Custom Fonts ─────────────── */
+async function loadCustomFonts() {
+  showFontLoading();
+  try {
+    await initDB();
+    const savedCustomFonts = await getAllFontsFromDB();
+    customFonts = savedCustomFonts; 
+    for (const f of savedCustomFonts) {
+      try {
+        if (f.type === 'url') {
+          loadGFontLink(f.data);
+        } else if (f.type === 'file') {
+          const fontFace = new FontFace(f.name, f.data);
+          await fontFace.load();
+          document.fonts.add(fontFace);
+        }
+      } catch (err) {
+        console.error("載入自訂字體失敗:", f.name, err);
+      }
+    }
+    renderCustomFontsList(savedCustomFonts);
+    renderLayersList();
+  } catch (err) {
+    console.error("初始化資料庫失敗:", err);
+  }
+
+  await document.fonts.ready;
+
+  const lastFont = lastUsedStyles.font;
+  if (!systemFonts.has(lastFont)) {
+    try {
+      await document.fonts.load(`${lastUsedStyles.size || 60}px "${lastFont}"`);
+    } catch(e) {}
+  }
+
+  hideFontLoading();
+  drawCanvas();
+}
+
+function loadGFontLink(url) {
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = url;
+  document.head.appendChild(link);
+}
+
+function extractFontName(url) {
+  try {
+    const parsed = new URL(url);
+    const family = parsed.searchParams.get('family');
+    if (family) {
+      return family.split(':')[0].replace(/\+/g, ' ');
+    }
+  } catch (e) {
+    console.error(e);
+  }
+  return null;
+}
+
+async function addGoogleFont() {
+  const urlInput = document.getElementById('gfontUrl');
+  const url = urlInput.value.trim();
+  if (!url) {
+    alert('請輸入 Google Fonts 連結！');
+    return;
+  }
+  const name = extractFontName(url);
+  if (!name) {
+    alert('無法解析字體名稱，請確認連結格式是否正確');
+    return;
+  }
+  
+  try {
+    loadGFontLink(url);
+    await saveFontToDB(name, url, 'url');
+    
+    const savedCustomFonts = await getAllFontsFromDB();
+    customFonts = savedCustomFonts;
+    
+    urlInput.value = '';
+    renderCustomFontsList(savedCustomFonts);
+    renderLayersList();
+    await ensureLayerFontsReady();
+    drawCanvas();
+    alert(`字體「${name}」載入並儲存成功！`);
+  } catch (e) {
+    alert('載入字體失敗：' + e.message);
+  }
+}
+
+async function loadLocalFontFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  
+  const lastDot = file.name.lastIndexOf('.');
+  let fontName = lastDot !== -1 ? file.name.substring(0, lastDot) : file.name;
+  fontName = fontName.replace(/[^a-zA-Z0-9\u4e00-\u9fa5_-]/g, '');
+  
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try {
+      const arrayBuffer = e.target.result;
+      const fontFace = new FontFace(fontName, arrayBuffer);
+      await fontFace.load();
+      document.fonts.add(fontFace);
+      
+      await saveFontToDB(fontName, arrayBuffer, 'file');
+      
+      const savedCustomFonts = await getAllFontsFromDB();
+      customFonts = savedCustomFonts;
+      
+      renderCustomFontsList(savedCustomFonts);
+      renderLayersList();
+      drawCanvas();
+      alert(`本機字體「${fontName}」載入並儲存成功！`);
+    } catch (err) {
+      alert('本機字體載入失敗，請確認檔案格式是否支援：' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  input.value = ''; 
+}
+
+function renderCustomFontsList(savedCustomFonts) {
+  const el = document.getElementById('customFontsList');
+  el.innerHTML = '';
+  if (savedCustomFonts.length === 0) {
+    el.innerHTML = '<div style="font-size:11px; color:var(--text-muted); width:100%;">尚無載入的自訂字體</div>';
+    return;
+  }
+  savedCustomFonts.forEach(f => {
+    const tag = document.createElement('div');
+    tag.style.cssText = "display:inline-flex; align-items:center; background:var(--surface2); border:1px solid var(--border); padding:4px 8px; border-radius:6px; font-size:11px; gap:6px;";
+    tag.innerHTML = `
+      <span>${f.type === 'url' ? '☁️' : '📂'} ${f.name}</span>
+      <span style="color:#ff6060; cursor:pointer; font-weight:bold; padding: 0 2px;" onclick="deleteCustomFont('${f.name}')">✕</span>
+    `;
+    el.appendChild(tag);
+  });
+}
+
+async function deleteCustomFont(name) {
+  if (confirm(`確認刪除自訂字體「${name}」？`)) {
+    await deleteFontFromDB(name);
+    const savedCustomFonts = await getAllFontsFromDB();
+    customFonts = savedCustomFonts;
+    renderCustomFontsList(savedCustomFonts);
+    renderLayersList();
+    drawCanvas();
+  }
+}
+
+/* ─────────────── Templates ─────────────── */
+function loadTemplates() {
+  const saved = localStorage.getItem('gm_pro_templates');
+  if (saved) {
+    savedTemplates = JSON.parse(saved);
+  } else {
+    savedTemplates = [
+      {
+        id: 1,
+        name: "經典花開喜樂",
+        layers: [
+          { id: 1, text: "🌸 平安喜樂 🌸", font: "Noto Serif TC", size: 65, color: "#ffffff", align: "center", stroke: true, strokeColor: "#ff6b35", strokeWidth: 4, shadow: true, x: 600, y: 240, visible: true },
+          { id: 2, text: "祝您有個美好順心的一天", font: "Noto Sans TC", size: 35, color: "#ffffff", align: "center", stroke: false, strokeColor: "#000000", strokeWidth: 6, shadow: true, x: 600, y: 360, visible: true }
+        ]
+      },
+      {
+        id: 2,
+        name: "文青質感早安",
+        layers: [
+          { id: 1, text: "早安．吉祥", font: "Klee One", size: 70, color: "#f5a623", align: "center", stroke: false, strokeColor: "#000000", strokeWidth: 6, shadow: false, x: 600, y: 260, visible: true },
+          { id: 2, text: "迎著晨光，擁抱生活的美好 ✨", font: "Zen Maru Gothic", size: 35, color: "#ffffff", align: "center", stroke: false, strokeColor: "#000000", strokeWidth: 6, shadow: false, x: 600, y: 380, visible: true }
+        ]
+      }
+    ];
+    localStorage.setItem('gm_pro_templates', JSON.stringify(savedTemplates));
+  }
+  renderTemplatesList();
+}
+
+function renderTemplatesList() {
+  const el = document.getElementById('templateList');
+  el.innerHTML = '';
+  if (savedTemplates.length === 0) {
+    el.innerHTML = '<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:10px;">尚無儲存的模板</div>';
+    return;
+  }
+  savedTemplates.forEach(t => {
+    const card = document.createElement('div');
+    card.className = 'template-card';
+    card.innerHTML = `
+      <span class="template-name" onclick="applyTemplate(${t.id})">📂 ${t.name}</span>
+      <button class="template-delete-btn" onclick="deleteTemplate(${t.id}, event)">✕</button>
+    `;
+    el.appendChild(card);
+  });
+}
+
+function saveCurrentAsTemplate() {
+  const input = document.getElementById('newTemplateName');
+  const name = input.value.trim();
+  if (!name) {
+    alert('請先輸入模板名稱！');
+    return;
+  }
+  if (layers.length === 0) {
+    alert('目前沒有任何文字排版可以儲存！');
+    return;
+  }
+  
+  const newTemplate = {
+    id: Date.now(),
+    name: name,
+    layers: JSON.parse(JSON.stringify(layers)) 
+  };
+  
+  savedTemplates.push(newTemplate);
+  localStorage.setItem('gm_pro_templates', JSON.stringify(savedTemplates));
+  input.value = '';
+  renderTemplatesList();
+}
+
+async function applyTemplate(id) {
+  const t = savedTemplates.find(item => item.id === id);
+  if (t) {
+    hasUnsavedChanges = true;
+    layers = JSON.parse(JSON.stringify(t.layers)); 
+    activeLayerId = layers.length ? layers[layers.length - 1].id : null;
+    
+    let maxId = 0;
+    layers.forEach(l => { if (l.id > maxId) maxId = l.id; });
+    layerCounter = maxId;
+    
+    renderLayersList();
+    await ensureLayerFontsReady();
+    drawCanvas();
+    saveSettings();
+  }
+}
+
+function deleteTemplate(id, event) {
+  event.stopPropagation(); 
+  savedTemplates = savedTemplates.filter(t => t.id !== id);
+  localStorage.setItem('gm_pro_templates', JSON.stringify(savedTemplates));
+  renderTemplatesList();
+}
+
+/* ─────────────── Layers ─────────────── */
+function makeLayer(x = canvas.width / 2, y = canvas.height / 2) {
+  layerCounter++;
+  let defaultSize = lastUsedStyles.size;
+  if (enableProportionalFontSize) {
+    // 智慧比例：自動設為畫布寬度的 5.5% (範圍限縮在 16px ~ 250px 之間防呆)
+    defaultSize = Math.max(16, Math.min(250, Math.round(canvas.width * 0.055)));
+  }
+  const textVal = enableDefaultNewText ? defaultNewTextValue : '';
+  return {
+    id: layerCounter, 
+    text: textVal, 
+    font: lastUsedStyles.font, 
+    size: defaultSize, 
+    color: lastUsedStyles.color, 
+    align: 'center', 
+    stroke: lastUsedStyles.stroke, 
+    strokeColor: lastUsedStyles.strokeColor,
+    strokeWidth: lastUsedStyles.strokeWidth, 
+    shadow: lastUsedStyles.shadow, 
+    x: x, 
+    y: y, 
+    visible: true
+  };
+}
+
+// 📍 重置特定文字圖層回到畫布正中央
+function resetToCenter(id) {
+  const l = layers.find(item => item.id === id);
+  if (l) {
+    pushToUndo(); 
+    l.x = canvas.width / 2;
+    l.y = canvas.height / 2;
+    drawCanvas();
+    saveSettings();
+    renderLayersList();
+  }
+}
+
+function onAddLayerClick() {
+  isAddingTextActive = !isAddingTextActive;
+  const btn = document.getElementById('addLayerBtn');
+  const headerBtn = document.getElementById('headerAddLayerBtn');
+  if (isAddingTextActive) {
+    if (btn) {
+      btn.style.background = 'rgba(245,166,35,0.15)';
+      btn.style.borderColor = 'var(--gold)';
+      btn.style.color = 'var(--gold)';
+      btn.textContent = '⚡ 請點擊圖片任意處新增... (點此取消)';
+    }
+    if (headerBtn) {
+      headerBtn.style.background = 'var(--gold)';
+      headerBtn.style.color = '#fff';
+      headerBtn.style.borderColor = 'var(--gold)';
+      headerBtn.textContent = '⚡❌';
+    }
+  } else {
+    resetAddTextState();
+  }
+}
+
+function resetAddTextState() {
+  isAddingTextActive = false;
+  const btn = document.getElementById('addLayerBtn');
+  const headerBtn = document.getElementById('headerAddLayerBtn');
+  if (btn) {
+    btn.style.background = 'transparent';
+    btn.style.borderColor = 'var(--border)';
+    btn.style.color = 'var(--gold)';
+    btn.textContent = '+ 新增文字';
+  }
+  if (headerBtn) {
+    headerBtn.style.background = 'var(--surface2)';
+    headerBtn.style.color = 'var(--text)';
+    headerBtn.style.borderColor = 'var(--border)';
+    headerBtn.textContent = '✍️＋';
+  }
+}
+
+function addLayerAt(x, y) {
+  pushToUndo(); 
+  const l = makeLayer(x, y);
+  layers.push(l);
+  activeLayerId = l.id;
+  renderLayersList();
+  
+  const el = document.getElementById('layersList');
+  const newCard = el.querySelector(`.layer-card[data-id="${l.id}"]`);
+  if (newCard) {
+    newCard.classList.add('editor-open');
+    const nameEl = newCard.querySelector('.layer-name');
+    const idx = layers.indexOf(l);
+    if (nameEl) nameEl.textContent = `圖層 ${idx + 1} ▲`;
+  }
+  drawCanvas();
+  saveSettings();
+  updateHistoryButtons();
+}
+
+function renderLayersList() {
+  const el = document.getElementById('layersList');
+  const currentOpenId = (() => {
+    const openCard = el.querySelector('.layer-card.editor-open');
+    return openCard ? parseInt(openCard.getAttribute('data-id')) : null;
+  })();
+  
+  el.innerHTML = '';
+  [...layers].reverse().forEach(l => {
+    const isActive = l.id === activeLayerId;
+    const isOpen = currentOpenId !== null ? (l.id === currentOpenId) : isActive;
+    const card = document.createElement('div');
+    card.className = `layer-card ${isActive ? 'active-layer' : ''} ${isOpen ? 'editor-open' : ''}`;
+    card.setAttribute('data-id', l.id);
+    
+    card.draggable = true;
+    card.ondragstart = (e) => handleLayerDragStart(e, l.id);
+    card.ondragover = (e) => handleLayerDragOver(e);
+    card.ondrop = (e) => handleLayerDrop(e, l.id);
+    card.ondragend = (e) => handleLayerDragEnd(e);
+    
+    const fontsList = getFontsList(l.font);
+    const idx = layers.indexOf(l);
+    const layerNum = idx + 1;
+
+    card.innerHTML = `
+      <div class="layer-card-head" onclick="toggleLayerOpen(${l.id})">
+        <div class="layer-thumb" style="font-family:'${l.font}'">A</div>
+        <div class="layer-info">
+          <div class="layer-name">圖層 ${layerNum} ${isOpen ? '▲' : '▼'}</div>
+          <div class="layer-preview">${l.text}</div>
+        </div>
+        <div class="layer-actions" onclick="event.stopPropagation()">
+          <button class="layer-btn" onclick="toggleVis(${l.id})">${l.visible?'👁':'🙈'}</button>
+          <button class="layer-btn danger" onclick="removeLayer(${l.id})">✕</button>
+        </div>
+      </div>
+      <div class="layer-editor" onmouseenter="this.parentElement.draggable=false;" onmouseleave="this.parentElement.draggable=true;" ontouchstart="this.parentElement.draggable=false;" ontouchend="this.parentElement.draggable=true;" ontouchcancel="this.parentElement.draggable=true;">
+        <label class="field-label">文字內容</label>
+        <textarea onfocus="pushToUndo()" oninput="updateProp(${l.id},'text',this.value)">${l.text}</textarea>
+        
+        <label class="field-label">字體</label>
+        <select onmousedown="pushToUndo()" onchange="updateProp(${l.id},'font',this.value)">
+          ${fontsList.map(f => `<option value="${f.value}" ${f.value===l.font?'selected':''}>${f.label}</option>`).join('')}
+        </select>
+
+        <label class="field-label size-label">大小 (${l.size}px)</label>
+        <input type="range" min="10" max="500" value="${l.size}" onmousedown="pushToUndo()" ontouchstart="pushToUndo()" oninput="updateProp(${l.id},'size',+this.value)">
+
+        <!-- 精緻調色盤觸發按鈕組 -->
+        <div class="row-2" style="margin-top: 12px; margin-bottom: 6px;">
+          <div onclick="openColorPaletteModal(${l.id}, 'color')" style="cursor:pointer; background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 8px; border-radius: 8px; display: flex; align-items: center; gap: 8px; transition: border-color 0.2s;" onmouseenter="this.style.borderColor='var(--gold)'" onmouseleave="this.style.borderColor='var(--border)'">
+            <div style="width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.25); background: ${l.color}; flex-shrink:0;"></div>
+            <div style="overflow:hidden;">
+              <div style="font-size: 11px; font-weight: 600; color: var(--text)">🎨 文字主顏色</div>
+              <div style="font-size: 9px; font-family: monospace; color: var(--text-muted); text-transform:uppercase;">${l.color}</div>
+            </div>
+          </div>
+          
+          <div onclick="openColorPaletteModal(${l.id}, 'strokeColor')" style="cursor:pointer; background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 8px; border-radius: 8px; display: flex; align-items: center; gap: 8px; transition: border-color 0.2s;" onmouseenter="this.style.borderColor='var(--gold)'" onmouseleave="this.style.borderColor='var(--border)'">
+            <div style="width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.25); background: ${l.strokeColor}; flex-shrink:0;"></div>
+            <div style="overflow:hidden;">
+              <div style="font-size: 11px; font-weight: 600; color: var(--text)">🖌️ 描邊顏色</div>
+              <div style="font-size: 9px; font-family: monospace; color: var(--text-muted); text-transform:uppercase;">${l.strokeColor}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="toggle-row">
+          <span class="toggle-label">顯示描邊</span>
+          <div class="toggle ${l.stroke?'on':''}" onclick="pushToUndo(); updateProp(${l.id},'stroke',!${l.stroke})"></div>
+        </div>
+        
+        <div class="toggle-row" style="margin-bottom: 8px;">
+          <span class="toggle-label">文字陰影</span>
+          <div class="toggle ${l.shadow?'on':''}" onclick="pushToUndo(); updateProp(${l.id},'shadow',!${l.shadow})"></div>
+        </div>
+
+        <!-- 按鈕式圖層排序面板 -->
+        <label class="field-label" style="margin-top: 12px; margin-bottom: 4px;">圖層順序調整</label>
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 10px; border-radius: 8px; margin-bottom: 12px;">
+          <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; margin-bottom: 10px;">
+            <button class="sp-btn" style="padding: 6px 2px; font-weight: 600;" onclick="moveLayerToTop(${l.id})" title="移到最上層">🔝 最頂</button>
+            <button class="sp-btn" style="padding: 6px 2px; font-weight: 600;" onclick="moveLayerUp(${l.id})" title="往上移一層">🔼 上移</button>
+            <button class="sp-btn" style="padding: 6px 2px; font-weight: 600;" onclick="moveLayerDown(${l.id})" title="往下移一層">🔽 下移</button>
+            <button class="sp-btn" style="padding: 6px 2px; font-weight: 600;" onclick="moveLayerToBottom(${l.id})" title="移到最下層">⤓ 最底</button>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; justify-content: space-between;">
+            <span style="font-size: 11px; color: var(--text-muted); font-weight: 500;">移動特定步數：</span>
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <input type="number" id="layer-steps-${l.id}" min="1" max="${layers.length > 1 ? layers.length - 1 : 1}" value="1" style="width: 48px; text-align: center; padding: 4px; font-size: 11px; height: 26px; border-radius: 4px;">
+              <button class="theme-btn" style="padding: 4px 8px; font-size: 11px; height: 26px; line-height: 1;" onclick="moveLayerBySteps(${l.id}, 'up')">🔺 往上</button>
+              <button class="theme-btn" style="padding: 4px 8px; font-size: 11px; height: 26px; line-height: 1;" onclick="moveLayerBySteps(${l.id}, 'down')">🔻 往下</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 📍 回到中間按鈕 -->
+        <button class="align-btn" style="width:100%; margin-top:12px; background:var(--surface); border:1px solid var(--border); padding:8px; display:block; color:var(--text);" onclick="resetToCenter(${l.id})">📍 回到中間</button>
+      </div>
+    `;
+    el.appendChild(card);
+  });
+}
+
+function toggleLayerOpen(id) {
+  activeLayerId = id;
+  
+  const el = document.getElementById('layersList');
+  const clickedCard = el.querySelector(`.layer-card[data-id="${id}"]`);
+  const wasOpen = clickedCard && clickedCard.classList.contains('editor-open');
+  
+  el.querySelectorAll('.layer-card').forEach(c => {
+    c.classList.remove('editor-open', 'active-layer');
+    const nameEl = c.querySelector('.layer-name');
+    if (nameEl) {
+      const layerId = parseInt(c.getAttribute('data-id'));
+      const l = layers.find(x => x.id === layerId);
+      if (l) {
+        const idx = layers.indexOf(l);
+        nameEl.textContent = `圖層 ${idx + 1} ▼`;
+      }
+    }
+  });
+  
+  if (clickedCard) {
+    clickedCard.classList.add('active-layer');
+    if (!wasOpen) {
+      clickedCard.classList.add('editor-open');
+      const nameEl = clickedCard.querySelector('.layer-name');
+      const l = layers.find(x => x.id === id);
+      const idx = layers.indexOf(l);
+      if (nameEl) nameEl.textContent = `圖層 ${idx + 1} ▲`;
+    }
+  }
+  
+  drawCanvas();
+}
+
+async function updateProp(id, p, v) {
+  const l = layers.find(l => l.id === id);
+  if (l) { 
+    l[p] = v; 
+    hasUnsavedChanges = true; 
+    
+    if (p in lastUsedStyles) {
+      lastUsedStyles[p] = v;
+      localStorage.setItem('gm_last_used_styles', JSON.stringify(lastUsedStyles));
+    }
+
+    if (p === 'font' && !systemFonts.has(v)) {
+      showFontLoading();
+      try { await document.fonts.load(`${l.size}px "${v}"`); } catch(e) {}
+      hideFontLoading();
+    }
+
+    drawCanvas(); 
+    saveSettings(); 
+    
+    if (p === 'size') {
+      const sizeLabel = document.querySelector(`.layer-card[data-id="${id}"] .size-label`);
+      if (sizeLabel) sizeLabel.textContent = `大小 (${v}px)`;
+    } else if (p === 'text') {
+      const previewEl = document.querySelector(`.layer-card[data-id="${id}"] .layer-preview`);
+      if (previewEl) previewEl.textContent = v;
+    } else if (p === 'color' || p === 'strokeColor') {
+      // 保持即時拖曳繪製的效能
+    } else {
+      renderLayersList();
+    }
+  }
+}
+
+function removeLayer(id) {
+  pushToUndo(); 
+  const idx = layers.findIndex(l => l.id === id);
+  const layerName = `圖層 ${idx + 1}`;
+  
+  layers = layers.filter(l => l.id !== id);
+  
+  renderLayersList();
+  drawCanvas();
+  saveSettings();
+  updateHistoryButtons();
+  
+  showToast(`已成功刪除 [${layerName}]`);
+}
+
+function toggleVis(id) {
+  pushToUndo(); 
+  const l = layers.find(l => l.id === id);
+  if (l) { l.visible = !l.visible; renderLayersList(); drawCanvas(); }
+  updateHistoryButtons();
+}
+
+/* ─────────────── 快速編輯文字彈窗控制 ─────────────── */
+function openQuickEdit(layer) {
+  quickEditLayerId = layer.id;
+  
+  document.getElementById('qeText').value = layer.text;
+  document.getElementById('qeSize').value = layer.size;
+  document.getElementById('qeSizeLabel').textContent = `大小 (${layer.size}px)`;
+  
+  document.getElementById('qeColor').value = layer.color;
+  document.getElementById('qeColorIndicator').style.backgroundColor = layer.color;
+  document.getElementById('qeColorPreviewText').textContent = layer.color.toUpperCase();
+  
+  document.getElementById('qeStrokeColor').value = layer.strokeColor;
+  document.getElementById('qeStrokeColorIndicator').style.backgroundColor = layer.strokeColor;
+  document.getElementById('qeStrokeColorPreviewText').textContent = layer.strokeColor.toUpperCase();
+
+  const qeFontSelect = document.getElementById('qeFont');
+  if (qeFontSelect) {
+    const fontsList = getFontsList(layer.font);
+    qeFontSelect.innerHTML = fontsList.map(f => `<option value="${f.value}" ${f.value===layer.font?'selected':''}>${f.label}</option>`).join('');
+  }
+  
+  const strokeToggle = document.getElementById('qeStroke');
+  const shadowToggle = document.getElementById('qeShadow');
+  
+  if (strokeToggle) {
+    if (layer.stroke) strokeToggle.classList.add('on');
+    else strokeToggle.classList.remove('on');
+  }
+  
+  if (shadowToggle) {
+    if (layer.shadow) shadowToggle.classList.add('on');
+    else shadowToggle.classList.remove('on');
+  }
+  
+  document.getElementById('quickEditModal').classList.add('active');
+}
+
+function closeQuickEdit() {
+  document.getElementById('quickEditModal').classList.remove('active');
+  quickEditLayerId = null;
+}
+
+function openInlineTextEditor(layer, clickPos = null) {
+  if (!enableInlineTextEdit) return;
+  const editor = document.getElementById('inlineTextEditor');
+  const input = document.getElementById('inlineTextInput');
+  const wrap = document.getElementById('canvasWrap');
+  const rect = canvas.getBoundingClientRect();
+  const l = layers.find(item => item.id === layer.id);
+  if (!editor || !input || !l) return;
+  inlineEditLayerId = l.id;
+  input.value = l.text;
+  editor.style.display = 'block';
+
+  // 計算畫布相對於其外層容器 (wrap) 的偏移量
+  const wrapRect = wrap.getBoundingClientRect();
+  const offsetX = rect.left - wrapRect.left;
+  const offsetY = rect.top - wrapRect.top;
+
+  const scaleX = rect.width / canvas.width;
+  const scaleY = rect.height / canvas.height;
+
+  // 智慧計算安全打字寬度：防止打字提早折行，直到文字確實觸碰到圖片左右邊緣
+  const maxW = 2 * Math.min(l.x, canvas.width - l.x);
+  const editorW = maxW * scaleX;
+  const editorX = offsetX + (l.x * scaleX) - (editorW / 2);
+
+  const lines = l.text.split('\n');
+  const lineH = l.size * 1.2;
+  const totalH = lines.length * lineH;
+  const editorH = totalH * scaleY;
+  const editorY = offsetY + (l.y * scaleY) - (editorH / 2);
+  
+  // 設置編輯器容器的位置與大小
+  editor.style.left = `${editorX}px`;
+  editor.style.top = `${editorY}px`;
+  editor.style.width = `${editorW}px`;
+  editor.style.height = `${editorH}px`;
+  
+  // 完全去除便條紙背景與外框，使其與畫布上的字型、顏色、對齊完全融為一體
+  editor.style.background = 'transparent';
+  editor.style.border = 'none';
+  editor.style.boxShadow = 'none';
+  editor.style.padding = '0';
+  editor.style.minWidth = '10px';
+  editor.style.maxWidth = '100%';
+
+  input.style.width = '100%';
+  input.style.height = '100%';
+  input.style.padding = '0';
+  input.style.margin = '0';
+  input.style.minHeight = '0px';
+  input.style.fontSize = `${l.size * scaleY}px`;
+  input.style.fontFamily = `"${l.font}", sans-serif`;
+  input.style.color = l.color;
+  input.style.textAlign = l.align || 'center';
+  input.style.lineHeight = '1.2';
+  input.style.background = 'transparent';
+  input.style.border = 'none';
+  input.style.outline = 'none';
+  input.style.resize = 'none';
+  input.style.overflow = 'hidden';
+
+  if (wrap) wrap.classList.add('zoom-edit');
+  
+  input.focus();
+
+  // 若提供點擊座標，則精準計算游標置入位置，避開全選藍色反白
+  if (clickPos) {
+    const lines = l.text.split('\n');
+    ctx.save();
+    ctx.font = `${l.size}px "${l.font}", sans-serif`;
+    
+    const lineH = l.size * 1.2;
+    const startY = l.y - ((lines.length - 1) * lineH) / 2;
+    
+    // 1. 推算點擊在第幾行
+    let lineIndex = Math.round((clickPos.y - startY) / lineH);
+    lineIndex = Math.max(0, Math.min(lines.length - 1, lineIndex));
+    
+    const lineText = lines[lineIndex] || '';
+    
+    // 2. 投影計算在該行內最接近哪兩個字元的中間
+    let closestCharIdx = 0;
+    let minDiff = Infinity;
+    const totalLineW = ctx.measureText(lineText).width;
+    const lineStartX = l.x - totalLineW / 2;
+
+    for (let c = 0; c <= lineText.length; c++) {
+      const sub = lineText.substring(0, c);
+      const subW = ctx.measureText(sub).width;
+      const charX = lineStartX + subW;
+      const diff = Math.abs(clickPos.x - charX);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestCharIdx = c;
+      }
+    }
+    ctx.restore();
+
+    // 3. 計算出總字串中的游標定位點 (需包含換行符 \n 的字數補償)
+    let overallCaretIdx = 0;
+    for (let j = 0; j < lineIndex; j++) {
+      overallCaretIdx += lines[j].length + 1;
+    }
+    overallCaretIdx += closestCharIdx;
+
+    input.setSelectionRange(overallCaretIdx, overallCaretIdx);
+  } else {
+    input.select(); // 如果沒有座標（例如鍵盤直接喚醒），則採用預設全選
+  }
+}
+
+function closeInlineTextEditor() {
+  const editor = document.getElementById('inlineTextEditor');
+  if (editor) editor.style.display = 'none';
+  inlineEditLayerId = null;
+  pendingInlineEdit = null;
+  pendingInlineEditStart = null;
+}
+
+function commitInlineTextEdit() {
+  const input = document.getElementById('inlineTextInput');
+  if (!inlineEditLayerId || !input) return;
+  const l = layers.find(item => item.id === inlineEditLayerId);
+  if (!l) return;
+  const text = input.value;
+  pushToUndo();
+  l.text = text;
+  renderLayersList();
+  drawCanvas();
+  saveSettings();
+  updateHistoryButtons();
+  closeInlineTextEditor();
+}
+
+/* ─────────────── 頂級精美調色盤核心邏輯與即時更新 ─────────────── */
+let colorTargetLayerId = null; 
+let colorTargetProp = null;     
+let colorOriginalValue = '';
+let colorCurrentValue = '';
+let mySavedColors = [];
+
+function loadMyColors() {
+  const saved = localStorage.getItem('gm_my_saved_colors');
+  if (saved) {
+    mySavedColors = JSON.parse(saved);
+  } else {
+    mySavedColors = ['#f5a623', '#ff6b35', '#2f54eb'];
+  }
+}
+
+function saveMyColorsToStorage() {
+  localStorage.setItem('gm_my_saved_colors', JSON.stringify(mySavedColors));
+  renderMyColorsGrid();
+}
+
+function renderMyColorsGrid() {
+  const grid = document.getElementById('myColorsModalGrid');
+  if (!grid) return;
+  if (mySavedColors.length === 0) {
+    grid.innerHTML = '<span style="font-size:11px; color:var(--text-muted); grid-column: span 12;">目前無收藏自訂色，請在上方按收藏增加</span>';
+    return;
+  }
+  grid.innerHTML = mySavedColors.map((c, idx) => `
+    <div class="compact-swatch" style="background:${c};" title="點擊套用 / 右鍵刪除" 
+         onclick="syncColorFromPicker('${c}')" 
+         oncontextmenu="deleteMyColor(${idx}, event)">
+    </div>
+  `).join('');
+}
+
+function deleteMyColor(idx, event) {
+  if (event) event.preventDefault();
+  const deletedColor = mySavedColors[idx];
+  mySavedColors.splice(idx, 1);
+  saveMyColorsToStorage();
+  showToast(`已刪除自訂色塊: ${deletedColor.toUpperCase()}`);
+}
+
+function saveCurrentToMyColors() {
+  const hex = colorCurrentValue.toLowerCase();
+  if (!mySavedColors.includes(hex)) {
+    mySavedColors.push(hex);
+    saveMyColorsToStorage();
+    showToast(`成功收藏新顏色: ${hex.toUpperCase()}`);
+  } else {
+    showToast(`此顏色已在收藏中!`);
+  }
+}
+
+function openColorPaletteModal(layerId, prop) {
+  colorTargetLayerId = layerId;
+  colorTargetProp = prop;
+  loadMyColors();
+  
+  let initColor = '#ffffff';
+  if (layerId === 'quickedit') {
+    const inputVal = document.getElementById(prop === 'color' ? 'qeColor' : 'qeStrokeColor').value;
+    initColor = inputVal || initColor;
+    document.getElementById('colorModalTargetLabel').textContent = `正在編輯：快速編輯的 [${prop === 'color' ? '文字顏色' : '描邊顏色'}]`;
+  } else {
+    const l = layers.find(item => item.id === layerId);
+    if (l) {
+      initColor = l[prop];
+      const idx = layers.indexOf(l);
+      document.getElementById('colorModalTargetLabel').textContent = `正在編輯：圖層 ${idx + 1} 的 [${prop === 'color' ? '文字主顏色' : '描邊顏色'}]`;
+    }
+  }
+  
+  colorOriginalValue = initColor;
+  colorCurrentValue = initColor;
+  
+  document.getElementById('colorModalHexInput').value = initColor.toUpperCase();
+  document.getElementById('colorModalPicker').value = initColor;
+  document.getElementById('colorModalPreviewCircle').style.backgroundColor = initColor;
+  
+  const presetGrid = document.getElementById('presetColorsModalGrid');
+  if (presetGrid) {
+    presetGrid.innerHTML = PRESET_COLORS.map(c => 
+      `<div class="compact-swatch" style="background:${c};" title="${c}" onclick="syncColorFromPicker('${c}')"></div>`
+    ).join('');
+  }
+  
+  renderMyColorsGrid();
+  document.getElementById('colorPaletteModal').classList.add('active');
+}
+
+function syncColorFromPicker(val) {
+  if (!val.startsWith('#')) val = '#' + val;
+  if (val.length > 7) val = val.substring(0, 7);
+  colorCurrentValue = val;
+  
+  document.getElementById('colorModalHexInput').value = val.toUpperCase();
+  document.getElementById('colorModalPicker').value = val;
+  document.getElementById('colorModalPreviewCircle').style.backgroundColor = val;
+  
+  applyColorValueToTarget(val);
+}
+
+function syncColorFromHexInput(val) {
+  if (!val.startsWith('#')) val = '#' + val;
+  if (val.length === 7 && /^#[0-9A-Fa-f]{6}$/.test(val)) {
+    colorCurrentValue = val;
+    document.getElementById('colorModalPicker').value = val;
+    document.getElementById('colorModalPreviewCircle').style.backgroundColor = val;
+    applyColorValueToTarget(val);
+  }
+}
+
+function applyColorValueToTarget(val) {
+  if (colorTargetLayerId === 'quickedit') {
+    const inputId = colorTargetProp === 'color' ? 'qeColor' : 'qeStrokeColor';
+    const indicatorId = colorTargetProp === 'color' ? 'qeColorIndicator' : 'qeStrokeColorIndicator';
+    const textId = colorTargetProp === 'color' ? 'qeColorPreviewText' : 'qeStrokeColorPreviewText';
+    
+    document.getElementById(inputId).value = val;
+    document.getElementById(indicatorId).style.backgroundColor = val;
+    document.getElementById(textId).textContent = val.toUpperCase();
+  } else {
+    const l = layers.find(item => item.id === colorTargetLayerId);
+    if (l) {
+      l[colorTargetProp] = val;
+      // 同步更新「最後使用的樣式」，確保下次新增文字時能記憶文字與描邊顏色
+      if (colorTargetProp in lastUsedStyles) {
+        lastUsedStyles[colorTargetProp] = val;
+        localStorage.setItem('gm_last_used_styles', JSON.stringify(lastUsedStyles));
+      }
+      drawCanvas();
+    }
+  }
+}
+
+function closeColorPaletteModal(apply) {
+  document.getElementById('colorPaletteModal').classList.remove('active');
+  if (!apply) {
+    applyColorValueToTarget(colorOriginalValue);
+    drawCanvas();
+  } else {
+    pushToUndo();
+    applyColorValueToTarget(colorCurrentValue);
+    saveSettings();
+    updateHistoryButtons();
+    renderLayersList(); 
+    showToast(`調色成功！已套用新顏色。`);
+  }
+}
+
+function applyQuickEdit() {
+  if (!quickEditLayerId) return;
+  const l = layers.find(item => item.id === quickEditLayerId);
+  if (l) {
+    pushToUndo(); 
+    l.text = document.getElementById('qeText').value;
+    l.font = document.getElementById('qeFont').value;
+    l.size = parseInt(document.getElementById('qeSize').value, 10);
+    l.color = document.getElementById('qeColor').value;
+    l.strokeColor = document.getElementById('qeStrokeColor').value;
+    
+    const strokeToggle = document.getElementById('qeStroke');
+    if (strokeToggle) l.stroke = strokeToggle.classList.contains('on');
+    
+    const shadowToggle = document.getElementById('qeShadow');
+    if (shadowToggle) l.shadow = shadowToggle.classList.contains('on');
+    
+    const styleProps = ['font', 'size', 'color', 'strokeColor', 'stroke', 'shadow'];
+    styleProps.forEach(p => {
+      lastUsedStyles[p] = l[p];
+    });
+    localStorage.setItem('gm_last_used_styles', JSON.stringify(lastUsedStyles));
+    
+    renderLayersList();
+    drawCanvas();
+    saveSettings();
+    updateHistoryButtons();
+  }
+  closeQuickEdit();
+}
+
+/* ─────────────── 計算圖層包圍盒 ─────────────── */
+function getLayerBoundingBox(l) {
+  ctx.save();
+  ctx.font = `${l.size}px "${l.font}", sans-serif`;
+  const lines = l.text.split('\n');
+  let maxW = 0;
+  lines.forEach(line => maxW = Math.max(maxW, ctx.measureText(line).width));
+  ctx.restore();
+  
+  const lineH = l.size * 1.2;
+  const totalH = (lines.length - 1) * lineH + l.size;
+  const startY = l.y - ((lines.length - 1) * lineH) / 2;
+  const rectY = startY - l.size / 2;
+  const rectX = l.x - maxW / 2;
+  
+  return {
+    x: rectX - 15,
+    y: rectY - 15,
+    w: maxW + 30,
+    h: totalH + 30
+  };
+}
+
+function getCanvasScale() {
+  const rect = canvas.getBoundingClientRect();
+  if (!rect.width) return 1;
+  return canvas.width / rect.width;
+}
+
+/* ─────────────── 裁切框位置點偵測 ─────────────── */
+function checkCropHit(pos) {
+  if (!isCropping || !cropRect) return null;
+  const hSize = 30; 
+  const r = cropRect;
+  
+  if (Math.abs(pos.x - r.x) < hSize && Math.abs(pos.y - r.y) < hSize) return 'tl';
+  if (Math.abs(pos.x - (r.x + r.w)) < hSize && Math.abs(pos.y - r.y) < hSize) return 'tr';
+  if (Math.abs(pos.x - r.x) < hSize && Math.abs(pos.y - (r.y + r.h)) < hSize) return 'bl';
+  if (Math.abs(pos.x - (r.x + r.w)) < hSize && Math.abs(pos.y - (r.y + r.h)) < hSize) return 'br';
+  
+  if (pos.x > r.x && pos.x < r.x + r.w && pos.y > r.y && pos.y < r.y + r.h) return 'move';
+  
+  return null;
+}
+
+/* ─────────────── Draw ─────────────── */
+function drawCanvas() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  if (bgImage) {
+    const scale = Math.max(canvas.width/bgImage.width, canvas.height/bgImage.height);
+    const sw = bgImage.width * scale, sh = bgImage.height * scale;
+    ctx.drawImage(bgImage, (canvas.width-sw)/2, (canvas.height-sh)/2, sw, sh);
+  }
+
+  layers.forEach(l => {
+    if (!l.visible) return;
+    if (inlineEditLayerId === l.id) return; // 正在編輯時，不渲染此層至畫布，防止重複疊影
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = `${l.size}px "${l.font}", "Microsoft JhengHei", "PingFang TC", "DFKai-SB", sans-serif`;
+    if (l.shadow) { ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10; }
+    
+    const lines = l.text.split('\n');
+    const lineH = l.size * 1.2;
+    const startY = l.y - ((lines.length - 1) * lineH) / 2;
+
+    lines.forEach((line, i) => {
+      const ly = startY + i * lineH;
+      if (l.stroke) { ctx.lineWidth = l.strokeWidth; ctx.strokeStyle = l.strokeColor; ctx.strokeText(line, l.x, ly); }
+      ctx.fillStyle = l.color;
+      ctx.fillText(line, l.x, ly);
+    });
+
+    if (activeLayerId === l.id && !isCropping) {
+      ctx.save();
+      const box = getLayerBoundingBox(l);
+      
+      ctx.strokeStyle = '#f5a623'; 
+      ctx.setLineDash([6, 4]); 
+      ctx.lineWidth = selectionBoxWidth;
+      ctx.shadowColor = 'transparent'; 
+      ctx.shadowBlur = 0;
+      ctx.strokeRect(box.x, box.y, box.w, box.h);
+      
+      const boxW = Math.round(box.w);
+      const boxH = Math.round(box.h);
+      const sizeText = `${boxW} × ${boxH} px`;
+      ctx.setLineDash([]);
+      ctx.font = `bold ${Math.max(14, Math.round(l.size * 0.22))}px "Noto Sans TC", sans-serif`;
+      const textW = ctx.measureText(sizeText).width;
+      const textH = Math.max(14, Math.round(l.size * 0.22));
+      const labelX = box.x;
+      const labelY = box.y - textH - 6;
+      
+      ctx.fillStyle = 'rgba(245, 166, 35, 0.85)';
+      ctx.beginPath();
+      ctx.roundRect(labelX, labelY - 2, textW + 14, textH + 8, 4);
+      ctx.fill();
+      
+      ctx.fillStyle = '#1a1a2e';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText(sizeText, labelX + 7, labelY + 2);
+      
+      ctx.restore();
+    }
+    ctx.restore();
+  });
+
+  if (isCropping && cropRect) {
+    ctx.save();
+    ctx.fillStyle = isDarkMode() ? 'rgba(15, 15, 26, 0.65)' : 'rgba(0, 0, 0, 0.25)';
+    ctx.fillRect(0, 0, canvas.width, cropRect.y);
+    ctx.fillRect(0, cropRect.y + cropRect.h, canvas.width, canvas.height - (cropRect.y + cropRect.h));
+    ctx.fillRect(0, cropRect.y, cropRect.x, cropRect.h);
+    ctx.fillRect(cropRect.x + cropRect.w, cropRect.y, canvas.width - (cropRect.x + cropRect.w), cropRect.h);
+
+    ctx.strokeStyle = '#f5a623'; 
+    ctx.lineWidth = 3; 
+    ctx.setLineDash([6, 4]);
+    ctx.strokeRect(cropRect.x, cropRect.y, cropRect.w, cropRect.h);
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = '#f5a623';
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    const hSize = 16; 
+    
+    const points = [
+      { x: cropRect.x, y: cropRect.y }, 
+      { x: cropRect.x + cropRect.w, y: cropRect.y }, 
+      { x: cropRect.x, y: cropRect.y + cropRect.h }, 
+      { x: cropRect.x + cropRect.w, y: cropRect.y + cropRect.h } 
+    ];
+    
+    points.forEach(p => {
+      ctx.beginPath();
+      ctx.rect(p.x - hSize / 2, p.y - hSize / 2, hSize, hSize);
+      ctx.fill();
+      ctx.stroke();
+    });
+    
+    ctx.restore();
+  }
+}
+
+/* ─────────────── Interaction ─────────────── */
+function checkHit(pos) {
+  if (isCropping) return null;
+  return layers.slice().reverse().find(l => {
+    if (!l.visible) return false;
+    ctx.save();
+    ctx.font = `${l.size}px "${l.font}", sans-serif`;
+    
+    const lines = l.text.split('\n');
+    let maxW = 0;
+    lines.forEach(line => maxW = Math.max(maxW, ctx.measureText(line).width));
+    ctx.restore();
+    
+    const lineH = l.size * 1.2;
+    const h = lines.length * lineH;
+    const w = maxW;
+    
+    const minX = l.x - w / 2;
+    const maxX = minX + w;
+    
+    const minY = l.y - h / 2;
+    const maxY = minY + h;
+    
+    const scale = getCanvasScale();
+    const pad = Math.max(25, 12 * scale); 
+    return pos.x >= minX - pad && pos.x <= maxX + pad && pos.y >= minY - pad && pos.y <= maxY + pad;
+  });
+}
+
+function handleStart(pos) {
+  if (inlineEditLayerId) {
+    commitInlineTextEdit();
+  }
+
+  if (isAddingTextActive) {
+    addLayerAt(pos.x, pos.y);
+    resetAddTextState();
+    return;
+  }
+
+  if (isCropping) { 
+    const hit = checkCropHit(pos);
+    if (hit) {
+      pushToUndo(); 
+      cropDragging = hit;
+      cropDragStartRect = { ...cropRect };
+      cropStart = pos;
+    }
+    return; 
+  }
+
+  const hit = checkHit(pos);
+  if (hit) {
+    // 1. 按下瞬間立即啟動選取外框並準備拖曳，給予最即時的反饋
+    pushToUndo(); 
+    draggingLayer = { id: hit.id, ox: pos.x - hit.x, oy: pos.y - hit.y };
+    activeLayerId = hit.id;
+    
+    // 2. 如果啟用了直接編輯，先記錄點擊起點與目標圖層
+    if (enableInlineTextEdit && !isCropping) {
+      pendingInlineEdit = hit;
+      pendingInlineEditStart = { x: pos.x, y: pos.y };
+    }
+    
+    // 3. 展開對應的側邊欄清單
+    renderLayersList();
+    const el = document.getElementById('layersList');
+    el.querySelectorAll('.layer-card').forEach(c => c.classList.remove('editor-open'));
+    const hitCard = el.querySelector(`.layer-card[data-id="${hit.id}"]`);
+    if (hitCard) {
+      hitCard.classList.add('editor-open');
+      const nameEl = hitCard.querySelector('.layer-name');
+      if (nameEl) {
+        const idx = layers.indexOf(hit);
+        nameEl.textContent = `圖層 ${idx + 1} ▲`;
+      }
+    }
+    drawCanvas();
+  } else {
+    activeLayerId = null;
+    renderLayersList();
+    drawCanvas();
+  }
+}
+
+function handleMove(pos) {
+  if (inlineEditLayerId) {
+    return;
+  }
+
+  // 判斷是否正在拖曳文字：若移動位移超過 8px，則視為「要移動位置」，取消放開後的直接編輯狀態
+  if (pendingInlineEdit && pendingInlineEditStart) {
+    const dx = pos.x - pendingInlineEditStart.x;
+    const dy = pos.y - pendingInlineEditStart.y;
+    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+      pendingInlineEdit = null;
+      pendingInlineEditStart = null;
+    }
+  }
+
+  if (isCropping && cropDragging && cropStart) {
+    const dx = pos.x - cropStart.x;
+    const dy = pos.y - cropStart.y;
+    const r = cropDragStartRect;
+    
+    if (cropDragging === 'move') {
+      let nx = r.x + dx;
+      let ny = r.y + dy;
+      if (nx < 0) nx = 0;
+      if (ny < 0) ny = 0;
+      if (nx + r.w > canvas.width) nx = canvas.width - r.w;
+      if (ny + r.h > canvas.height) ny = canvas.height - r.h;
+      cropRect.x = nx;
+      cropRect.y = ny;
+    } else {
+      let nx = r.x, ny = r.y, nw = r.w, nh = r.h;
+      
+      if (cropDragging === 'tl') {
+        nw = Math.max(20, r.w - dx);
+        nh = currentCropRatio !== 'free' ? nw / parseFloat(currentCropRatio) : Math.max(20, r.h - dy);
+        nx = r.x + r.w - nw; ny = r.y + r.h - nh;
+      } else if (cropDragging === 'tr') {
+        nw = Math.max(20, Math.min(canvas.width - r.x, r.w + dx));
+        nh = currentCropRatio !== 'free' ? nw / parseFloat(currentCropRatio) : Math.max(20, r.h - dy);
+        ny = r.y + r.h - nh;
+      } else if (cropDragging === 'bl') {
+        nw = Math.max(20, r.w - dx);
+        nh = currentCropRatio !== 'free' ? nw / parseFloat(currentCropRatio) : Math.max(20, Math.min(canvas.height - r.y, r.h + dy));
+        nx = r.x + r.w - nw;
+      } else if (cropDragging === 'br') {
+        nw = Math.max(20, Math.min(canvas.width - r.x, r.w + dx));
+        nh = currentCropRatio !== 'free' ? nw / parseFloat(currentCropRatio) : Math.max(20, Math.min(canvas.height - r.y, r.h + dy));
+      }
+      
+      if (nx >= 0 && ny >= 0 && nx + nw <= canvas.width && ny + nh <= canvas.height) {
+        cropRect.x = nx; cropRect.y = ny; cropRect.w = nw; cropRect.h = nh;
+      }
+    }
+    drawCanvas();
+  } else if (draggingLayer) {
+    const l = layers.find(l => l.id === draggingLayer.id);
+    if (l) { 
+      l.x = pos.x - draggingLayer.ox; 
+      l.y = pos.y - draggingLayer.oy; 
+      drawCanvas(); 
+    }
+  }
+}
+
+function handleEnd() { 
+  if (pendingInlineEdit && pendingInlineEditStart) {
+    openInlineTextEditor(pendingInlineEdit, pendingInlineEditStart);
+  }
+  pendingInlineEdit = null;
+  pendingInlineEditStart = null;
+  draggingLayer = null; 
+  cropDragging = null;
+  cropStart = null;
+  cropDragStartRect = null;
+  drawCanvas(); 
+  saveSettings(); 
+  updateHistoryButtons();
+}
+
+function updateCursorStyle(pos) {
+  if (isCropping) {
+    const hit = checkCropHit(pos);
+    if (hit === 'move') {
+      canvas.style.cursor = 'move';
+    } else if (hit === 'tl' || hit === 'br') {
+      canvas.style.cursor = 'nwse-resize';
+    } else if (hit === 'tr' || hit === 'bl') {
+      canvas.style.cursor = 'nesw-resize';
+    } else {
+      canvas.style.cursor = 'default';
+    }
+    return;
+  }
+  if (isAddingTextActive) {
+    canvas.style.cursor = 'cell';
+    return;
+  }
+  if (checkHit(pos)) {
+    canvas.style.cursor = 'move';
+    return;
+  }
+  canvas.style.cursor = 'default';
+}
+
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  return { 
+    x: (e.clientX - rect.left) * (canvas.width/rect.width), 
+    y: (e.clientY - rect.top) * (canvas.height/rect.height) 
+  };
+}
+
+canvas.addEventListener('mousedown', e => handleStart(getPos(e)));
+window.addEventListener('mousemove', e => {
+  const pos = getPos(e);
+  updateCursorStyle(pos);
+  handleMove(pos);
+});
+window.addEventListener('mouseup', () => handleEnd());
+
+canvas.addEventListener('dblclick', e => {
+  const pos = getPos(e);
+  const hit = checkHit(pos);
+  if (!hit) return;
+  if (enableQuickEdit) {
+    openQuickEdit(hit);
+  } else if (enableInlineTextEdit) {
+    openInlineTextEditor(hit, pos);
+  }
+});
+
+function getTouchPos(e) {
+  if (!e.touches.length) return { x: 0, y: 0 };
+  const touch = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  return { 
+    x: (touch.clientX - rect.left) * (canvas.width/rect.width), 
+    y: (touch.clientY - rect.top) * (canvas.height/rect.height) 
+  };
+}
+
+canvas.addEventListener('touchstart', e => {
+  if (enablePinchZoom && e.touches && e.touches.length >= 2) {
+    handlePinchStart(e);
+    return;
+  }
+  if (isPinchZooming) return;
+  const pos = getTouchPos(e);
+  const hit = checkHit(pos);
+  const currentTime = Date.now();
+  const tapInterval = currentTime - lastTapTime;
+  
+  if (enableQuickEdit && hit && tapInterval < 300 && tapInterval > 0) {
+    e.preventDefault();
+    openQuickEdit(hit);
+    return;
+  }
+  lastTapTime = currentTime;
+  
+  if (isAddingTextActive || hit || isCropping) {
+    e.preventDefault();
+    canvas.style.touchAction = 'none'; 
+    handleStart(pos);
+  } else {
+    canvas.style.touchAction = 'auto'; 
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchmove', e => {
+  if (!isPinchZooming) return;
+  handlePinchMove(e);
+}, { passive: false });
+
+canvas.addEventListener('touchend', e => {
+  if (isPinchZooming) {
+    handlePinchEnd();
+    return;
+  }
+  canvas.style.touchAction = 'auto';
+  handleEnd();
+});
+
+canvas.addEventListener('touchcancel', e => {
+  if (isPinchZooming) {
+    isPinchZooming = false;
+    hidePinchZoomIndicator();
+  }
+  canvas.style.touchAction = 'auto';
+});
+
+window.addEventListener('touchmove', e => {
+  if (isPinchZooming) return;
+  if (draggingLayer) {
+    e.preventDefault();
+    handleMove(getTouchPos(e));
+  } else if (isCropping && cropStart) {
+    e.preventDefault();
+    handleMove(getTouchPos(e));
+  }
+}, { passive: false });
+
+window.addEventListener('touchend', () => {
+  canvas.style.touchAction = 'auto';
+  if (!isPinchZooming) {
+    handleEnd();
+  }
+});
+
+function hasUnsavedCanvasWork() {
+  return hasUnsavedChanges && (!!bgImage || layers.length > 0);
+}
+
+window.addEventListener('beforeunload', (e) => {
+  if (!enableCloseTabWarning) return;
+  if (hasUnsavedCanvasWork()) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+
+function handleInlineEditorKeydown(e) {
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+    e.preventDefault();
+    commitInlineTextEdit();
+  } else if (e.key === 'Escape') {
+    e.preventDefault();
+    closeInlineTextEditor();
+  }
+}
+
+const inlineTextInputEl = document.getElementById('inlineTextInput');
+if (inlineTextInputEl) {
+  inlineTextInputEl.addEventListener('keydown', handleInlineEditorKeydown);
+  inlineTextInputEl.addEventListener('input', () => {
+    const l = layers.find(item => item.id === inlineEditLayerId);
+    if (!l) return;
+    l.text = inlineTextInputEl.value;
+    
+    // 🔄 動態計算輸入框大小與位置，隨打字內容即時伸縮外框
+    const editor = document.getElementById('inlineTextEditor');
+    const wrap = document.getElementById('canvasWrap');
+    const rect = canvas.getBoundingClientRect();
+    
+    let offsetX = 0;
+    let offsetY = 0;
+    if (wrap) {
+      const wrapRect = wrap.getBoundingClientRect();
+      offsetX = rect.left - wrapRect.left;
+      offsetY = rect.top - wrapRect.top;
+    }
+
+    const scaleX = rect.width / canvas.width;
+    const scaleY = rect.height / canvas.height;
+    
+    // 保持寬度為安全打字寬度，並依行數動態向下延展高度
+    const maxW = 2 * Math.min(l.x, canvas.width - l.x);
+    const editorW = maxW * scaleX;
+    const editorX = offsetX + (l.x * scaleX) - (editorW / 2);
+
+    const lines = inlineTextInputEl.value.split('\n');
+    const lineH = l.size * 1.2;
+    const totalH = lines.length * lineH;
+    const editorH = totalH * scaleY;
+    const editorY = offsetY + (l.y * scaleY) - (editorH / 2);
+    
+    if (editor) {
+      editor.style.left = `${editorX}px`;
+      editor.style.top = `${editorY}px`;
+      editor.style.width = `${editorW}px`;
+      editor.style.height = `${editorH}px`;
+      inlineTextInputEl.style.fontSize = `${l.size * scaleY}px`;
+    }
+
+    renderLayersList();
+    drawCanvas();
+  });
+  inlineTextInputEl.addEventListener('blur', () => {
+    if (inlineEditLayerId) {
+      commitInlineTextEdit();
+    }
+  });
+}
+
+/* ─────────────── 全新單鍵裁剪機制 ─────────────── */
+let currentCropRatio = 'free';
+
+document.getElementById('btnEnterCrop').onclick = () => {
+  if (!bgImage) { alert('請先上傳圖片再點選裁切功能！'); return; }
+  isCropping = true;
+  currentCropRatio = 'free';
+  
+  cropRect = { x: 0, y: 0, w: canvas.width, h: canvas.height };
+  cropStart = null; cropDragging = null; cropDragStartRect = null;
+  
+  bgImageBackup = bgImage;
+  canvasWidthBackup = canvas.width;
+  canvasHeightBackup = canvas.height;
+  layersBackup = JSON.parse(JSON.stringify(layers));
+  
+  document.getElementById('btnEnterCrop').style.display = 'none';
+  document.getElementById('cropMenu').style.display = 'block';
+  
+  document.querySelectorAll('#cropRatios .sp-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('#cropRatios .sp-btn[data-ratio="free"]').classList.add('active');
+  
+  drawCanvas();
+};
+
+document.getElementById('cropRatios').onclick = e => {
+  const btn = e.target.closest('.sp-btn');
+  if (!btn) return;
+  document.querySelectorAll('#cropRatios .sp-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  
+  const ratio = btn.dataset.ratio;
+  currentCropRatio = ratio;
+  
+  if (ratio !== 'free') {
+    const targetRatio = parseFloat(ratio);
+    const canvasRatio = canvas.width / canvas.height;
+    let nw = canvas.width, nh = canvas.height;
+    
+    if (canvasRatio > targetRatio) {
+      nw = nh * targetRatio; 
+    } else {
+      nh = nw / targetRatio; 
+    }
+    cropRect = { x: (canvas.width - nw) / 2, y: (canvas.height - nh) / 2, w: nw, h: nh };
+  } else {
+    cropRect = { x: 0, y: 0, w: canvas.width, h: canvas.height };
+  }
+  drawCanvas();
+};
+
+function applyDirectCrop() {
+  if (!cropRect || cropRect.w < 10 || cropRect.h < 10) return;
+  pushToUndo(); 
+  
+  const temp = document.createElement('canvas');
+  temp.width = cropRect.w; 
+  temp.height = cropRect.h;
+  const tempCtx = temp.getContext('2d');
+  
+  const scale = Math.max(canvasWidthBackup / bgImageBackup.width, canvasHeightBackup / bgImageBackup.height);
+  const sw = bgImageBackup.width * scale;
+  const sh = bgImageBackup.height * scale;
+  const bgOffsetX = (canvasWidthBackup - sw) / 2;
+  const bgOffsetY = (canvasHeightBackup - sh) / 2;
+  
+  tempCtx.drawImage(
+    bgImageBackup,
+    (cropRect.x - bgOffsetX) / scale, (cropRect.y - bgOffsetY) / scale,
+    cropRect.w / scale, cropRect.h / scale,
+    0, 0, cropRect.w, cropRect.h
+  );
+  
+  const img = new Image();
+  img.onload = () => {
+    const oldWidth = canvasWidthBackup;
+    bgImage = img;
+    canvas.width = cropRect.w; 
+    canvas.height = cropRect.h;
+    
+    const scaleRatio = enableProportionalFontSize ? (cropRect.w / oldWidth) : 1;
+
+    layers.forEach((l, idx) => {
+      const origL = layersBackup[idx];
+      l.x = origL.x - cropRect.x;
+      l.y = origL.y - cropRect.y;
+      
+      if (enableProportionalFontSize) {
+        l.size = Math.max(12, Math.round(origL.size * scaleRatio));
+        l.strokeWidth = Math.max(1, Math.round(origL.strokeWidth * scaleRatio));
+      }
+    });
+    
+    closeCropMenu();
+    saveSettings();
+    updateHistoryButtons();
+  };
+  img.src = temp.toDataURL();
+}
+
+function cancelCrop() {
+  if (bgImageBackup) {
+    bgImage = bgImageBackup;
+    canvas.width = canvasWidthBackup;
+    canvas.height = canvasHeightBackup;
+    layers = JSON.parse(JSON.stringify(layersBackup));
+  }
+  closeCropMenu();
+}
+
+function closeCropMenu() {
+  isCropping = false;
+  cropRect = null; cropStart = null; cropDragging = null; cropDragStartRect = null;
+  bgImageBackup = null; layersBackup = [];
+  
+  document.getElementById('cropMenu').style.display = 'none';
+  document.getElementById('btnEnterCrop').style.display = 'block';
+  renderLayersList();
+  drawCanvas();
+}
+
+/* ─────────────── Export ─────────────── */
+let currentExportFormat = 'png';
+
+function exportImage(fmt) {
+  // 防呆機制：若未上傳圖片，則不執行匯出
+  if (!bgImage && layers.length === 0) {
+    showToast("請先上傳圖片或建立內容後再匯出！");
+    return;
+  }
+  
+  currentExportFormat = fmt;
+  
+  // 自動填入預設檔名：[原圖片名稱]-goodmorning
+  const fileNameInput = document.getElementById('exportFileNameInput');
+  if (fileNameInput) {
+    fileNameInput.value = `${uploadedFileName}-goodmorning`;
+  }
+  
+  document.getElementById('exportModal').classList.add('active');
+}
+
+function closeExportModal() {
+  document.getElementById('exportModal').classList.remove('active');
+}
+
+// 🔄 回復所有設定與編輯狀態至初始值
+function resetAllToDefault() {
+  if (!confirm("確定要回復初始設定嗎？\n這將會清除您目前畫布上的圖片、所有文字圖層，並將各項功能設定恢復為預設值。")) return;
+  
+  // 1. 清除相關本地端儲存空間 (不影響載入的自訂字體與儲存的模板)
+  localStorage.removeItem('gm_pro_settings');
+  localStorage.removeItem('gm_last_used_styles');
+  localStorage.removeItem('gm_enable_english_fonts');
+  localStorage.removeItem('gm_enable_quick_edit');
+  localStorage.removeItem('gm_enable_quick_edit_responsive');
+  localStorage.removeItem('gm_enable_inline_text_edit');
+  localStorage.removeItem('gm_enable_close_tab_warning');
+  localStorage.removeItem('gm_enable_default_new_text');
+  localStorage.removeItem('gm_default_new_text_value');
+  localStorage.removeItem('gm_selection_box_width');
+  localStorage.removeItem('gm_enable_pinch_zoom');
+  
+  // 2. 恢復核心變數預設值
+  bgImage = null;
+  layers = [];
+  layerCounter = 0;
+  activeLayerId = null;
+  draggingLayer = null;
+  isAddingTextActive = false;
+  enableEnglishFonts = false;
+  enableQuickEdit = false;
+  enableProportionalFontSize = false;
+  enableDefaultNewText = true;
+  enableInlineTextEdit = false;
+  enableCloseTabWarning = true;
+  enablePinchZoom = false;
+  isPinchZooming = false;
+  pinchStartDist = 0;
+  pinchStartZoom = 1;
+  currentPinchZoom = 1;
+  defaultNewTextValue = '🌞 早安！';
+  currentZoom = 1;
+  zoomMode = 'view';
+  selectionBoxWidth = 3.5;
+  undoStack = [];
+  redoStack = [];
+  hasUnsavedChanges = false;
+  
+  // 3. 重置選取框線設定 UI
+  lastUsedStyles = { ...defaultStyles };
+  
+  // 3. 重置選取框線設定 UI
+  const slider = document.getElementById('selectionBoxWidthSlider');
+  if (slider) slider.value = 3.5;
+  const label = document.getElementById('selBoxWidthLabel');
+  if (label) label.textContent = '框線粗細（3.5px）';
+  const preview = document.getElementById('selBoxPreview');
+  if (preview) preview.style.borderWidth = '3.5px';
+  
+  // 4. 重置功能開關 UI 狀態
+  const toggleEng = document.getElementById('toggleEnableEnglishFonts');
+  if (toggleEng) toggleEng.classList.remove('on');
+  const toggleQe = document.getElementById('toggleQuickEdit');
+  if (toggleQe) toggleQe.classList.remove('on');
+  const toggleProp = document.getElementById('toggleProportionalFont');
+  if (toggleProp) toggleProp.classList.remove('on');
+  const toggleInline = document.getElementById('toggleInlineTextEdit');
+  if (toggleInline) toggleInline.classList.remove('on');
+  const toggleWarn = document.getElementById('toggleCloseWarn');
+  if (toggleWarn) toggleWarn.classList.add('on');
+  const toggleDefaultText = document.getElementById('toggleDefaultNewText');
+  if (toggleDefaultText) toggleDefaultText.classList.add('on');
+  const togglePinchZoom = document.getElementById('togglePinchZoom');
+  if (togglePinchZoom) togglePinchZoom.classList.remove('on');
+  const pinchWrap = document.getElementById('canvasWrap');
+  if (pinchWrap) pinchWrap.classList.remove('pinch-zoom-active');
+  const defaultTextInput = document.getElementById('defaultNewTextInput');
+  if (defaultTextInput) defaultTextInput.value = '🌞 早安！';
+  const defaultTextConfig = document.getElementById('defaultNewTextConfig');
+  if (defaultTextConfig) defaultTextConfig.style.display = 'block';
+  
+  // 5. 恢復主畫面狀態與隱藏控制
+  const ws = document.getElementById('workspace');
+  if (ws) {
+    ws.classList.remove('started');
+    ws.classList.add('not-started');
+  }
+  
+  // 主動清除上傳欄位的值
+  const fWelcome = document.getElementById('imageUploadWelcome');
+  if (fWelcome) fWelcome.value = "";
+  const fUpload = document.getElementById('imageUpload');
+  if (fUpload) fUpload.value = "";
+  const hint = document.getElementById('canvasHint');
+  if (hint) hint.style.display = 'none';
+  const uploadText = document.getElementById('uploadAreaText');
+  if (uploadText) uploadText.textContent = '點擊上傳圖片';
+  
+  // 6. 重置縮放
+  resetZoom();
+  const pinchZoomIndicator = document.getElementById('pinchZoomIndicator');
+  if (pinchZoomIndicator) pinchZoomIndicator.classList.remove('show');
+  updateExportButtonsState();
+  
+  // 7. 更新與重新渲染
+  updateHistoryButtons();
+  renderLayersList();
+  drawCanvas();
+  
+  showToast("已成功回復初始設定！");
+}
+
+function handleSaveToLocal() {
+  const fmt = currentExportFormat;
+  const link = document.createElement('a');
+  
+  // 讀取自訂輸入框的檔名，若使用者清空，則自動 fallback 為預設檔名
+  const customName = document.getElementById('exportFileNameInput').value.trim() || `${uploadedFileName}-goodmorning`;
+  link.download = `${customName}.${fmt}`;
+  
+  const originalActiveId = activeLayerId;
+  const originalIsCropping = isCropping;
+  activeLayerId = null;
+  isCropping = false;
+  drawCanvas();
+  
+  link.href = canvas.toDataURL(`image/${fmt}`);
+  link.click();
+  
+  hasUnsavedChanges = false;
+  
+  activeLayerId = originalActiveId;
+  isCropping = originalIsCropping;
+  drawCanvas();
+  
+  closeExportModal();
+}
+
+async function handleSaveToCloud() {
+  const fmt = currentExportFormat;
+  const mimeType = `image/${fmt === 'jpg' || fmt === 'jpeg' ? 'jpeg' : fmt}`;
+  
+  try {
+    const originalActiveId = activeLayerId;
+    const originalIsCropping = isCropping;
+    activeLayerId = null;
+    isCropping = false;
+    drawCanvas();
+
+    /* 🚫 Vercel 網頁版佈署：將 Capacitor 原生分享註解掉
+    if (window.Capacitor && window.Capacitor.Plugins) {
+      const { Share } = window.Capacitor.Plugins;
+      if (Share) {
+        const base64Data = canvas.toDataURL(mimeType, 0.95);
+        activeLayerId = originalActiveId;
+        isCropping = originalIsCropping;
+        drawCanvas();
+        
+        await Share.share({
+          title: '我的早安圖',
+          text: '分享自製早安圖',
+          url: base64Data, 
+          dialogTitle: '分享或儲存早安圖'
+        });
+        closeExportModal();
+        return;
+      }
+    }
+    */
+    
+    // 🌐 一般網頁瀏覽器版 (PWA) 分享與下載機制
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, mimeType, 0.95));
+    
+    activeLayerId = originalActiveId;
+    isCropping = originalIsCropping;
+    drawCanvas();
+    
+    if (!blob) throw new Error("畫布輸出成影像 Blob 失敗");
+    
+    // 讀取自訂輸入框的檔名，若使用者清空，則自動 fallback 為預設檔名
+    const customName = document.getElementById('exportFileNameInput').value.trim() || `${uploadedFileName}-goodmorning`;
+    const fileName = `${customName}.${fmt}`;
+    const file = new File([blob], fileName, { type: mimeType });
+
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: '我的早安圖',
+        text: '分享自製早安圖'
+      });
+      hasUnsavedChanges = false;
+      closeExportModal();
+    } else {
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = fileName;
+      link.href = downloadUrl;
+      link.click();
+      
+      hasUnsavedChanges = false;
+      alert('您的設備不支援系統直接上傳。已先自動下載檔案，隨即為您開啟「Google 相簿」網頁，方便您直接上傳或拖曳！');
+      window.open('https://photos.google.com/', '_blank');
+      closeExportModal();
+      
+      setTimeout(() => URL.revokeObjectURL(downloadUrl), 5000);
+    }
+  } catch (err) {
+    console.error("雲端/分享儲存失敗:", err);
+    handleSaveToLocal();
+  }
+}
+</script>
+</body>
+</html>
