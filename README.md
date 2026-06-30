@@ -16,8 +16,7 @@
 =======
 開放字型庫：感謝 Google Fonts 託管與分發之思源黑體/明體、粉圓體、芫荽體、霞鶩文楷，以及多款日系手寫字體與藝術英文字型。這些字體均遵循 SIL Open Font License 1.1 或 Apache License 2.0 授權釋出。
 Web API 與本地儲存：字型本機永久儲存技術由 W3C IndexedDB 標準支援；離線與快取技術則採用 Service Worker 與 Web App Manifest 實現。
-🔒 系統內建與專有字型聲明 (Proprietary):
-
+🔒 系統內建與專有字型聲明 (Proprietary)
 為確保平台無縫運作與字體未載入時的退路，本工具亦宣告呼叫部分系統內建字型：
 
 微軟正黑體 (Microsoft JhengHei)：版權屬於 Microsoft Corporation 所有。
