@@ -975,6 +975,15 @@
     </div>
 
     <div class="panel-section">
+      <div class="section-title">日期函數</div>
+      <div class="toggle-row">
+        <span class="toggle-label" style="font-size:12px; font-weight:500;">啟用 {TODAY()} 日期函數</span>
+        <div class="toggle on" id="toggleTodayFunction" onclick="toggleTodayFunctionFeature()"></div>
+      </div>
+      <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">在文字內容輸入 {TODAY()} 會自動替换為今天的日期 (YYYY/MM/DD)</p>
+    </div>
+
+    <div class="panel-section">
       <div class="section-title">實驗性操作設定</div>
       <div class="toggle-row">
         <span class="toggle-label" style="font-size:12px; font-weight:500;">啟用自適應文字比例</span>
@@ -1181,7 +1190,7 @@
 <div id="aboutPage" class="modal-overlay">
   <div class="modal-box" style="text-align: left; max-width: 480px; font-size: 12px;">
     <h3 class="modal-title" style="text-align: center; font-size: 18px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
-    <p id="appVersion" data-version="v1.19" style="text-align: center; font-size: 11px; color: var(--gold); margin-bottom: 16px; font-weight: bold;">版本 v1.19 </p>
+    <p id="appVersion" data-version="v1.21" style="text-align: center; font-size: 11px; color: var(--gold); margin-bottom: 16px; font-weight: bold;">版本 v1.19 </p>
     
     <div style="font-size: 12px; color: var(--text); line-height: 1.5; display: flex; flex-direction: column; gap: 10px;">
       <p>這款工具可直接在網頁上使用，也能安裝成 PWA 離線使用，即可攜帶、免安裝的問候圖與祝福卡片設計工具，陪伴您傳遞每日的關懷與溫暖。</p>
@@ -2764,6 +2773,16 @@ function isDarkMode() {
 function updateDefaultNewText(val) {
   defaultNewTextValue = val;
   localStorage.setItem('gm_default_new_text_value', val);
+}
+
+function resolveTextVariables(text) {
+  if (!enableTodayFunction) return text;
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const dateStr = `${yyyy}/${mm}/${dd}`;
+  return text.replace(/\{TODAY\(\)\}/g, dateStr);
 }
 
 /* ─────────────── 確保圖層字體就緒 ─────────────── */
