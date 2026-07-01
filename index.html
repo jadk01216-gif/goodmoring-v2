@@ -1157,7 +1157,11 @@
     <div class="panel-section">
       <div class="section-title">手機友善編輯</div>
       <div class="toggle-row">
+<<<<<<< HEAD
         <span class="toggle-label" style="font-size:12px; font-weight:500;">📱 啟用手機友善編輯模式（Google 相簿風）</span>
+=======
+        <span class="toggle-label" style="font-size:12px; font-weight:500;">📱 啟用手機友善編輯模式（Google Photos風）</span>
+>>>>>>> main
         <div class="toggle" id="toggleMobileEditingMode" onclick="toggleMobileEditingModeFeature()"></div>
       </div>
       <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">開啟後會在畫布下方顯示大按鈕工具列，讓新增文字、裁切與快速編輯更適合手機單手操作。</p>
@@ -1233,7 +1237,7 @@
     </div>
 
     <div class="modal-options">
-      <button onclick="handleSaveToCloud()" class="modal-btn-primary">📸 使用裝置分享 (可分享至 Google 相簿 / LINE / IG)</button>
+      <button onclick="handleSaveToCloud()" class="modal-btn-primary">📸 使用裝置分享 (可分享至 Google photos / LINE / IG)</button>
       <button onclick="handleSaveToLocal()" class="modal-btn-secondary">📁 直接下載到本機「下載」資料夾</button>
     </div>
     <span onclick="closeExportModal()" class="modal-close-link">關閉取消</span>
@@ -5246,7 +5250,7 @@ async function handleSaveToCloud() {
       link.click();
       
       hasUnsavedChanges = false;
-      alert('您的設備不支援系統直接上傳。已先自動下載檔案，隨即為您開啟「Google 相簿」網頁，方便您直接上傳或拖曳！');
+      alert('您的設備不支援系統直接上傳。已先自動下載檔案，隨即為您開啟「Google Photos」網頁，方便您直接上傳或拖曳！');
       window.open('https://photos.google.com/', '_blank');
       closeExportModal();
       
