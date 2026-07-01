@@ -9,6 +9,8 @@
 <meta name="theme-color" content="#d4891a">
 <!-- 引入 marked.js 用於解析 Markdown -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<!-- 引入 JSZip 用於打包與讀取 .gm 專案檔案 -->
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <!-- 網站 SVG Favicon 🌅 -->
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌅</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -837,7 +839,9 @@
       <h2 class="welcome-title">歡迎請上傳圖片</h2>
       <p class="welcome-subtitle">請上傳您的圖片以開啟編輯與排版功能</p>
       <button onclick="document.getElementById('imageUploadWelcome').click()" class="welcome-btn">立即上傳圖片</button>
+      <button onclick="document.getElementById('projectUploadWelcome').click()" class="welcome-btn" style="margin-top:12px; background: var(--surface2); color: var(--text);">📁 載入已儲存專案 (.gm)</button>
       <input type="file" id="imageUploadWelcome" accept="image/*" style="display:none">
+      <input type="file" id="projectUploadWelcome" accept=".gm" style="display:none">
     </div>
   </div>
 
@@ -888,6 +892,15 @@
         <div style="font-size:24px; margin-bottom:5px;">🖼️</div>
         <p id="uploadAreaText" style="font-size:12px; color:var(--text-muted);">點擊上傳圖片</p>
       </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title">專案存檔</div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button onclick="openProjectExportDialog()" class="theme-btn" style="flex:1; min-width:120px;">⬇️ 匯出專案 (.gm)</button>
+        <button onclick="document.getElementById('projectFileInput').click()" class="theme-btn" style="flex:1; min-width:120px;">⬆️ 匯入專案 (.gm)</button>
+      </div>
+      <input type="file" id="projectFileInput" accept=".gm" style="display:none">
     </div>
 
     <div class="panel-section">
@@ -1168,7 +1181,7 @@
 <div id="aboutPage" class="modal-overlay">
   <div class="modal-box" style="text-align: left; max-width: 480px; font-size: 12px;">
     <h3 class="modal-title" style="text-align: center; font-size: 18px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
-    <p id="appVersion" data-version="v1.17" style="text-align: center; font-size: 11px; color: var(--gold); margin-bottom: 16px; font-weight: bold;">版本 v1.17 </p>
+    <p id="appVersion" data-version="v1.18" style="text-align: center; font-size: 11px; color: var(--gold); margin-bottom: 16px; font-weight: bold;">版本 v1.18 </p>
     
     <div style="font-size: 12px; color: var(--text); line-height: 1.5; display: flex; flex-direction: column; gap: 10px;">
       <p>這款工具可直接在網頁上使用，也能安裝成 PWA 離線使用。即可攜帶、免安裝的問候圖與祝福卡片設計工具，陪伴您傳遞每日的關懷與溫暖。</p>
@@ -2254,8 +2267,147 @@ function saveSettings() {
 
 /* ─────────────── 圖片上傳控制 ─────────────── */
 document.getElementById('imageUploadWelcome').onchange = e => handleBackgroundUpload(e);
+document.getElementById('projectUploadWelcome').onchange = e => handleProjectFileUpload(e);
 document.getElementById('imageUpload').onchange = e => handleBackgroundUpload(e);
+document.getElementById('projectFileInput').onchange = e => handleProjectFileUpload(e);
 document.getElementById('uploadArea').onclick = () => document.getElementById('imageUpload').click();
+
+function handleProjectFileUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  importProjectFile(file);
+  e.target.value = "";
+}
+
+async function importProjectFile(file) {
+  if (!file) return;
+  const extension = file.name.split('.').pop().toLowerCase();
+  if (extension !== 'gm' && extension !== 'zip') {
+    alert('請選擇 .gm 專案檔案');
+    return;
+  }
+
+  showToast('正在載入專案，請稍候...');
+  try {
+    const zip = await JSZip.loadAsync(file);
+    const projectFile = zip.file('project.json');
+    if (!projectFile) {
+      alert('專案檔案格式不正確，找不到 project.json');
+      return;
+    }
+
+    const jsonText = await projectFile.async('string');
+    const projectState = JSON.parse(jsonText);
+    const bgEntry = zip.file('background.png');
+
+    const loadProject = async () => {
+      layers = Array.isArray(projectState.layers) ? projectState.layers : [];
+      canvas.width = projectState.canvasWidth || canvas.width;
+      canvas.height = projectState.canvasHeight || canvas.height;
+      layerCounter = layers.reduce((max, item) => Math.max(max, item.id || 0), 0);
+      activeLayerId = layers.length ? layers[layers.length - 1].id : null;
+      uploadedFileName = projectState.uploadedFileName || 'goodmorning';
+
+      const uploadText = document.getElementById('uploadAreaText');
+      if (uploadText) {
+        uploadText.textContent = '點擊重新上傳圖片';
+      }
+
+      const ws = document.getElementById('workspace');
+      if (ws) {
+        ws.classList.remove('not-started');
+        ws.classList.add('started');
+      }
+      const hint = document.getElementById('canvasHint');
+      if (hint) {
+        hint.style.display = 'flex';
+      }
+
+      renderLayersList();
+      await ensureLayerFontsReady();
+      drawCanvas();
+      saveSettings();
+      updateHistoryButtons();
+      updateExportButtonsState();
+      hasUnsavedChanges = false;
+      showToast('已成功載入 .gm 專案！');
+    };
+
+    if (bgEntry) {
+      const blob = await bgEntry.async('blob');
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(blob);
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        bgImage = img;
+        loadProject();
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        alert('載入專案背景圖失敗。');
+      };
+      img.src = objectUrl;
+    } else {
+      bgImage = null;
+      await loadProject();
+    }
+  } catch (error) {
+    console.error(error);
+    alert('載入專案失敗，請確認檔案格式是否正確。');
+  }
+}
+
+async function downloadProjectFile(customName = null) {
+  if (!bgImage && layers.length === 0) {
+    showToast('請先建立專案再匯出 .gm');
+    return;
+  }
+
+  const defaultName = uploadedFileName ? uploadedFileName.replace(/[\\/:*?"<>|]+/g, '_') : 'goodmorning';
+  const projectName = customName ? customName : `${defaultName}-goodmorning`;
+  const zip = new JSZip();
+  const projectState = {
+    version: 1,
+    canvasWidth: canvas.width,
+    canvasHeight: canvas.height,
+    layers,
+    uploadedFileName
+  };
+
+  zip.file('project.json', JSON.stringify(projectState, null, 2));
+  if (bgImage) {
+    const blob = await getBackgroundImageBlob();
+    if (blob) {
+      zip.file('background.png', blob);
+    }
+  }
+
+  const content = await zip.generateAsync({ type: 'blob' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(content);
+  link.download = `${projectName}.gm`;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+  hasUnsavedChanges = false;
+  showToast('.gm 專案已匯出');
+}
+
+function getBackgroundImageBlob() {
+  return new Promise((resolve) => {
+    if (!bgImage) {
+      resolve(null);
+      return;
+    }
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = bgImage.width;
+    tempCanvas.height = bgImage.height;
+    const tempCtx = tempCanvas.getContext('2d');
+    tempCtx.drawImage(bgImage, 0, 0);
+    tempCanvas.toBlob(blob => {
+      resolve(blob);
+    }, 'image/png');
+  });
+}
 
 function handleBackgroundUpload(e) {
   const file = e.target.files[0];
@@ -4183,6 +4335,7 @@ function closeCropMenu() {
 
 /* ─────────────── Export ─────────────── */
 let currentExportFormat = 'png';
+let currentExportType = 'image'; // 'image' or 'project'
 
 function exportImage(fmt) {
   // 防呆機制：若未上傳圖片，則不執行匯出
@@ -4191,6 +4344,7 @@ function exportImage(fmt) {
     return;
   }
   
+  currentExportType = 'image';
   currentExportFormat = fmt;
   
   // 自動填入預設檔名：[原圖片名稱]-goodmorning
@@ -4199,11 +4353,43 @@ function exportImage(fmt) {
     fileNameInput.value = `${uploadedFileName}-goodmorning`;
   }
   
+  updateExportModalMode();
+  document.getElementById('exportModal').classList.add('active');
+}
+
+function openProjectExportDialog() {
+  if (!bgImage && layers.length === 0) {
+    showToast('請先建立專案再匯出 .gm');
+    return;
+  }
+
+  currentExportType = 'project';
+  currentExportFormat = 'gm';
+  const fileNameInput = document.getElementById('exportFileNameInput');
+  if (fileNameInput) {
+    fileNameInput.value = `${uploadedFileName}-goodmorning`;
+  }
+  updateExportModalMode();
   document.getElementById('exportModal').classList.add('active');
 }
 
 function closeExportModal() {
   document.getElementById('exportModal').classList.remove('active');
+}
+
+function updateExportModalMode() {
+  const shareBtn = document.querySelector('#exportModal .modal-btn-primary');
+  const localBtn = document.querySelector('#exportModal .modal-btn-secondary');
+  const subtitle = document.querySelector('#exportModal .modal-subtitle');
+  if (currentExportType === 'project') {
+    if (shareBtn) shareBtn.style.display = 'none';
+    if (localBtn) localBtn.textContent = '📁 直接下載專案 (.gm)';
+    if (subtitle) subtitle.textContent = '匯出專案檔案 (.gm)，下次即可直接載入編輯。';
+  } else {
+    if (shareBtn) shareBtn.style.display = 'block';
+    if (localBtn) localBtn.textContent = '📁 直接下載到本機「下載」資料夾';
+    if (subtitle) subtitle.textContent = '系統已準備好您的早安圖！';
+  }
 }
 
 // 🔄 回復所有設定與編輯狀態至初始值
@@ -4314,6 +4500,13 @@ function resetAllToDefault() {
 }
 
 function handleSaveToLocal() {
+  if (currentExportType === 'project') {
+    const customName = document.getElementById('exportFileNameInput').value.trim() || `${uploadedFileName}-goodmorning`;
+    downloadProjectFile(customName);
+    closeExportModal();
+    return;
+  }
+
   const fmt = currentExportFormat;
   const link = document.createElement('a');
   
@@ -4340,6 +4533,11 @@ function handleSaveToLocal() {
 }
 
 async function handleSaveToCloud() {
+  if (currentExportType === 'project') {
+    handleSaveToLocal();
+    return;
+  }
+
   const fmt = currentExportFormat;
   const mimeType = `image/${fmt === 'jpg' || fmt === 'jpeg' ? 'jpeg' : fmt}`;
   
