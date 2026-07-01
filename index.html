@@ -487,7 +487,7 @@
     inset: 0;
     background: var(--modal-overlay-bg);
     backdrop-filter: blur(8px);
-    z-index: 1000;
+    z-index: 2200;
     display: none;
     align-items: center;
     justify-content: center;
@@ -1011,7 +1011,7 @@
         <div style="display:flex; gap:8px; align-items:center;">
           <button class="mobile-edit-btn" id="mobileCursorBtn" onclick="toggleCursorMode()" title="游標模式">⌨️</button>
           <button class="mobile-edit-btn primary" id="mobileEditTextBtn" onclick="openQuickEditTextOnlyForSelection()" title="編輯文字">✏️</button>
-          <button class="mobile-edit-btn" id="mobileFontBtn" onclick="openMobileFontPanel(); closeMobileMoreMenu();" title="更換字體">🔤</button>
+          <button class="mobile-edit-btn" id="mobileFontBtn" onclick="showFontModal(); closeMobileMoreMenu();" title="更換字體">🔤</button>
           <button class="mobile-edit-btn" id="mobileExitModeBtn" onclick="exitMobileMode()" title="離開手機模式">⤴️</button>
           <button class="mobile-edit-btn" onclick="toggleMobileMoreMenu()" title="更多">☰</button>
         </div>
@@ -1246,7 +1246,7 @@
     <input type="range" id="qeSize" min="10" max="500" style="margin-bottom:10px;">
     
     <!-- 快速編輯調色盤按鈕組 -->
-    <div class="row-2" style="margin-bottom:15px; margin-top:10px;">
+    <div id="qeColorRow" class="row-2" style="margin-bottom:15px; margin-top:10px;">
       <div onclick="openColorPaletteModal('quickedit', 'color')" style="cursor:pointer; background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 8px; border-radius: 8px; display: flex; align-items: center; gap: 8px; transition: border-color 0.2s;" onmouseenter="this.style.borderColor='var(--gold)'" onmouseleave="this.style.borderColor='var(--border)'">
         <div id="qeColorIndicator" style="width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.25); background: #ffffff; flex-shrink:0;"></div>
         <div style="overflow:hidden;">
@@ -1265,12 +1265,12 @@
     <input type="hidden" id="qeColor" value="#ffffff">
     <input type="hidden" id="qeStrokeColor" value="#000000">
     
-    <div class="toggle-row" style="margin-bottom:6px;">
+    <div id="qeStrokeRow" class="toggle-row" style="margin-bottom:6px;">
       <span class="toggle-label">顯示描邊</span>
       <div class="toggle" id="qeStroke"></div>
     </div>
     
-    <div class="toggle-row" style="margin-bottom:12px;">
+    <div id="qeShadowRow" class="toggle-row" style="margin-bottom:12px;">
       <span class="toggle-label">文字陰影</span>
       <div class="toggle" id="qeShadow"></div>
     </div>
@@ -1278,6 +1278,19 @@
     <div class="row-2" style="margin-top: 15px;">
       <button class="modal-btn-secondary" onclick="closeQuickEdit()" style="padding:10px;">取消</button>
       <button class="modal-btn-primary" onclick="applyQuickEdit()" style="padding:10px;">確定套用</button>
+    </div>
+  </div>
+</div>
+
+<!-- 字型選擇彈窗（行動端專用） -->
+<div id="fontModal" class="modal-overlay">
+  <div class="modal-box" style="max-width:360px; padding:20px;">
+    <h3 class="modal-title">🔤 選擇字型</h3>
+    <p style="margin:6px 0 12px 0; color:var(--text-muted); font-size:13px;">選擇字型會套用到目前選取的圖層。</p>
+    <select id="fontSelectModal" style="width:100%; margin-bottom:12px;"></select>
+    <div style="display:flex; gap:8px; justify-content:flex-end;">
+      <button class="modal-btn-secondary" onclick="closeFontModal()">取消</button>
+      <button class="modal-btn-primary" onclick="applyFontFromModal()">套用</button>
     </div>
   </div>
 </div>
@@ -3780,7 +3793,12 @@ function openQuickEditTextOnlyForSelection() {
 }
 
 function openMobileFontPanel() {
-  showToast('請在側邊欄的字型選單中更換字體');
+  const modal = document.getElementById('fontModal');
+  if (!modal) {
+    showToast('字型彈窗尚未初始化，請重新整理頁面');
+    return;
+  }
+  showFontModal();
 }
 
 function openQuickEdit(layer, mode = 'full') {
@@ -3810,25 +3828,21 @@ function openQuickEdit(layer, mode = 'full') {
   if (strokeToggle) strokeToggle.classList.toggle('on', !!layer.stroke);
   if (shadowToggle) shadowToggle.classList.toggle('on', !!layer.shadow);
 
-  // 若是文字專用模式，停用非文字編輯控制項（不可編輯）
+  // 若是文字專用模式，完全隱藏非文字控制項（保留取消/確定按鈕）
   const isTextOnly = quickEditMode === 'text-only';
   try {
-    const elementsToDisable = ['qeFont','qeSize','qeColor','qeStrokeColor','qeStroke','qeShadow'];
-    elementsToDisable.forEach(id => {
-      const el = document.getElementById(id);
+    const elsToToggle = [
+      document.getElementById('qeFont'),
+      document.getElementById('qeSize'),
+      document.getElementById('qeSizeLabel'),
+      document.getElementById('qeColorRow'),
+      document.getElementById('qeStrokeRow'),
+      document.getElementById('qeShadowRow')
+    ];
+    elsToToggle.forEach(el => {
       if (!el) return;
-      if (el.tagName && el.tagName.toLowerCase() === 'select' || el.tagName.toLowerCase() === 'input') {
-        el.disabled = isTextOnly;
-        el.style.opacity = isTextOnly ? '0.6' : '';
-      } else {
-        // toggles and other divs
-        el.style.pointerEvents = isTextOnly ? 'none' : '';
-        el.style.opacity = isTextOnly ? '0.6' : '';
-      }
+      el.style.display = isTextOnly ? 'none' : '';
     });
-    // 顏色按鈕容器
-    const colorContainers = document.querySelectorAll('#quickEditModal .row-2');
-    colorContainers.forEach(c => { c.style.pointerEvents = isTextOnly ? 'none' : ''; c.style.opacity = isTextOnly ? '0.6' : ''; });
   } catch (e) {}
 
   document.getElementById('quickEditModal').classList.add('active');
@@ -3837,6 +3851,40 @@ function openQuickEdit(layer, mode = 'full') {
 function closeQuickEdit() {
   document.getElementById('quickEditModal').classList.remove('active');
   quickEditLayerId = null;
+}
+
+function showFontModal() {
+  const sel = document.getElementById('fontSelectModal');
+  const modal = document.getElementById('fontModal');
+  if (!sel || !modal) {
+    showToast('字型彈窗未正確載入，請重新整理頁面');
+    return;
+  }
+  const fonts = getFontsList();
+  sel.innerHTML = fonts.map(f => `<option value="${f.value}">${f.label}</option>`).join('');
+  modal.classList.add('active');
+}
+
+function closeFontModal() {
+  const modal = document.getElementById('fontModal');
+  if (!modal) return;
+  modal.classList.remove('active');
+}
+
+function applyFontFromModal() {
+  const sel = document.getElementById('fontSelectModal');
+  if (!sel) return closeFontModal();
+  const value = sel.value;
+  // apply to active selection or quickEditLayerId
+  const id = activeLayerId || quickEditLayerId;
+  if (!id) { showToast('請先選取一個圖層'); closeFontModal(); return; }
+  const l = layers.find(x => x.id === id);
+  if (!l) { showToast('找不到選取圖層'); closeFontModal(); return; }
+  pushToUndo();
+  l.font = value;
+  saveSettings(); drawCanvas(); renderLayersList(); updateHistoryButtons();
+  showToast('字型已套用');
+  closeFontModal();
 }
 
 function openInlineTextEditor(layer, clickPos = null) {
