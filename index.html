@@ -1218,6 +1218,14 @@
     </div>
 
     <div class="panel-section">
+      <div class="section-title">拖曳觸控範圍</div>
+      <label class="field-label" style="margin-top:0;" id="grabPaddingLabel">抓取範圍（25px）</label>
+      <input type="range" id="grabPaddingSlider" min="10" max="80" step="1" value="25"
+        oninput="grabPadding=+this.value; localStorage.setItem('gm_grab_padding', this.value); document.getElementById('grabPaddingLabel').textContent='抓取範圍（'+this.value+'px）'; document.getElementById('selBoxPreview').style.inset=this.value+'px'; drawCanvas();">
+      <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">調整手機/觸控拖曳文字圖層時，手指容易抓到的範圍大小</p>
+    </div>
+
+    <div class="panel-section">
       <div class="section-title">匯出儲存</div>
       <div class="dl-row">
         <button class="dl-btn png" onclick="exportImage('png')">PNG</button>
@@ -1409,7 +1417,7 @@
 <div id="aboutPage" class="modal-overlay">
   <div class="modal-box" style="text-align: left; max-width: 480px; font-size: 12px;">
     <h3 class="modal-title" style="text-align: center; font-size: 18px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
-    <p id="appVersion" data-version="v1.22" style="text-align: center; font-size: 11px; color: var(--gold); margin-bottom: 16px; font-weight: bold;">版本 v1.22 </p>
+    <p id="appVersion" data-version="v1.23" style="text-align: center; font-size: 11px; color: var(--gold); margin-bottom: 16px; font-weight: bold;">版本 v1.23 </p>
     
     <div style="font-size: 12px; color: var(--text); line-height: 1.5; display: flex; flex-direction: column; gap: 10px;">
       <p>這款工具可直接在網頁上使用，也能安裝成 PWA 離線使用，即可攜帶、免安裝的問候圖與祝福卡片設計工具，陪伴您傳遞每日的關懷與溫暖。</p>
@@ -1537,6 +1545,9 @@ let lastTapTime = 0;
 
 // 選取框線粗細 
 let selectionBoxWidth = 3.5;
+
+// 拖曳觸控範圍粗細（影響 checkHit 的觸控命中區域與 getLayerBoundingBox 的外框大小）
+let grabPadding = 25;
 
 // 字體就緒旗標
 let fontsReady = false;
@@ -2134,6 +2145,15 @@ window.onload = async () => {
     if (label) label.textContent = `框線粗細（${selectionBoxWidth}px）`;
     const preview = document.getElementById('selBoxPreview');
     if (preview) preview.style.borderWidth = `${selectionBoxWidth}px`;
+  }
+
+  const savedGrabPadding = localStorage.getItem('gm_grab_padding');
+  if (savedGrabPadding) {
+    grabPadding = parseInt(savedGrabPadding, 10);
+    const gpSlider = document.getElementById('grabPaddingSlider');
+    if (gpSlider) gpSlider.value = grabPadding;
+    const gpLabel = document.getElementById('grabPaddingLabel');
+    if (gpLabel) gpLabel.textContent = `抓取範圍（${grabPadding}px）`;
   }
 
   const savedStyles = localStorage.getItem('gm_last_used_styles');
@@ -4358,10 +4378,10 @@ function getLayerBoundingBox(l) {
   const rectX = l.x - maxW / 2;
   
   return {
-    x: rectX - 15,
-    y: rectY - 15,
-    w: maxW + 30,
-    h: totalH + 30
+    x: rectX - grabPadding,
+    y: rectY - grabPadding,
+    w: maxW + grabPadding * 2,
+    h: totalH + grabPadding * 2
   };
 }
 
@@ -4513,7 +4533,7 @@ function checkHit(pos) {
     const maxY = minY + h;
     
     const scale = getCanvasScale();
-    const pad = Math.max(25, 12 * scale); 
+    const pad = Math.max(grabPadding, 12 * scale); 
     return pos.x >= minX - pad && pos.x <= maxX + pad && pos.y >= minY - pad && pos.y <= maxY + pad;
   });
 }
@@ -5058,6 +5078,7 @@ function resetAllToDefault() {
   localStorage.removeItem('gm_enable_default_new_text');
   localStorage.removeItem('gm_default_new_text_value');
   localStorage.removeItem('gm_selection_box_width');
+  localStorage.removeItem('gm_grab_padding');
   localStorage.removeItem('gm_enable_pinch_zoom');
   localStorage.removeItem('gm_enable_today_function');
   
@@ -5084,6 +5105,7 @@ function resetAllToDefault() {
   currentZoom = 1;
   zoomMode = 'view';
   selectionBoxWidth = 3.5;
+  grabPadding = 25;
   undoStack = [];
   redoStack = [];
   hasUnsavedChanges = false;
@@ -5098,6 +5120,11 @@ function resetAllToDefault() {
   if (label) label.textContent = '框線粗細（3.5px）';
   const preview = document.getElementById('selBoxPreview');
   if (preview) preview.style.borderWidth = '3.5px';
+  
+  const gpSlider = document.getElementById('grabPaddingSlider');
+  if (gpSlider) gpSlider.value = 25;
+  const gpLabel = document.getElementById('grabPaddingLabel');
+  if (gpLabel) gpLabel.textContent = '抓取範圍（25px）';
   
   // 4. 重置功能開關 UI 狀態
   const toggleEng = document.getElementById('toggleEnableEnglishFonts');
