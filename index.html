@@ -790,6 +790,53 @@
   .canvas-wrap.pinch-zoom-active {
     cursor: zoom-in;
   }
+
+  .guide-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.72);
+    z-index: 1300;
+    backdrop-filter: blur(2px);
+  }
+
+  .guide-spotlight {
+    display: none;
+    position: fixed;
+    z-index: 1350;
+    border: 2px solid var(--gold);
+    border-radius: 14px;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.72), inset 0 0 0 2px rgba(245, 166, 35, 0.25);
+    pointer-events: none;
+  }
+
+  .guide-tooltip {
+    display: none;
+    position: fixed;
+    z-index: 1400;
+    max-width: 320px;
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 14px 12px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.32);
+  }
+
+  .guide-tooltip strong {
+    color: var(--gold);
+  }
+
+  .guide-tooltip .guide-tip-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 6px;
+  }
+
   /* 在左右排版的電腦版介面上隱藏分割條 */
   @media (min-width: 1024px) {
     .drag-splitter {
@@ -830,6 +877,9 @@
 
 <div id="toastNotification"></div>
 <div id="pinchZoomIndicator"></div>
+<div id="guideOverlay" class="guide-overlay"></div>
+<div id="guideSpotlight" class="guide-spotlight"></div>
+<div id="guideTooltip" class="guide-tooltip"></div>
 
 <div class="workspace not-started" id="workspace">
   
@@ -1166,13 +1216,34 @@
       <button onclick="openChangelogManual()" style="width: 100%; text-align: center; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s;">📋 更新日誌</button>
     </div>
 
-    <!-- 5. 回復初始設定 -->
+    <!-- 6. 導覽 -->
+    <div style="margin-bottom: 12px;">
+      <button onclick="openGuideModal(); closeMoreSettings();" style="width: 100%; text-align: center; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s;">🧭 導覽</button>
+    </div>
+
+    <!-- 7. 回復初始設定 -->
     <div style="margin-bottom: 24px;">
       <button onclick="resetAllToDefault(); closeMoreSettings();" style="width: 100%; text-align: center; background: rgba(255, 77, 79, 0.1); border: 1px solid rgba(255, 77, 79, 0.3); border-radius: 8px; color: #ff4d4f; padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s;">🔄 回復初始設定</button>
     </div>
 
     <div class="row-2">
       <button class="modal-btn-primary" onclick="closeMoreSettings()" style="padding:12px; width: 100%; grid-column: span 2;">確定並返回</button>
+    </div>
+  </div>
+</div>
+
+<!-- 🧭 首次使用導覽彈窗 -->
+<div id="guideModal" class="modal-overlay">
+  <div class="modal-box" style="text-align: left; max-width: 460px; padding: 24px;">
+    <h3 class="modal-title" style="font-size: 18px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">🧭 快速導覽</h3>
+    <p id="guideModalStep" style="font-size: 12px; color: var(--gold); margin-bottom: 10px; font-weight: 700;">步驟 1 / 3</p>
+    <h4 id="guideModalTitle" style="font-size: 16px; margin-bottom: 8px; color: var(--text);">歡迎使用早安圖製作工具</h4>
+    <div id="guideModalBody" style="font-size: 13px; color: var(--text); line-height: 1.6; margin-bottom: 20px;"></div>
+    <div class="row-2" style="gap: 10px;">
+      <button id="guideModalPrevBtn" class="modal-btn-secondary" onclick="previousGuideStep()" style="padding:10px; display:none;">上一步</button>
+      <button id="guideModalActionBtn" class="modal-btn-secondary" onclick="runGuideAction()" style="padding:10px; display:none;">操作示範</button>
+      <button id="guideModalSkipBtn" class="modal-btn-secondary" onclick="closeGuideModal(true)" style="padding:10px;">略過</button>
+      <button id="guideModalNextBtn" class="modal-btn-primary" onclick="startGuideTour()" style="padding:10px;">開始導覽</button>
     </div>
   </div>
 </div>
@@ -1550,9 +1621,242 @@ function checkVersionUpdate() {
 /* ─────────────── 更多設定視窗控制 ─────────────── */
 function openMoreSettings() {
   document.getElementById('moreSettingsModal').classList.add('active');
+  if (guideTourActive && guideCurrentStep === 6) {
+    setTimeout(() => {
+      closeGuideModal(true);
+    }, 220);
+  }
 }
 function closeMoreSettings() {
   document.getElementById('moreSettingsModal').classList.remove('active');
+}
+
+/* ─────────────── 首次使用導覽控制 ─────────────── */
+let guideCurrentStep = 0;
+let guideTourActive = false;
+const guideSteps = [
+  {
+    id: 'welcome',
+    title: '歡迎使用早安圖製作工具',
+    body: '<p>這次導覽會帶您快速走一遍最常用的流程，包含上傳圖片、加入文字、拖曳與匯出。之後也可以隨時從「更多」中的「導覽」再次開啟。</p><ul style="margin: 8px 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 6px;"><li>先上傳一張圖片作為底圖</li><li>點擊畫布加入文字與圖層</li><li>完成後即可匯出成漂亮的祝福圖</li></ul>'
+  },
+  {
+    id: 'upload',
+    title: '第一步：上傳圖片',
+    body: '<p>先把想要製作的圖片載入進來，接下來才能開始排版與加字。</p><p><strong>提示：</strong>這個步驟也支援直接從歡迎畫面點擊上傳按鈕，或是使用側邊欄的圖片上傳區。</p>',
+    targetSelector: '#imageUploadWelcome',
+    actionLabel: '前往上傳圖片'
+  },
+  {
+    id: 'addText',
+    title: '第二步：新增文字',
+    body: '<p>圖片準備好後，點擊這個按鈕就能進入「新增文字」模式，接著在畫布上任意位置點一下即可放入文字。</p>',
+    targetSelector: '#addLayerBtn',
+    actionLabel: '切換新增文字'
+  },
+  {
+    id: 'placeText',
+    title: '第三步：把文字放到畫布上',
+    body: '<p>現在請在畫布上點一下，系統會建立一個新的文字圖層。您也可以直接在畫布上打字或重新調整位置。</p>',
+    targetSelector: '#canvas'
+  },
+  {
+    id: 'moveText',
+    title: '第四步：拖曳與調整',
+    body: '<p>點選已建立的文字後，就能直接拖曳移動；側邊欄會同步顯示圖層，您也可以在那裡調整樣式與順序。</p>',
+    targetSelector: '#layersList'
+  },
+  {
+    id: 'export',
+    title: '第五步：匯出作品',
+    body: '<p>完成編輯後，可從上方的匯出按鈕選擇 PNG、JPG 或 WebP 進行輸出。</p>',
+    targetSelector: '#headerExportBtn',
+    actionLabel: '開啟匯出選單'
+  },
+  {
+    id: 'more',
+    title: '第六步：隨時重新開啟導覽',
+    body: '<p>如果之後想再次查看這份說明，請在「更多」選單中點選「導覽」。這樣即使您已經熟悉操作，也能快速回來複習。</p>',
+    targetSelector: 'button[title="設定"]',
+    actionLabel: '開啟更多設定'
+  }
+];
+
+function getGuideTargetSelector(step) {
+  if (!step) return null;
+  if (step.id === 'addText' && !bgImage) return '#imageUploadWelcome';
+  if (step.id === 'addText') return '#addLayerBtn';
+  if (step.id === 'upload' && bgImage) return '#uploadArea';
+  return step.targetSelector || null;
+}
+
+function updateGuideHighlight() {
+  const overlay = document.getElementById('guideOverlay');
+  const spotlight = document.getElementById('guideSpotlight');
+  const tooltip = document.getElementById('guideTooltip');
+
+  if (!guideTourActive || guideCurrentStep === 0 || !overlay || !spotlight || !tooltip) {
+    overlay && (overlay.style.display = 'none');
+    spotlight && (spotlight.style.display = 'none');
+    tooltip && (tooltip.style.display = 'none');
+    return;
+  }
+
+  const step = guideSteps[guideCurrentStep - 1];
+  const selector = getGuideTargetSelector(step);
+  const target = selector ? document.querySelector(selector) : null;
+
+  if (!target) {
+    overlay.style.display = 'block';
+    spotlight.style.display = 'none';
+    tooltip.style.display = 'none';
+    return;
+  }
+
+  const rect = target.getBoundingClientRect();
+  spotlight.style.left = `${Math.max(6, rect.left - 6)}px`;
+  spotlight.style.top = `${Math.max(6, rect.top - 6)}px`;
+  spotlight.style.width = `${rect.width + 12}px`;
+  spotlight.style.height = `${rect.height + 12}px`;
+  spotlight.style.display = 'block';
+  overlay.style.display = 'block';
+
+  tooltip.innerHTML = `<div class="guide-tip-badge">互動教學</div><strong>${step.title}</strong><div style="margin-top:6px; font-size:12px; line-height:1.5;">${step.body.replace(/<p>/g, '<p style="margin:0 0 6px;">').replace(/<ul>/g, '<ul style="margin:6px 0 0 16px; padding:0;">')}</div>`;
+  const tooltipWidth = 320;
+  const left = Math.min(window.innerWidth - tooltipWidth - 16, Math.max(16, rect.left + rect.width / 2 - tooltipWidth / 2));
+  const top = Math.max(16, rect.bottom + 14);
+  tooltip.style.left = `${left}px`;
+  tooltip.style.top = `${top}px`;
+  tooltip.style.display = 'block';
+}
+
+function renderGuideModal() {
+  const modal = document.getElementById('guideModal');
+  const stepEl = document.getElementById('guideModalStep');
+  const titleEl = document.getElementById('guideModalTitle');
+  const bodyEl = document.getElementById('guideModalBody');
+  const prevBtn = document.getElementById('guideModalPrevBtn');
+  const actionBtn = document.getElementById('guideModalActionBtn');
+  const skipBtn = document.getElementById('guideModalSkipBtn');
+  const nextBtn = document.getElementById('guideModalNextBtn');
+
+  if (!modal || !stepEl || !titleEl || !bodyEl || !prevBtn || !actionBtn || !skipBtn || !nextBtn) return;
+
+  if (guideCurrentStep === 0) {
+    const introStep = guideSteps[0];
+    stepEl.textContent = '歡迎';
+    titleEl.textContent = introStep.title;
+    bodyEl.innerHTML = introStep.body;
+    prevBtn.style.display = 'none';
+    actionBtn.style.display = 'none';
+    skipBtn.style.display = 'inline-block';
+    nextBtn.textContent = '開始導覽';
+    nextBtn.onclick = startGuideTour;
+    return;
+  }
+
+  const step = guideSteps[guideCurrentStep - 1];
+  stepEl.textContent = `步驟 ${guideCurrentStep} / ${guideSteps.length}`;
+  titleEl.textContent = step.title;
+  bodyEl.innerHTML = step.body;
+  prevBtn.style.display = guideCurrentStep > 1 ? 'inline-block' : 'none';
+  skipBtn.style.display = 'inline-block';
+
+  if (step.actionLabel) {
+    actionBtn.style.display = 'inline-block';
+    actionBtn.textContent = step.actionLabel;
+  } else {
+    actionBtn.style.display = 'none';
+  }
+
+  if (guideCurrentStep < guideSteps.length) {
+    nextBtn.textContent = '下一步';
+    nextBtn.onclick = nextGuideStep;
+  } else {
+    nextBtn.textContent = '完成';
+    nextBtn.onclick = () => closeGuideModal(true);
+  }
+
+  updateGuideHighlight();
+}
+
+function startGuideTour() {
+  guideCurrentStep = 1;
+  guideTourActive = true;
+  renderGuideModal();
+}
+
+function nextGuideStep() {
+  if (guideCurrentStep < guideSteps.length) {
+    guideCurrentStep += 1;
+    renderGuideModal();
+  } else {
+    closeGuideModal(true);
+  }
+}
+
+function previousGuideStep() {
+  if (guideCurrentStep > 1) {
+    guideCurrentStep -= 1;
+    renderGuideModal();
+  }
+}
+
+function runGuideAction() {
+  const step = guideSteps[guideCurrentStep - 1];
+  if (!step) return;
+
+  if (step.id === 'upload') {
+    const welcomeInput = document.getElementById('imageUploadWelcome');
+    const sideInput = document.getElementById('imageUpload');
+    if (welcomeInput) welcomeInput.click();
+    else if (sideInput) sideInput.click();
+  } else if (step.id === 'addText') {
+    if (!bgImage) {
+      showToast('請先上傳圖片後，再進行新增文字');
+      return;
+    }
+    onAddLayerClick();
+  } else if (step.id === 'export') {
+    toggleHeaderExportMenu();
+  } else if (step.id === 'more') {
+    openMoreSettings();
+  }
+}
+
+function openGuideModal() {
+  guideCurrentStep = 0;
+  guideTourActive = true;
+  renderGuideModal();
+  document.getElementById('guideModal').classList.add('active');
+}
+
+function closeGuideModal(markSeen = true) {
+  const modal = document.getElementById('guideModal');
+  if (modal) modal.classList.remove('active');
+  const overlay = document.getElementById('guideOverlay');
+  const spotlight = document.getElementById('guideSpotlight');
+  const tooltip = document.getElementById('guideTooltip');
+  if (overlay) overlay.style.display = 'none';
+  if (spotlight) spotlight.style.display = 'none';
+  if (tooltip) tooltip.style.display = 'none';
+  guideTourActive = false;
+  if (markSeen) localStorage.setItem('gm_has_seen_tour', 'true');
+}
+
+function showFirstTimeGuide() {
+  const hasSeenTour = localStorage.getItem('gm_has_seen_tour');
+  if (hasSeenTour === 'true') return;
+
+  const hasExistingAppState = Object.keys(localStorage).some(key => key.startsWith('gm_'));
+  if (hasExistingAppState) {
+    localStorage.setItem('gm_has_seen_tour', 'true');
+    return;
+  }
+
+  setTimeout(() => {
+    openGuideModal();
+  }, 350);
 }
 
 /* ─────────────── 現代化 Toast 提示 ─────────────── */
@@ -2020,10 +2324,6 @@ window.onload = async () => {
   await loadCustomFonts();
   loadTemplates();
 
-  /* 🚫 Vercel 網頁版佈署：將 Capacitor 接收機制調用註解掉
-  checkSharedIntent();
-  */
-
   // 偵測並處理來自 PWA 分享管道的圖片
   checkPwaSharedImage();
 
@@ -2032,6 +2332,7 @@ window.onload = async () => {
   initPinchZoom();
   updateExportButtonsState();
   checkVersionUpdate();
+  showFirstTimeGuide();
 };
 
 /**
@@ -2150,6 +2451,12 @@ function toggleHeaderExportMenu() {
   if (!menu) return;
   const isVisible = menu.style.display === 'block';
   menu.style.display = isVisible ? 'none' : 'block';
+  if (guideTourActive && guideCurrentStep === 6) {
+    setTimeout(() => {
+      guideCurrentStep = 7;
+      renderGuideModal();
+    }, 120);
+  }
 }
 
 function updateExportButtonsState() {
@@ -2451,69 +2758,6 @@ function handleBackgroundUpload(e) {
   // 關鍵防呆：處理完畢後立即清除路徑紀錄，確保下次選取相同檔案時仍能正常觸發 onchange
   e.target.value = "";
 }
-
-/* 🚫 Vercel 網頁版佈署：將 Capacitor 接收外部 App 分享圖片的機制註解掉
-async function checkSharedIntent() {
-  try {
-    if (window.Capacitor && window.Capacitor.Plugins) {
-      const { SendIntent } = window.Capacitor.Plugins;
-      
-      if (SendIntent) {
-        SendIntent.addListener('appSendIntentReceived', (intent) => {
-          handleSharedIntentData(intent);
-        });
-
-        const result = await SendIntent.checkSendIntentReceived();
-        if (result) {
-          handleSharedIntentData(result);
-          if (SendIntent.finish) {
-            await SendIntent.finish();
-          }
-        }
-      }
-    }
-  } catch (err) {
-    console.error("讀取分享 Intent 失敗:", err);
-  }
-}
-
-function handleSharedIntentData(intent) {
-  if (!intent) return;
-  
-  let fileUrl = intent.url;
-  if (!fileUrl && intent.extras) {
-    fileUrl = intent.extras['android.intent.extra.STREAM'];
-  }
-  
-  if (fileUrl) {
-    const img = new Image();
-    img.onload = () => {
-      pushToUndo();
-      bgImage = img;
-      canvas.width = img.width;
-      canvas.height = img.height;
-      
-      layers = [];
-      layerCounter = 0;
-      activeLayerId = null;
-      
-      const ws = document.getElementById('workspace');
-      if (ws) {
-        ws.classList.remove('not-started');
-        ws.classList.add('started');
-      }
-      document.getElementById('canvasHint').style.display = 'flex';
-      
-      renderLayersList();
-      drawCanvas();
-      saveSettings();
-      updateHistoryButtons();
-      showToast("成功載入外部分享圖片！");
-    };
-    img.src = window.Capacitor.convertFileSrc(fileUrl);
-  }
-}
-*/
 
 /* ─────────────── 字型選單設定 ─────────────── */
 function getFontsList(currentFont = null) {
@@ -3098,6 +3342,10 @@ function onAddLayerClick() {
       headerBtn.style.color = '#fff';
       headerBtn.style.borderColor = 'var(--gold)';
       headerBtn.textContent = '⚡❌';
+    }
+    if (guideTourActive && guideCurrentStep === 2) {
+      guideCurrentStep = 3;
+      renderGuideModal();
     }
   } else {
     resetAddTextState();
@@ -3880,6 +4128,10 @@ function handleStart(pos) {
 
   if (isAddingTextActive) {
     addLayerAt(pos.x, pos.y);
+    if (guideTourActive && guideCurrentStep === 3) {
+      guideCurrentStep = 4;
+      renderGuideModal();
+    }
     resetAddTextState();
     return;
   }
@@ -3897,6 +4149,10 @@ function handleStart(pos) {
 
   const hit = checkHit(pos);
   if (hit) {
+    if (guideTourActive && guideCurrentStep === 4) {
+      guideCurrentStep = 5;
+      renderGuideModal();
+    }
     // 1. 按下瞬間立即啟動選取外框並準備拖曳，給予最即時的反饋
     pushToUndo(); 
     draggingLayer = { id: hit.id, ox: pos.x - hit.x, oy: pos.y - hit.y };
@@ -4548,27 +4804,6 @@ async function handleSaveToCloud() {
     isCropping = false;
     drawCanvas();
 
-    /* 🚫 Vercel 網頁版佈署：將 Capacitor 原生分享註解掉
-    if (window.Capacitor && window.Capacitor.Plugins) {
-      const { Share } = window.Capacitor.Plugins;
-      if (Share) {
-        const base64Data = canvas.toDataURL(mimeType, 0.95);
-        activeLayerId = originalActiveId;
-        isCropping = originalIsCropping;
-        drawCanvas();
-        
-        await Share.share({
-          title: '我的早安圖',
-          text: '分享自製早安圖',
-          url: base64Data, 
-          dialogTitle: '分享或儲存早安圖'
-        });
-        closeExportModal();
-        return;
-      }
-    }
-    */
-    
     // 🌐 一般網頁瀏覽器版 (PWA) 分享與下載機制
     const blob = await new Promise(resolve => canvas.toBlob(resolve, mimeType, 0.95));
     
