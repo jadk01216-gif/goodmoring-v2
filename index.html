@@ -790,16 +790,18 @@
     display: none;
     align-items: center;
     gap: 8px;
-    padding: 8px;
-    background: rgba(15, 15, 26, 0.88);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 999px;
-    box-shadow: 0 10px 28px rgba(0,0,0,0.25);
-    backdrop-filter: blur(10px);
+    padding: 8px 12px;
+    background: rgba(15, 15, 26, 0.94);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.28);
+    backdrop-filter: blur(8px);
     z-index: 70;
-    flex-wrap: wrap;
-    max-width: min(94vw, 520px);
-    justify-content: center;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    max-width: min(98vw, 720px);
+    justify-content: space-between;
   }
   .mobile-edit-toolbar .mobile-edit-btn {
     width: 42px;
@@ -811,6 +813,15 @@
     font-size: 18px;
     cursor: pointer;
     transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .mobile-edit-toolbar .mobile-edit-btn.primary {
+    width: 56px;
+    height: 56px;
+    font-size: 20px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(245,166,35,0.95), rgba(255,203,110,0.9));
+    color: #1a1a2e;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.25);
   }
   .mobile-edit-toolbar .mobile-edit-btn:hover {
     transform: translateY(-1px);
@@ -902,6 +913,24 @@
     transition: opacity .2s;
     white-space: nowrap;
   }
+  .mobile-traditional-menu {
+    position: absolute;
+    left: 50%;
+    bottom: 92px;
+    transform: translateX(-50%);
+    width: min(96vw, 520px);
+    background: var(--surface);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    z-index: 1100;
+    padding: 12px;
+    display: none;
+  }
+  .mobile-traditional-menu.active { display: block; }
+  .mobile-traditional-menu__header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .mobile-traditional-menu__close { border:none; background:var(--surface2); padding:6px 8px; border-radius:6px; cursor:pointer; }
+  .mobile-traditional-menu__content { max-height: 48vh; overflow:auto; }
   #pinchZoomIndicator.show {
     display: block;
     opacity: 1;
@@ -972,14 +1001,20 @@
         <textarea id="inlineTextInput" placeholder="直接在圖片上編輯文字…"></textarea>
       </div>
       <div id="mobileEditToolbar" class="mobile-edit-toolbar">
-        <button class="mobile-edit-btn" onclick="onAddLayerClick()" title="新增文字">✍️</button>
-        <button class="mobile-edit-btn" onclick="openQuickEditForSelection()" title="快速編輯">✨</button>
-        <button class="mobile-edit-btn" id="mobileColorBtn" onclick="openMobileColorPicker()" title="變更顏色">🎨</button>
-        <button class="mobile-edit-btn" onclick="changeSelectedLayerSize(8)" title="放大文字">＋</button>
-        <button class="mobile-edit-btn" onclick="changeSelectedLayerSize(-8)" title="縮小文字">－</button>
-        <button class="mobile-edit-btn" onclick="toggleMobileMoreMenu()" title="更多">☰</button>
-        <button class="mobile-edit-btn" onclick="undo()" title="復原">↩️</button>
-        <button class="mobile-edit-btn" onclick="redo()" title="重做">↪️</button>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button class="mobile-edit-btn" onclick="onAddLayerClick()" title="新增文字">✍️</button>
+          <button class="mobile-edit-btn" onclick="showToast('請使用右方的編輯按鈕或雙擊文字進行編輯')" title="快速編輯">✨</button>
+          <button class="mobile-edit-btn" id="mobileColorBtn" onclick="openMobileColorPicker()" title="變更顏色">🎨</button>
+          <button class="mobile-edit-btn" onclick="changeSelectedLayerSize(8)" title="放大文字">＋</button>
+          <button class="mobile-edit-btn" onclick="changeSelectedLayerSize(-8)" title="縮小文字">－</button>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button class="mobile-edit-btn" id="mobileCursorBtn" onclick="toggleCursorMode()" title="游標模式">⌨️</button>
+          <button class="mobile-edit-btn primary" id="mobileEditTextBtn" onclick="openQuickEditTextOnlyForSelection()" title="編輯文字">✏️</button>
+          <button class="mobile-edit-btn" id="mobileFontBtn" onclick="openMobileFontPanel(); closeMobileMoreMenu();" title="更換字體">🔤</button>
+          <button class="mobile-edit-btn" id="mobileExitModeBtn" onclick="exitMobileMode()" title="離開手機模式">⤴️</button>
+          <button class="mobile-edit-btn" onclick="toggleMobileMoreMenu()" title="更多">☰</button>
+        </div>
       </div>
       <div id="mobileMenuSheet" class="mobile-menu-sheet" onclick="closeMobileMoreMenu()">
         <div class="mobile-menu-sheet__content" onclick="event.stopPropagation()">
@@ -989,13 +1024,21 @@
           </div>
           <div class="mobile-menu-sheet__grid">
             <button class="mobile-menu-sheet__item" onclick="onAddLayerClick(); closeMobileMoreMenu();">✍️ 新增文字</button>
-            <button class="mobile-menu-sheet__item" onclick="openQuickEditForSelection(); closeMobileMoreMenu();">✨ 快速編輯</button>
+            <button class="mobile-menu-sheet__item" onclick="closeMobileMoreMenu(); showToast('請使用下方編輯按鈕或雙擊文字進行編輯');">✨ 快速編輯</button>
             <button class="mobile-menu-sheet__item" onclick="document.getElementById('btnEnterCrop').click(); closeMobileMoreMenu();">✂️ 裁切</button>
             <button class="mobile-menu-sheet__item" onclick="openMoreSettings(); closeMobileMoreMenu();">⚙️ 設定</button>
             <button class="mobile-menu-sheet__item" onclick="exportImage('png'); closeMobileMoreMenu();">⬇️ 匯出 PNG</button>
             <button class="mobile-menu-sheet__item" onclick="openMobileColorPicker(); closeMobileMoreMenu();">🎨 變更顏色</button>
+            <button class="mobile-menu-sheet__item" onclick="openMobileTraditionalMenu(); closeMobileMoreMenu();">📋 傳統選單</button>
           </div>
         </div>
+      </div>
+      <div id="mobileTraditionalMenu" class="mobile-traditional-menu" style="display:none;">
+        <div class="mobile-traditional-menu__header">
+          <div style="font-weight:700; color:var(--gold);">傳統選單</div>
+          <button class="mobile-traditional-menu__close" onclick="closeMobileTraditionalMenu()">✕</button>
+        </div>
+        <div id="mobileTraditionalMenuContent" class="mobile-traditional-menu__content"></div>
       </div>
       <div id="fontLoadingOverlay">
         <div class="font-spinner"></div>
@@ -1429,6 +1472,7 @@ let inlineEditLayerId = null;
 let inlineEditOffset = {x:0, y:0};
 let pendingInlineEdit = null;
 let pendingInlineEditStart = null;
+let cursorModeActive = false;
 
 // 歷史還原狀態機制 (Undo / Redo Stack)
 let undoStack = [];
@@ -1455,6 +1499,7 @@ let lastUsedStyles = { ...defaultStyles };
 
 // 彈窗編輯器狀態變數
 let quickEditLayerId = null;
+let quickEditMode = 'full';
 
 // 雙點擊時間記錄
 let lastTapTime = 0;
@@ -2745,11 +2790,11 @@ function syncMobileEditingModeUI() {
   document.body.classList.toggle('mobile-edit-mode', enableMobileEditingMode);
 
   if (enableMobileEditingMode) {
-    enableInlineTextEdit = true;
+    // 手機模式不再強制直接開啟 inline 編輯，改由工具列的編輯按鈕啟動
     if (inlineToggleEl) {
-      inlineToggleEl.classList.add('on');
-      inlineToggleEl.style.opacity = '0.7';
+      inlineToggleEl.style.opacity = '0.6';
       inlineToggleEl.style.pointerEvents = 'none';
+      inlineToggleEl.title = '在手機模式下請使用編輯按鈕進行文字編輯';
     }
     if (quickEditToggleEl) {
       quickEditToggleEl.classList.add('on');
@@ -2808,6 +2853,97 @@ function openMobileColorPicker() {
   openColorPaletteModal(layer.id, 'color');
 }
 
+/* 手機傳統選單（填充常用操作並提供明顯左右移動按鈕） */
+function openMobileTraditionalMenu() {
+  const sheet = document.getElementById('mobileTraditionalMenu');
+  const content = document.getElementById('mobileTraditionalMenuContent');
+  if (!sheet || !content) return;
+
+  // 清理並建立簡潔、不重複的選單項
+  content.innerHTML = `
+    <div style="display:flex; gap:8px; justify-content:center; margin-bottom:10px;">
+      <button style="flex:1; padding:14px; font-size:18px; border-radius:10px; background:linear-gradient(90deg,#ff9c6e,#ff6b35); color:#111; font-weight:700;" onclick="slideLayerLeft()">◀ 向左</button>
+      <button style="flex:1; padding:14px; font-size:18px; border-radius:10px; background:linear-gradient(90deg,#2f54eb,#69c0ff); color:#fff; font-weight:700;" onclick="slideLayerRight()">向右 ▶</button>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <button style="padding:10px; border-radius:8px; background:var(--surface2); border:1px solid var(--border);" onclick="onAddLayerClick(); closeMobileTraditionalMenu();">✍️ 新增文字</button>
+      <button style="padding:10px; border-radius:8px; background:var(--surface2); border:1px solid var(--border);" onclick="openQuickEditForSelection(); closeMobileTraditionalMenu();">✨ 快速編輯</button>
+      <button style="padding:10px; border-radius:8px; background:var(--surface2); border:1px solid var(--border);" onclick="document.getElementById('btnEnterCrop').click(); closeMobileTraditionalMenu();">✂️ 裁切</button>
+      <button style="padding:10px; border-radius:8px; background:var(--surface2); border:1px solid var(--border);" onclick="exportImage('png'); closeMobileTraditionalMenu();">⬇️ 匯出 PNG</button>
+    </div>
+  `;
+
+  sheet.style.display = 'block';
+  sheet.classList.add('active');
+}
+
+function closeMobileTraditionalMenu() {
+  const sheet = document.getElementById('mobileTraditionalMenu');
+  if (!sheet) return;
+  sheet.classList.remove('active');
+  sheet.style.display = 'none';
+}
+
+/* 手機上的明顯左右移動：每次水平位移 100px（可調） */
+function slideLayerLeft() {
+  if (!activeLayerId) { showToast('請先選取一個文字圖層'); return; }
+  const l = layers.find(x => x.id === activeLayerId);
+  if (!l) { showToast('找不到選取圖層'); return; }
+  pushToUndo();
+  l.x = Math.max(0, l.x - 100);
+  drawCanvas(); saveSettings(); updateHistoryButtons(); showToast('已向左移動文字');
+}
+
+function slideLayerRight() {
+  if (!activeLayerId) { showToast('請先選取一個文字圖層'); return; }
+  const l = layers.find(x => x.id === activeLayerId);
+  if (!l) { showToast('找不到選取圖層'); return; }
+  pushToUndo();
+  l.x = Math.min(canvas.width, l.x + 100);
+  drawCanvas(); saveSettings(); updateHistoryButtons(); showToast('已向右移動文字');
+}
+
+/* 切換手機游標模式（僅視覺與提示） */
+function toggleCursorMode() {
+  cursorModeActive = !cursorModeActive;
+  const btn = document.getElementById('mobileCursorBtn');
+  if (btn) btn.classList.toggle('active', cursorModeActive);
+  showToast(cursorModeActive ? '游標模式已開啟' : '游標模式已關閉');
+}
+
+/* 手機工具列的主要編輯按鈕：在手機模式下開啟快速編輯，否則嘗試內嵌編輯 */
+function editSelectedText() {
+  if (!activeLayerId) { showToast('請先選取一個文字圖層'); return; }
+  const layer = layers.find(l => l.id === activeLayerId);
+  if (!layer) { showToast('找不到選取圖層'); return; }
+  if (enableMobileEditingMode) {
+    openQuickEdit(layer);
+  } else if (enableInlineTextEdit) {
+    openInlineTextEditor(layer);
+  } else {
+    openQuickEdit(layer);
+  }
+}
+
+function exitMobileMode() {
+  enableMobileEditingMode = false;
+  syncMobileEditingModeUI();
+  localStorage.setItem('gm_enable_mobile_edit_mode', 'false');
+  showToast('已離開手機友善編輯模式');
+}
+
+/* 移動圖層到最底（index 0） */
+function moveLayerToBottom(id) {
+  const idx = layers.findIndex(l => l.id === id);
+  if (idx > -1 && idx !== 0) {
+    pushToUndo();
+    const [item] = layers.splice(idx, 1);
+    layers.unshift(item);
+    renderLayersList(); drawCanvas(); saveSettings(); updateHistoryButtons();
+    showToast('已將圖層移至最底');
+  }
+}
+
 function changeSelectedLayerSize(delta) {
   if (!activeLayerId) {
     showToast('請先選取一個文字圖層');
@@ -2818,7 +2954,13 @@ function changeSelectedLayerSize(delta) {
     showToast('請先選取一個文字圖層');
     return;
   }
+  // 防止連按導致狀態錯亂：短暫鎖定
+  if (changeSelectedLayerSize._locked) return;
+  changeSelectedLayerSize._locked = true;
+  setTimeout(() => { changeSelectedLayerSize._locked = false; }, 80);
+
   const nextSize = Math.max(12, Math.min(500, layer.size + delta));
+  if (nextSize === layer.size) return;
   pushToUndo();
   layer.size = nextSize;
   drawCanvas();
@@ -3627,20 +3769,32 @@ function openQuickEditForSelection() {
     showToast('目前選取的不是文字圖層');
     return;
   }
-  openQuickEdit(layer);
+  openQuickEdit(layer, 'full');
 }
 
-function openQuickEdit(layer) {
+function openQuickEditTextOnlyForSelection() {
+  if (!activeLayerId) { showToast('請先選擇一個文字圖層'); return; }
+  const layer = layers.find(item => item.id === activeLayerId);
+  if (!layer) { showToast('請先選擇一個文字圖層'); return; }
+  openQuickEdit(layer, 'text-only');
+}
+
+function openMobileFontPanel() {
+  showToast('請在側邊欄的字型選單中更換字體');
+}
+
+function openQuickEdit(layer, mode = 'full') {
   quickEditLayerId = layer.id;
-  
+  quickEditMode = mode || 'full';
+
   document.getElementById('qeText').value = layer.text;
   document.getElementById('qeSize').value = layer.size;
   document.getElementById('qeSizeLabel').textContent = `大小 (${layer.size}px)`;
-  
+
   document.getElementById('qeColor').value = layer.color;
   document.getElementById('qeColorIndicator').style.backgroundColor = layer.color;
   document.getElementById('qeColorPreviewText').textContent = layer.color.toUpperCase();
-  
+
   document.getElementById('qeStrokeColor').value = layer.strokeColor;
   document.getElementById('qeStrokeColorIndicator').style.backgroundColor = layer.strokeColor;
   document.getElementById('qeStrokeColorPreviewText').textContent = layer.strokeColor.toUpperCase();
@@ -3650,20 +3804,33 @@ function openQuickEdit(layer) {
     const fontsList = getFontsList(layer.font);
     qeFontSelect.innerHTML = fontsList.map(f => `<option value="${f.value}" ${f.value===layer.font?'selected':''}>${f.label}</option>`).join('');
   }
-  
+
   const strokeToggle = document.getElementById('qeStroke');
   const shadowToggle = document.getElementById('qeShadow');
-  
-  if (strokeToggle) {
-    if (layer.stroke) strokeToggle.classList.add('on');
-    else strokeToggle.classList.remove('on');
-  }
-  
-  if (shadowToggle) {
-    if (layer.shadow) shadowToggle.classList.add('on');
-    else shadowToggle.classList.remove('on');
-  }
-  
+  if (strokeToggle) strokeToggle.classList.toggle('on', !!layer.stroke);
+  if (shadowToggle) shadowToggle.classList.toggle('on', !!layer.shadow);
+
+  // 若是文字專用模式，停用非文字編輯控制項（不可編輯）
+  const isTextOnly = quickEditMode === 'text-only';
+  try {
+    const elementsToDisable = ['qeFont','qeSize','qeColor','qeStrokeColor','qeStroke','qeShadow'];
+    elementsToDisable.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (el.tagName && el.tagName.toLowerCase() === 'select' || el.tagName.toLowerCase() === 'input') {
+        el.disabled = isTextOnly;
+        el.style.opacity = isTextOnly ? '0.6' : '';
+      } else {
+        // toggles and other divs
+        el.style.pointerEvents = isTextOnly ? 'none' : '';
+        el.style.opacity = isTextOnly ? '0.6' : '';
+      }
+    });
+    // 顏色按鈕容器
+    const colorContainers = document.querySelectorAll('#quickEditModal .row-2');
+    colorContainers.forEach(c => { c.style.pointerEvents = isTextOnly ? 'none' : ''; c.style.opacity = isTextOnly ? '0.6' : ''; });
+  } catch (e) {}
+
   document.getElementById('quickEditModal').classList.add('active');
 }
 
@@ -4045,25 +4212,28 @@ function applyQuickEdit() {
   if (!quickEditLayerId) return;
   const l = layers.find(item => item.id === quickEditLayerId);
   if (l) {
-    pushToUndo(); 
+    pushToUndo();
+    // always allow editing text
     l.text = document.getElementById('qeText').value;
-    l.font = document.getElementById('qeFont').value;
-    l.size = parseInt(document.getElementById('qeSize').value, 10);
-    l.color = document.getElementById('qeColor').value;
-    l.strokeColor = document.getElementById('qeStrokeColor').value;
-    
-    const strokeToggle = document.getElementById('qeStroke');
-    if (strokeToggle) l.stroke = strokeToggle.classList.contains('on');
-    
-    const shadowToggle = document.getElementById('qeShadow');
-    if (shadowToggle) l.shadow = shadowToggle.classList.contains('on');
-    
-    const styleProps = ['font', 'size', 'color', 'strokeColor', 'stroke', 'shadow'];
-    styleProps.forEach(p => {
-      lastUsedStyles[p] = l[p];
-    });
-    localStorage.setItem('gm_last_used_styles', JSON.stringify(lastUsedStyles));
-    
+
+    // only apply other props when quickEditMode === 'full'
+    if (quickEditMode === 'full') {
+      l.font = document.getElementById('qeFont').value;
+      l.size = parseInt(document.getElementById('qeSize').value, 10);
+      l.color = document.getElementById('qeColor').value;
+      l.strokeColor = document.getElementById('qeStrokeColor').value;
+
+      const strokeToggle = document.getElementById('qeStroke');
+      if (strokeToggle) l.stroke = strokeToggle.classList.contains('on');
+
+      const shadowToggle = document.getElementById('qeShadow');
+      if (shadowToggle) l.shadow = shadowToggle.classList.contains('on');
+
+      const styleProps = ['font', 'size', 'color', 'strokeColor', 'stroke', 'shadow'];
+      styleProps.forEach(p => { lastUsedStyles[p] = l[p]; });
+      localStorage.setItem('gm_last_used_styles', JSON.stringify(lastUsedStyles));
+    }
+
     renderLayersList();
     drawCanvas();
     saveSettings();
@@ -4278,7 +4448,8 @@ function handleStart(pos) {
     activeLayerId = hit.id;
     
     // 2. 如果啟用了直接編輯，先記錄點擊起點與目標圖層
-    if (enableInlineTextEdit && !isCropping) {
+    // 在手機模式下，點擊後不自動進入 inline 編輯；改為使用「編輯」按鈕手動啟動
+    if (enableInlineTextEdit && !isCropping && !enableMobileEditingMode) {
       pendingInlineEdit = hit;
       pendingInlineEditStart = { x: pos.x, y: pos.y };
     }
