@@ -834,12 +834,37 @@
     padding-bottom: 72px;
   }
 
-  /* 📱 手機橫向支援：在直橫向皆保持完整操作空間 */
+  /* 📱 手機橫向支援：直橫向並排佈局，移除拖曳功能 */
   @media (max-width: 1024px) and (orientation: landscape) {
+    .workspace {
+      flex-direction: row;
+      height: 100%;
+    }
+    .canvas-area {
+      flex: 1;
+      height: 100% !important;
+      min-height: auto;
+      position: relative;
+      top: 0;
+      border-bottom: none;
+      border-right: 1px solid var(--border);
+      padding: 12px;
+      overflow: auto;
+    }
+    .side-panel {
+      width: 320px;
+      height: 100%;
+      overflow-y: auto;
+      padding-bottom: 40px;
+      flex-shrink: 0;
+    }
+    .drag-splitter {
+      display: none !important;
+    }
     body.mobile-edit-mode .canvas-area {
-      height: calc(100dvh - 64px);
-      min-height: calc(100dvh - 64px);
-      padding: 4px;
+      height: calc(100dvh - 64px) !important;
+      min-height: calc(100dvh - 64px) !important;
+      padding: 6px;
     }
     body.mobile-edit-mode .canvas-wrap {
       width: 100%;
@@ -1366,6 +1391,12 @@
         <div class="toggle" id="togglePinchZoom" onclick="togglePinchZoomFeature()"></div>
       </div>
       <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">開啟後，在畫布區域用兩指捏合即可直接放大或縮小文字；此模式會暫時關閉拖曳與文字編輯，不會互相干擾</p>
+      
+      <div class="toggle-row" style="margin-top:10px;">
+        <span class="toggle-label" style="font-size:12px; font-weight:500;">限制文字拖曳在圖片範圍內</span>
+        <div class="toggle on" id="toggleConstrainText" onclick="toggleConstrainTextFeature()"></div>
+      </div>
+      <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">開啟後，文字無法被拖曳到圖片外部；關閉則可自由拖曳至任何位置</p>
     </div>
 
     <div class="panel-section">
@@ -1656,6 +1687,7 @@ let enableInlineTextEdit = false; // 實驗性功能：在圖片上直接編輯�
 let enableCloseTabWarning = true; // 未匯出就關閉時提醒
 let enablePinchZoom = false; // 實驗性功能：雙指捏合手勢縮放文字
 let enableTodayFunction = true; // 日期函數：{TODAY()} 替换為今天日期
+let enableConstrainText = true; // 文字拖曳限制在圖片範圍內（預設開啟）
 let isPinchZooming = false;
 let pinchStartDist = 0;
 let pinchStartZoom = 1;
@@ -2400,6 +2432,16 @@ window.onload = async () => {
     if (pinchZoomToggleEl) pinchZoomToggleEl.classList.remove('on');
   }
 
+  const savedConstrainText = localStorage.getItem('gm_enable_constrain_text');
+  const constrainTextToggleEl = document.getElementById('toggleConstrainText');
+  if (savedConstrainText === 'false') {
+    enableConstrainText = false;
+    if (constrainTextToggleEl) constrainTextToggleEl.classList.remove('on');
+  } else {
+    enableConstrainText = true;
+    if (constrainTextToggleEl) constrainTextToggleEl.classList.add('on');
+  }
+
   const savedTodayFunction = localStorage.getItem('gm_enable_today_function');
   const todayToggleEl = document.getElementById('toggleTodayFunction');
   if (savedTodayFunction === 'false') {
@@ -2499,6 +2541,9 @@ async function checkPwaSharedImage() {
 
 // ↕️ 上下比例拖曳分割條初始化與控制邏輯 (支援持久儲存、雙擊還原)
 function initDragSplitter() {
+  const isLandscape = window.matchMedia('(max-width: 1024px) and (orientation: landscape)').matches;
+  if (isLandscape) return;
+
   const splitter = document.getElementById('dragSplitter');
   const canvasArea = document.querySelector('.canvas-area');
   const workspace = document.getElementById('workspace');
@@ -2532,10 +2577,10 @@ function initDragSplitter() {
     const deltaY = clientY - startY;
     let newHeight = startHeight + deltaY;
 
-    // 限制拖曳範圍：150px 至 工作區總高度的 75%
+    const isLandscape = window.matchMedia('(max-width: 1024px) and (orientation: landscape)').matches;
     const wsHeight = workspace.getBoundingClientRect().height;
-    const minHeight = 150;
-    const maxHeight = wsHeight * 0.75;
+    const minHeight = isLandscape ? 80 : 150;
+    const maxHeight = isLandscape ? wsHeight * 0.88 : wsHeight * 0.75;
 
     if (newHeight < minHeight) newHeight = minHeight;
     if (newHeight > maxHeight) newHeight = maxHeight;
@@ -3282,6 +3327,16 @@ function toggleTodayFunctionFeature() {
   renderLayersList();
   drawCanvas();
   showToast(enableTodayFunction ? '日期函數已開啟：{TODAY()}→YYYY/MM/DD，{TODAY(NOYEAR)}→MM/DD' : '日期函數已關閉：{TODAY()} 與 {TODAY(NOYEAR)} 會保持原樣');
+}
+
+function toggleConstrainTextFeature() {
+  enableConstrainText = !enableConstrainText;
+  const toggleEl = document.getElementById('toggleConstrainText');
+  if (toggleEl) {
+    toggleEl.classList.toggle('on', enableConstrainText);
+  }
+  localStorage.setItem('gm_enable_constrain_text', enableConstrainText ? 'true' : 'false');
+  showToast(enableConstrainText ? '文字拖曳已限制在圖片範圍內' : '文字拖曳限制已關閉，可自由拖曳');
 }
 
 function setZoomMode(mode) {
@@ -4819,8 +4874,34 @@ function handleMove(pos) {
   } else if (draggingLayer) {
     const l = layers.find(l => l.id === draggingLayer.id);
     if (l) { 
-      l.x = pos.x - draggingLayer.ox; 
-      l.y = pos.y - draggingLayer.oy; 
+      let nx = pos.x - draggingLayer.ox; 
+      let ny = pos.y - draggingLayer.oy; 
+      
+      if (enableConstrainText) {
+        ctx.save();
+        ctx.font = `${l.size}px "${l.font}", sans-serif`;
+        const lines = resolveTextVariables(l.text).split('\n');
+        let maxW = 0;
+        lines.forEach(line => maxW = Math.max(maxW, ctx.measureText(line).width));
+        ctx.restore();
+        
+        const lineH = l.size * 1.2;
+        const h = lines.length * lineH;
+        const w = maxW;
+        
+        const minX = w / 2;
+        const maxX = canvas.width - w / 2;
+        const minY = h / 2;
+        const maxY = canvas.height - h / 2;
+        
+        if (nx < minX) nx = minX;
+        if (nx > maxX) nx = maxX;
+        if (ny < minY) ny = minY;
+        if (ny > maxY) ny = maxY;
+      }
+      
+      l.x = nx; 
+      l.y = ny; 
       drawCanvas(); 
     }
   }
@@ -5247,6 +5328,7 @@ function resetAllToDefault() {
   localStorage.removeItem('gm_selection_box_width');
   localStorage.removeItem('gm_enable_pinch_zoom');
   localStorage.removeItem('gm_enable_today_function');
+  localStorage.removeItem('gm_enable_constrain_text');
   localStorage.removeItem('gm_crop_border_width');
   localStorage.removeItem('gm_crop_handle_size');
   
@@ -5265,6 +5347,7 @@ function resetAllToDefault() {
   enableCloseTabWarning = true;
   enablePinchZoom = false;
   enableTodayFunction = true;
+  enableConstrainText = true;
   isPinchZooming = false;
   pinchStartDist = 0;
   pinchStartZoom = 1;
@@ -5317,6 +5400,8 @@ function resetAllToDefault() {
   if (togglePinchZoom) togglePinchZoom.classList.remove('on');
   const toggleTodayFunction = document.getElementById('toggleTodayFunction');
   if (toggleTodayFunction) toggleTodayFunction.classList.add('on');
+  const toggleConstrainText = document.getElementById('toggleConstrainText');
+  if (toggleConstrainText) toggleConstrainText.classList.add('on');
   const pinchWrap = document.getElementById('canvasWrap');
   if (pinchWrap) pinchWrap.classList.remove('pinch-zoom-active');
   const defaultTextInput = document.getElementById('defaultNewTextInput');
