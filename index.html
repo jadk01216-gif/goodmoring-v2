@@ -834,6 +834,172 @@
     padding-bottom: 72px;
   }
 
+  /* 📱 手機橫向支援：在直橫向皆保持完整操作空間 */
+  @media (max-width: 1024px) and (orientation: landscape) {
+    body.mobile-edit-mode .canvas-area {
+      height: calc(100dvh - 64px);
+      min-height: calc(100dvh - 64px);
+      padding: 4px;
+    }
+    body.mobile-edit-mode .canvas-wrap {
+      width: 100%;
+      height: 100%;
+    }
+    body.mobile-edit-mode canvas {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+    }
+    .mobile-edit-toolbar {
+      bottom: 8px;
+      padding: 6px 10px;
+      gap: 6px;
+      max-width: min(96vw, 960px);
+      border-radius: 10px;
+    }
+    .mobile-edit-toolbar .mobile-edit-btn {
+      width: 36px;
+      height: 36px;
+      font-size: 16px;
+      border-radius: 50%;
+    }
+    .mobile-edit-toolbar .mobile-edit-btn.primary {
+      width: 44px;
+      height: 44px;
+      font-size: 18px;
+      border-radius: 10px;
+    }
+    .mobile-edit-toolbar .mobile-edit-btn:hover {
+      transform: none;
+    }
+    .canvas-area.mobile-edit-active {
+      padding-bottom: 60px;
+    }
+    body.mobile-edit-mode .canvas-area {
+      padding-bottom: 60px;
+    }
+    .mobile-menu-sheet__content {
+      width: min(92vw, 640px);
+      padding: 12px;
+      border-radius: 12px 12px 0 0;
+    }
+    .mobile-menu-sheet__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+    }
+    .mobile-menu-sheet__item {
+      padding: 8px;
+      font-size: 11px;
+      border-radius: 8px;
+    }
+    .mobile-traditional-menu {
+      bottom: auto;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      width: auto;
+      max-height: calc(100dvh - 24px);
+      border-radius: 12px;
+    }
+    .mobile-traditional-menu__content {
+      max-height: calc(100dvh - 120px);
+    }
+    .drag-splitter {
+      height: 10px;
+    }
+    header {
+      padding: 8px 12px;
+    }
+    header .logo {
+      width: 24px;
+      height: 24px;
+      font-size: 12px;
+      border-radius: 8px;
+    }
+    header h1 {
+      font-size: 11px;
+    }
+    .theme-btn, .history-btn {
+      padding: 5px 7px;
+      font-size: 11px;
+    }
+    .panel-section {
+      padding: 10px 12px;
+    }
+    .section-title {
+      font-size: 10px;
+      margin-bottom: 8px;
+    }
+    .add-layer-btn {
+      padding: 8px;
+      font-size: 12px;
+    }
+    input[type=text], textarea, select {
+      font-size: 12px;
+      padding: 6px 8px;
+    }
+    input[type=range] {
+      accent-color: var(--gold);
+    }
+    input[type=color] {
+      height: 32px;
+    }
+    .layer-card-head {
+      padding: 6px 8px;
+    }
+    .layer-thumb {
+      width: 28px;
+      height: 28px;
+      font-size: 12px;
+    }
+    .layer-name {
+      font-size: 11px;
+    }
+    .layer-preview {
+      font-size: 10px;
+    }
+    .layer-btn {
+      width: 24px;
+      height: 24px;
+      font-size: 11px;
+    }
+    .layer-editor {
+      padding: 10px;
+    }
+    .size-presets {
+      gap: 4px;
+    }
+    .sp-btn {
+      padding: 5px 8px;
+      font-size: 11px;
+    }
+    .align-btn {
+      padding: 8px;
+      font-size: 12px;
+    }
+    .dl-btn {
+      padding: 10px 2px;
+      font-size: 12px;
+    }
+    .modal-box {
+      padding: 24px 16px;
+      max-width: 360px;
+    }
+    .modal-title {
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    .modal-subtitle {
+      font-size: 12px;
+      margin-bottom: 16px;
+    }
+    .modal-btn-primary, .modal-btn-secondary {
+      padding: 12px;
+      font-size: 13px;
+    }
+  }
+
   .mobile-menu-sheet {
     position: fixed;
     inset: 0;
@@ -1163,15 +1329,7 @@
     <div class="panel-section">
       <div class="section-title">手機友善編輯</div>
       <div class="toggle-row">
-<<<<<<< HEAD
-<<<<<<< HEAD
-        <span class="toggle-label" style="font-size:12px; font-weight:500;">📱 啟用手機友善編輯模式（Google 相簿風）</span>
-=======
-        <span class="toggle-label" style="font-size:12px; font-weight:500;">📱 啟用手機友善編輯模式（Google Photos風）</span>
->>>>>>> main
-=======
         <span class="toggle-label" style="font-size:12px; font-weight:500;">📱 啟用手機友善編輯模式（Google 相簿風格）</span>
->>>>>>> main
         <div class="toggle" id="toggleMobileEditingMode" onclick="toggleMobileEditingModeFeature()"></div>
       </div>
       <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">開啟後會在畫布下方顯示大按鈕工具列，讓新增文字、裁切與快速編輯更適合手機單手操作。</p>
@@ -1189,10 +1347,10 @@
     <div class="panel-section">
       <div class="section-title">日期函數</div>
       <div class="toggle-row">
-        <span class="toggle-label" style="font-size:12px; font-weight:500;">啟用 {TODAY()} 日期函數</span>
+        <span class="toggle-label" style="font-size:12px; font-weight:500;">啟用 {TODAY()} 與 {TODAY(NOYEAR)} 日期函數</span>
         <div class="toggle on" id="toggleTodayFunction" onclick="toggleTodayFunctionFeature()"></div>
       </div>
-      <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">在文字內容輸入 {TODAY()} 會自動替换為今天的日期 (YYYY/MM/DD)</p>
+      <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">在文字內容輸入 {TODAY()} 會自動替換為今天的日期 (YYYY/MM/DD)；{TODAY(NOYEAR)} 則只顯示月/日 (MM/DD)</p>
     </div>
 
     <div class="panel-section">
@@ -3123,7 +3281,7 @@ function toggleTodayFunctionFeature() {
   localStorage.setItem('gm_enable_today_function', enableTodayFunction ? 'true' : 'false');
   renderLayersList();
   drawCanvas();
-  showToast(enableTodayFunction ? '日期函數已開啟：{TODAY()} 會自動轉換為今天日期' : '日期函數已關閉：{TODAY()} 會保持原樣');
+  showToast(enableTodayFunction ? '日期函數已開啟：{TODAY()}→YYYY/MM/DD，{TODAY(NOYEAR)}→MM/DD' : '日期函數已關閉：{TODAY()} 與 {TODAY(NOYEAR)} 會保持原樣');
 }
 
 function setZoomMode(mode) {
@@ -3270,8 +3428,11 @@ function resolveTextVariables(text) {
   const yyyy = today.getFullYear();
   const mm = String(today.getMonth() + 1).padStart(2, '0');
   const dd = String(today.getDate()).padStart(2, '0');
-  const dateStr = `${yyyy}/${mm}/${dd}`;
-  return text.replace(/\{TODAY\(\)\}/g, dateStr);
+  const fullDateStr = `${yyyy}/${mm}/${dd}`;
+  const noYearDateStr = `${mm}/${dd}`;
+  let result = text.replace(/\{TODAY\(\)\}/g, fullDateStr);
+  result = result.replace(/\{TODAY\(NOYEAR\)\}/g, noYearDateStr);
+  return result;
 }
 
 /* ─────────────── 確保圖層字體就緒 ─────────────── */
