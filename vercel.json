@@ -1,5 +1,8 @@
 {
-  "cleanUrls": true,
+  "version": 2,
+  "builds": [
+    { "src": "**/*", "use": "@vercel/static" }
+  ],
   "git": {
     "deploymentEnabled": {
       "main": true,
