@@ -12,7 +12,7 @@
 
 微軟正黑體 (Microsoft JhengHei)：版權屬於 Microsoft Corporation 所有。 蘋方體-繁 (PingFang TC)：版權屬於 Apple Inc. 所有。 標楷體、新細明體：版權屬於其對應之原始開發單位所有。
 
-本程式僅進行 CSS 渲染宣告，不包含任何上述閉源字型檔案的複製、散佈或商業再利用行為。
+本程式僅進行 CSS 渲染宣告，不包含任何上述閉源字型檔案的複製、散佈或商業等再利用行為。
 =======
 開放字型庫：感謝 Google Fonts 託管與分發之思源黑體/明體、粉圓體、芫荽體、霞鶩文楷，以及多款日系手寫字體與藝術英文字型。這些字體均遵循 SIL Open Font License 1.1 或 Apache License 2.0 授權釋出。
 Web API 與本地儲存：字型本機永久儲存技術由 W3C IndexedDB 標準支援；離線與快取技術則採用 Service Worker 與 Web App Manifest 實現。
@@ -22,5 +22,5 @@ Web API 與本地儲存：字型本機永久儲存技術由 W3C IndexedDB 標準
 微軟正黑體 (Microsoft JhengHei)：版權屬於 Microsoft Corporation 所有。
 蘋方體-繁 (PingFang TC)：版權屬於 Apple Inc. 所有。
 標楷體、新細明體：版權屬於其對應之原始開發單位所有。
-* 本程式僅進行 CSS 渲染宣告，不包含任何上述閉源字型檔案的複製、散佈或商業再利用行為。
+* 本程式僅進行 CSS 渲染宣告，不包含任何上述閉源字型檔案的複製、散佈或商業等再利用行為。
 
