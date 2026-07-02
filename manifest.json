@@ -1,4 +1,5 @@
 {
+  "id": "/goodmoring-v2/",
   "short_name": "早安圖製作工具",
   "name": "早安圖製作工具",
   "description": "每日問候與祝福圖片自製排版工具",
@@ -16,7 +17,8 @@
       "purpose": "any maskable"
     }
   ],
-  "start_url": "./index.html",
+  "start_url": "/goodmoring-v2/",
+  "scope": "/goodmoring-v2/",
   "background_color": "#0f0f1a",
   "theme_color": "#d4891a",
   "display": "standalone",
