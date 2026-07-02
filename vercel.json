@@ -1,7 +1,9 @@
 {
+  "cleanUrls": true,
   "git": {
     "deploymentEnabled": {
-      "main": false
+      "main": false,
+      "beta": true
     }
   }
 }
