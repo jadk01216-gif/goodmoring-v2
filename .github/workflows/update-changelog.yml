@@ -61,7 +61,6 @@ jobs:
             # 4. 自動修改 README.md 中的版本標題（不用 AI 處理，防止無限循環）
             if [ -f "README.md" ]; then
               echo "正在自動將 README.md 中的版本從 $OLD_VERSION 更新為 $CURRENT_VERSION..."
-              # 使用 sed 將舊版本號改為新版本號
               sed -i "s/## 🌅 早安圖製作工具 版本 $OLD_VERSION/## 🌅 早安圖製作工具 版本 $CURRENT_VERSION/g" README.md
             fi
 
@@ -111,23 +110,22 @@ jobs:
             # 8. 格式化目前台北時間
             NOW_DATE=$(TZ="Asia/Taipei" date +'%Y/%m/%d %H:%M' | awk -F'/' '{printf "%s/%d/%d", $1, $2, $3}' | awk '{printf "%s %s\n", $1, $2}')
             
-            # 建立本次新版本的獨立日誌模板
-            NEW_ENTRY="# 🚀 更新日誌：版本 $CURRENT_VERSION
-
-### 感謝您持續使用本產品！我們很高興向您宣佈 $CURRENT_VERSION 版本的更新。
-
-$AI_CONTENT
-
-<div align=\"right\">
-    早安圖製作工具作者於 $NOW_DATE 發布
-</div>
-
----
-
-"
-            # 9. 將新內容置頂附加到 changelog.md 最上方
+            # 9. 將新內容置頂附加到 changelog.md 最上方 (已修正 YAML 多行引號語法)
             mv changelog.md old_changelog.tmp 2>/dev/null || touch old_changelog.tmp
-            printf "$NEW_ENTRY" > changelog.md
+            
+            echo "# 🚀 更新日誌：版本 $CURRENT_VERSION" > changelog.md
+            echo "" >> changelog.md
+            echo "### 感謝您持續使用本產品！我們很高興向您宣佈 $CURRENT_VERSION 版本的更新。" >> changelog.md
+            echo "" >> changelog.md
+            echo "$AI_CONTENT" >> changelog.md
+            echo "" >> changelog.md
+            echo '<div align="right">' >> changelog.md
+            echo "    早安圖製作工具作者於 $NOW_DATE 發布" >> changelog.md
+            echo "</div>" >> changelog.md
+            echo "" >> changelog.md
+            echo "---" >> changelog.md
+            echo "" >> changelog.md
+            
             cat old_changelog.tmp >> changelog.md
             rm -f old_changelog.tmp
             echo "changelog.md 最新版本已成功置頂寫入！"
@@ -138,7 +136,6 @@ $AI_CONTENT
 
       - name: Commit and Push changes
         run: |
-          # 檢查 changelog.md 或 README.md 是否有被修改
           if git diff --name-only | grep -qE '^(changelog\.md|README\.md)$'; then
             git config --local user.email "action@github.com"
             git config --local user.name "GitHub Action"
