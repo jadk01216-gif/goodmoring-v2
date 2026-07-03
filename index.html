@@ -1860,68 +1860,46 @@
             <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">開啟後，文字無法被拖曳到圖片外部；關閉則可自由拖曳至任何位置</p>
           </div>
 
-          <div class="toggle-row" style="margin-top:10px;">
-            <span class="toggle-label" style="font-size:12px; font-weight:500;">啟用右下角縮放控制點</span>
-            <div class="toggle on" id="toggleResizeHandles" onclick="toggleResizeHandlesFeature()"></div>
-          </div>
-          <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">
-            開啟後，選取文字時右下角會出現一個控制點，可直接拖曳以放大或縮小文字尺寸。
-          </p>
-        </div>
-
-
-
-        <div class="panel-section">
-          <div class="section-title">選取框線設定</div>
-          <label class="field-label" style="margin-top:0;" id="selBoxWidthLabel">框線粗細（3.5px）</label>
-          <input type="range" id="selectionBoxWidthSlider" min="1" max="12" step="0.5" value="3.5"
-            oninput="selectionBoxWidth=+this.value; localStorage.setItem('gm_selection_box_width', this.value); document.getElementById('selBoxWidthLabel').textContent='框線粗細（'+this.value+'px）'; document.getElementById('selBoxPreview').style.borderWidth=this.value+'px'; drawCanvas();">
-          <div style="display:flex; gap:6px; margin-top:10px;">
-            <div
-              style="flex:1; height:24px; border-radius:4px; background:var(--surface2); border:1px solid var(--border); position:relative; overflow:hidden;">
-              <div id="selBoxPreview"
-                style="position:absolute; inset:4px; border:3.5px dashed #f5a623; border-radius:3px; pointer-events:none;">
-              </div>
+          <div class="panel-section">
+            <div class="section-title">匯出儲存</div>
+            <div class="dl-row">
+              <button class="dl-btn png" onclick="exportImage('png')">PNG</button>
+              <button class="dl-btn jpg" onclick="exportImage('jpeg')">JPG</button>
+              <button class="dl-btn webp" onclick="exportImage('webp')">WebP</button>
             </div>
           </div>
-          <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">拖曳選取文字圖層時所顯示的虛線外框粗細</p>
 
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 12px;">
-            <label class="field-label" style="margin-top:0;" id="resizeHandleRadiusLabel">縮放控制點大小 (8px)</label>
-            <button onclick="resetResizeHandleRadius()"
-              style="background: transparent; border: none; color: var(--text-muted); font-size: 11px; cursor: pointer; text-decoration: underline;">還原預設</button>
-          </div>
-          <input type="range" id="resizeHandleRadiusSlider" min="4" max="20" step="1" value="8"
-            oninput="updateResizeHandleRadius(this.value)">
-          <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">調整選取文字時，右下角縮放控制點的圓圈大小。</p>
-        </div>
-
-
-
-        <div class="panel-section">
-          <div class="section-title">選取框線設定</div>
-          <label class="field-label" style="margin-top:0;" id="selBoxWidthLabel">框線粗細（3.5px）</label>
-          <input type="range" id="selectionBoxWidthSlider" min="1" max="12" step="0.5" value="3.5"
-            oninput="selectionBoxWidth=+this.value; localStorage.setItem('gm_selection_box_width', this.value); document.getElementById('selBoxWidthLabel').textContent='框線粗細（'+this.value+'px）'; document.getElementById('selBoxPreview').style.borderWidth=this.value+'px'; drawCanvas();">
-          <div style="display:flex; gap:6px; margin-top:10px;">
-            <div
-              style="flex:1; height:24px; border-radius:4px; background:var(--surface2); border:1px solid var(--border); position:relative; overflow:hidden;">
-              <div id="selBoxPreview"
-                style="position:absolute; inset:4px; border:3.5px dashed #f5a623; border-radius:3px; pointer-events:none;">
+          <div class="panel-section">
+            <div class="section-title">選取框線與控制點設定</div>
+            <label class="field-label" style="margin-top:0;" id="selBoxWidthLabel">框線粗細（3.5px）</label>
+            <input type="range" id="selectionBoxWidthSlider" min="1" max="12" step="0.5" value="3.5"
+              oninput="selectionBoxWidth=+this.value; localStorage.setItem('gm_selection_box_width', this.value); document.getElementById('selBoxWidthLabel').textContent='框線粗細（'+this.value+'px）'; document.getElementById('selBoxPreview').style.borderWidth=this.value+'px'; drawCanvas();">
+            <div style="display:flex; gap:6px; margin-top:10px;">
+              <div
+                style="flex:1; height:24px; border-radius:4px; background:var(--surface2); border:1px solid var(--border); position:relative; overflow:hidden;">
+                <div id="selBoxPreview"
+                  style="position:absolute; inset:4px; border:3.5px dashed #f5a623; border-radius:3px; pointer-events:none;">
+                </div>
               </div>
             </div>
-          </div>
-          <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">拖曳選取文字圖層時所顯示的虛線外框粗細</p>
-        </div>
+            <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">拖曳選取文字圖層時所顯示的虛線外框粗細</p>
 
-        <div class="panel-section">
-          <div class="section-title">匯出儲存</div>
-          <div class="dl-row">
-            <button class="dl-btn png" onclick="exportImage('png')">PNG</button>
-            <button class="dl-btn jpg" onclick="exportImage('jpeg')">JPG</button>
-            <button class="dl-btn webp" onclick="exportImage('webp')">WebP</button>
+            <div class="toggle-row" style="margin-top:12px;">
+              <span class="toggle-label" style="font-size:12px; font-weight:500;">啟用右下角縮放控制點</span>
+              <div class="toggle on" id="toggleResizeHandles" onclick="toggleResizeHandlesFeature()"></div>
+            </div>
+            <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">
+              開啟後，選取文字時右下角會出現一個控制點，可直接拖曳以放大或縮小文字尺寸。
+            </p>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 12px;">
+              <label class="field-label" style="margin-top:0;" id="resizeHandleRadiusLabel">縮放控制點大小 (8px)</label>
+              <button onclick="resetResizeHandleRadius()"
+                style="background: transparent; border: none; color: var(--text-muted); font-size: 11px; cursor: pointer; text-decoration: underline;">還原預設</button>
+            </div>
+            <input type="range" id="resizeHandleRadiusSlider" min="4" max="20" step="1" value="8"
+              oninput="updateResizeHandleRadius(this.value)">
+            <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">調整選取文字時，右下角縮放控制點的圓圈大小。</p>
           </div>
-        </div>
     </aside>
   </div>
 
@@ -2170,8 +2148,8 @@
       style="text-align: left; max-width: 480px; font-size: 12px; display: flex; flex-direction: column; padding: 0;">
       <div class="about-header" style="padding: 24px 24px 16px; text-align: center; flex-shrink: 0;">
         <h3 class="modal-title" style="font-size: 18px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
-        <p id="appVersion" data-version="v1.50"
-          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.50 </p>
+        <p id="appVersion" data-version="v1.51"
+          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.51 </p>
       </div>
 
       <div class="about-content"
