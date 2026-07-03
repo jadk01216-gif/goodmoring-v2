@@ -1813,7 +1813,7 @@
               <div class="toggle" id="toggleMobileEditingMode" onclick="toggleMobileEditingModeFeature()"></div>
             </div>
             <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">
-              開啟後會在畫布下方顯示大按鈕工具列，讓新增文字、裁切與快速編輯更適合手機單手操作。
+              開啟後會在畫布下方顯示大按鈕工具列，讓新增文字、裁切與快速編輯更適合手機單手操作。<b>（極不穩定實驗性功能）</b>
             </p>
           </div>
 
@@ -1905,6 +1905,22 @@
         <button onclick="handleSaveToLocal()" class="modal-btn-secondary">📁 直接下載到本機「下載」資料夾</button>
       </div>
       <span onclick="closeExportModal()" class="modal-close-link">關閉取消</span>
+    </div>
+  </div>
+
+  <!-- ⚠️ 手機友善編輯模式實驗性功能警告 -->
+  <div id="mobileEditWarningModal" class="modal-overlay">
+    <div class="modal-box" style="text-align: center; max-width: 360px; padding: 28px 24px;">
+      <div style="font-size: 40px; margin-bottom: 12px;">⚠️</div>
+      <h3 class="modal-title" style="font-size: 18px; margin-bottom: 8px;">極不穩定實驗性功能</h3>
+      <p class="modal-subtitle" style="font-size: 13px; margin-bottom: 20px; line-height: 1.6; text-align: left;">
+        您即將啟用「手機友善編輯模式（Google
+        相簿風格）」。此功能<b>極不穩定</b>且處於<b>極度實驗性質</b>，可能會有選取框bug、平移異常、文字尺寸跳動、剪切區偏移等非預期行為。若您遇到任何問題，請關閉此模式並使用傳統側邊欄編輯。
+      </p>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button class="modal-btn-primary" onclick="confirmEnableMobileEditMode()">⚠️ 繼續啟用實驗性功能</button>
+        <button class="modal-btn-secondary" onclick="cancelEnableMobileEditMode()">取消</button>
+      </div>
     </div>
   </div>
 
@@ -2116,8 +2132,8 @@
       style="text-align: left; max-width: 480px; font-size: 12px; display: flex; flex-direction: column; padding: 0;">
       <div class="about-header" style="padding: 24px 24px 16px; text-align: center; flex-shrink: 0;">
         <h3 class="modal-title" style="font-size: 18px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
-        <p id="appVersion" data-version="v1.48"
-          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.48 </p>
+        <p id="appVersion" data-version="v1.49"
+          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.49 </p>
       </div>
 
       <div class="about-content"
@@ -3686,17 +3702,32 @@
     }
 
     function toggleMobileEditingModeFeature() {
-      enableMobileEditingMode = !enableMobileEditingMode;
-      if (enableMobileEditingMode) {
-        enableQuickEdit = true;
-        enableInlineTextEdit = true;
-        const quickEditToggleEl = document.getElementById('toggleQuickEdit');
-        if (quickEditToggleEl) quickEditToggleEl.classList.add('on');
-        localStorage.setItem('gm_enable_quick_edit', 'true');
+      if (!enableMobileEditingMode) {
+        document.getElementById('mobileEditWarningModal').classList.add('active');
+        return;
       }
+      enableMobileEditingMode = false;
+      const toggleEl = document.getElementById('toggleMobileEditingMode');
+      if (toggleEl) toggleEl.classList.remove('on');
       syncMobileEditingModeUI();
-      localStorage.setItem('gm_enable_mobile_edit_mode', enableMobileEditingMode ? 'true' : 'false');
-      showToast(enableMobileEditingMode ? '手機友善編輯模式已開啟' : '手機友善編輯模式已關閉');
+      localStorage.setItem('gm_enable_mobile_edit_mode', 'false');
+      showToast('手機友善編輯模式已關閉');
+    }
+
+    function confirmEnableMobileEditMode() {
+      enableMobileEditingMode = true;
+      enableQuickEdit = true;
+      enableInlineTextEdit = true;
+      const toggleEl = document.getElementById('toggleMobileEditingMode');
+      if (toggleEl) toggleEl.classList.add('on');
+      syncMobileEditingModeUI();
+      localStorage.setItem('gm_enable_mobile_edit_mode', 'true');
+      showToast('手機友善編輯模式已開啟');
+      document.getElementById('mobileEditWarningModal').classList.remove('active');
+    }
+
+    function cancelEnableMobileEditMode() {
+      document.getElementById('mobileEditWarningModal').classList.remove('active');
     }
 
     function isTextLayer(layer) {
