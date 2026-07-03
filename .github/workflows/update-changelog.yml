@@ -74,7 +74,7 @@ jobs:
             JSON_PROMPT=$(NODE_OPTIONS="--no-warnings" node -e 'console.log(JSON.stringify(process.argv[1]))' -- "$PROMPT")
 
             echo "正在呼叫 Google Gemma API..."
-            API_RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemma2-27b-it:generateContent" \
+            API_RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemma-4-31b-it" \
               -H "Content-Type: application/json" \
               -H "x-goog-api-key: ${GEMINI_API_KEY}" \
               -d "{\"contents\": [{\"parts\": [{\"text\": $JSON_PROMPT}]}]}")
@@ -135,20 +135,35 @@ jobs:
         with:
           path: '.'
 
-      - name: Deploy to GitHub Pages (Attempt 1)
-        id: deploy_1
-        uses: actions/deploy-pages@v4
-        timeout-minutes: 2
-        continue-on-error: true
-
-      - name: Wait for server recovery if Attempt 1 failed
-        if: steps.deploy_1.outcome == 'failure'
-        run: |
-          echo "⚠️ 第一輪部署因 GitHub 伺服器忙碌而失敗或逾時。"
-          echo "⏳ 正在等待 20 秒讓伺服器稍微消化快取，隨後將自動進行重試..."
-          sleep 20
-
-      - name: Deploy to GitHub Pages (Attempt 2 - Retry)
-        if: steps.deploy_1.outcome == 'failure'
-        uses: actions/deploy-pages@v4
-        timeout-minutes: 3
+      # =================================================================
+      # 🔄 【自動重試迴圈】最多嘗試 5 次部署，每次失敗冷卻 20 秒
+      # =================================================================
+      - name: Deploy to GitHub Pages (With 5 Retries)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const maxAttempts = 5;
+            const delaySeconds = 20;
+            
+            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+              try {
+                console.log(`🚀 正在進行第 ${attempt} / ${maxAttempts} 次 GitHub Pages 部署嘗試...`);
+                
+                // 呼叫官方部署 Action
+                await typeof github.actions !== 'undefined' 
+                  ? core.summary.addText(`嘗試第 ${attempt} 次部署中...`)
+                  : null;
+                  
+                await actions.run('actions/deploy-pages@v4', { 'timeout-minutes': '3' });
+                console.log('✅ GitHub Pages 部署成功！');
+                break; 
+              } catch (error) {
+                console.log(`⚠️ 第 ${attempt} 次部署失敗。`);
+                if (attempt === maxAttempts) {
+                  console.log('❌ 已達最大重試次數，部署宣告失敗。');
+                  throw error;
+                }
+                console.log(`⏳ 伺服器可能正忙碌中，等待 ${delaySeconds} 秒後自動重試...`);
+                await new Promise(resolve => setTimeout(resolve, delaySeconds * 1000));
+              }
+            }
