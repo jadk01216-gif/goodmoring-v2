@@ -1567,6 +1567,8 @@
           <div class="dropdown-item" onclick="triggerHeaderExport('png')">🖼️ 匯出為 PNG</div>
           <div class="dropdown-item" onclick="triggerHeaderExport('jpeg')">📸 匯出為 JPG</div>
           <div class="dropdown-item" onclick="triggerHeaderExport('webp')">⚡ 匯出為 WebP</div>
+          <div class="dropdown-item" onclick="triggerHeaderExport('gm')"
+            style="border-top: 1px solid var(--border); margin-top: 4px; padding-top: 10px;">💾 匯出專案 (.gm)</div>
         </div>
       </div>
 
@@ -2114,8 +2116,8 @@
       style="text-align: left; max-width: 480px; font-size: 12px; display: flex; flex-direction: column; padding: 0;">
       <div class="about-header" style="padding: 24px 24px 16px; text-align: center; flex-shrink: 0;">
         <h3 class="modal-title" style="font-size: 18px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
-        <p id="appVersion" data-version="v1.42"
-          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.42 </p>
+        <p id="appVersion" data-version="v1.43"
+          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.43 </p>
       </div>
 
       <div class="about-content"
@@ -3278,7 +3280,11 @@
     function triggerHeaderExport(format) {
       const menu = document.getElementById('headerExportMenu');
       if (menu) menu.style.display = 'none';
-      exportImage(format);
+      if (format === 'gm') {
+        openProjectExportDialog();
+      } else {
+        exportImage(format);
+      }
     }
 
     // 點擊外部自動收起選單
