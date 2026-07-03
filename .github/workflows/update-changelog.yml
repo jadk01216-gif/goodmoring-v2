@@ -71,23 +71,30 @@ jobs:
             請直接以 Markdown 的條列式符號（*）列出這次版本最主要、有意義的變更點即可。
             請勿自己加上額外的「### 功能分類」標題，也不要加上任何前言、後語、問候語或外層 Markdown 大標題，直接輸出更新項目。"
 
-            JSON_PROMPT=$(NODE_OPTIONS="--no-warnings" node -e 'console.log(JSON.stringify(process.argv[1]))' -- "$PROMPT")
+            # 使用 jq 安全建立 JSON 請求檔案
+            jq -n --arg msg "$PROMPT" '{"contents": [{"parts": [{"text": $msg}]}]}' > gemini_request.json
 
             echo "正在呼叫 Google Gemma API..."
-            API_RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemma-4-31b-it" \
+            
+            HTTP_STATUS=$(curl -s -o gemini_response.json -w "%{http_code}" -X POST \
+              "https://generativelanguage.googleapis.com/v1beta/models/gemma-4-31b-it:generateContent?key=${GEMINI_API_KEY}" \
               -H "Content-Type: application/json" \
-              -H "x-goog-api-key: ${GEMINI_API_KEY}" \
-              -d "{\"contents\": [{\"parts\": [{\"text\": $JSON_PROMPT}]}]}")
+              -d @gemini_request.json)
 
-            AI_CONTENT=$(echo "$API_RESPONSE" | node -e '
-              const fs = require("fs");
-              const data = JSON.parse(fs.readFileSync(0, "utf-8"));
-              if(data.candidates && data.candidates[0].content.parts[0].text) {
-                console.log(data.candidates[0].content.parts[0].text);
-              } else {
-                console.log("* 優化內部程式碼結構與穩定性。");
-              }
-            ')
+            echo "API 回傳狀態碼: $HTTP_STATUS"
+
+            if [ "$HTTP_STATUS" -eq 200 ] && [ -s gemini_response.json ]; then
+              AI_CONTENT=$(jq -r '.candidates[0].content.parts[0].text' gemini_response.json 2>/dev/null || echo "error")
+              if [ "$AI_CONTENT" = "error" ] || [ -z "$AI_CONTENT" ] || [ "$AI_CONTENT" = "null" ]; then
+                echo "⚠️ JSON 解析失敗或內容為空，啟用預設更新日誌。"
+                AI_CONTENT="* 優化內部程式碼結構與穩定性。"
+              fi
+            else
+              echo "⚠️ API 呼叫失敗，啟用預設更新日誌。"
+              AI_CONTENT="* 優化內部程式碼結構與穩定性。"
+            fi
+
+            rm -f gemini_request.json gemini_response.json
 
             NOW_DATE=$(TZ="Asia/Taipei" date +'%Y/%-m/%-d %H:%M')
             
@@ -136,34 +143,57 @@ jobs:
           path: '.'
 
       # =================================================================
-      # 🔄 【自動重試迴圈】最多嘗試 5 次部署，每次失敗冷卻 20 秒
+      # 🔄 【自動重試機制】最多嘗試 5 次標準 Pages 部署動作 (語法完全修正版)
       # =================================================================
-      - name: Deploy to GitHub Pages (With 5 Retries)
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const maxAttempts = 5;
-            const delaySeconds = 20;
-            
-            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-              try {
-                console.log(`🚀 正在進行第 ${attempt} / ${maxAttempts} 次 GitHub Pages 部署嘗試...`);
-                
-                // 呼叫官方部署 Action
-                await typeof github.actions !== 'undefined' 
-                  ? core.summary.addText(`嘗試第 ${attempt} 次部署中...`)
-                  : null;
-                  
-                await actions.run('actions/deploy-pages@v4', { 'timeout-minutes': '3' });
-                console.log('✅ GitHub Pages 部署成功！');
-                break; 
-              } catch (error) {
-                console.log(`⚠️ 第 ${attempt} 次部署失敗。`);
-                if (attempt === maxAttempts) {
-                  console.log('❌ 已達最大重試次數，部署宣告失敗。');
-                  throw error;
-                }
-                console.log(`⏳ 伺服器可能正忙碌中，等待 ${delaySeconds} 秒後自動重試...`);
-                await new Promise(resolve => setTimeout(resolve, delaySeconds * 1000));
-              }
-            }
+      
+      # 🚀 第 1 次嘗試
+      - name: Deploy to GitHub Pages (Attempt 1)
+        id: deploy_1
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+
+      # ⏳ 失敗則等待 20 秒
+      - name: Wait for Retry 2
+        if: steps.deploy_1.outcome == 'failure'
+        run: sleep 20
+
+      # 🚀 第 2 次嘗試
+      - name: Deploy to GitHub Pages (Attempt 2)
+        id: deploy_2
+        if: steps.deploy_1.outcome == 'failure'
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+
+      # ⏳ 失敗則等待 20 秒
+      - name: Wait for Retry 3
+        if: steps.deploy_2.outcome == 'failure'
+        run: sleep 20
+
+      # 🚀 第 3 次嘗試
+      - name: Deploy to GitHub Pages (Attempt 3)
+        id: deploy_3
+        if: steps.deploy_2.outcome == 'failure'
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+
+      # ⏳ 失敗則等待 20 秒
+      - name: Wait for Retry 4
+        if: steps.deploy_3.outcome == 'failure'
+        run: sleep 20
+
+      # 🚀 第 4 次嘗試
+      - name: Deploy to GitHub Pages (Attempt 4)
+        id: deploy_4
+        if: steps.deploy_3.outcome == 'failure'
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+
+      # ⏳ 失敗則等待 20 秒
+      - name: Wait for Retry 5
+        if: steps.deploy_4.outcome == 'failure'
+        run: sleep 20
+
+      # 🚀 第 5 次嘗試 (最後一次不加 continue-on-error，失敗就真正報錯結束)
+      - name: Deploy to GitHub Pages (Attempt 5)
+        if: steps.deploy_4.outcome == 'failure'
+        uses: actions/deploy-pages@v4
