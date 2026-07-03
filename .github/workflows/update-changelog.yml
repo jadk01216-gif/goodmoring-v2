@@ -21,7 +21,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2 # 取得最近 2 次提交以比對變更
+          fetch-depth: 2
 
       - name: Generate Changelog and Update Files
         env:
@@ -29,7 +29,6 @@ jobs:
         run: |
           TARGET_FILE="index.html"
           
-          # 1. 偵測這 4 個核心檔案是否有被修改
           FILES_CHANGED=$(git diff --name-only HEAD~1 HEAD | grep -E '^(index\.html|LICENSE|manifest\.json|sw\.js)$' || true)
           
           if [ -z "$FILES_CHANGED" ]; then
@@ -37,7 +36,6 @@ jobs:
             exit 0
           fi
 
-          # 2. 抓取目前與上一個版本的版本號
           CURRENT_VERSION=$(grep -oP 'id="appVersion"\s+data-version="\K[^"]+' "$TARGET_FILE" || true)
           if [ -z "$CURRENT_VERSION" ]; then
             echo "找不到目前的 appVersion，結束流程。"
@@ -46,7 +44,6 @@ jobs:
 
           OLD_VERSION=$(git show HEAD~1:"$TARGET_FILE" | grep -oP 'id="appVersion"\s+data-version="\K[^"]+' || true)
           
-          # 3. 同時滿足「4檔其一有改」+「版本號有變」雙重檢查機制
           if [ "$CURRENT_VERSION" != "$OLD_VERSION" ] && [ ! -z "$OLD_VERSION" ]; then
             
             touch changelog.md
@@ -56,18 +53,16 @@ jobs:
               exit 0
             fi
 
-            # 4. 自動修改 README.md 中的版本標題
             if [ -f "README.md" ]; then
               echo "正在自動將 README.md 中的版本更新為 $CURRENT_VERSION..."
-              sed -i -E "s/## 🌅 早安圖製作工具[[:space:]]+版本[[:space:]]+v[0-9\.]+/## 🌅 早安圖製作工具 版本 $CURRENT_VERSION/g" README.md
+              sed -i -E "s/## 🌅 早安圖製作工具[[:space:]]+版本[[:space:]]+v[0-9\.]+/## 🌅 早安圖製作工具 版本 $CURRENT_VERSION/g" README.md[cite: 1]
             fi
 
             echo "版本已變更，正在擷取程式碼實際變更（Git Diff）..."
 
-            # 5. 撈取實際程式碼變更內容（限制前 200 行）
+            # 限制 200 行防 Token 爆炸
             GIT_DIFF_OUTPUT=$(git diff HEAD~1 HEAD -- index.html LICENSE manifest.json sw.js | head -n 200)
             
-            # 6. 設計 Prompt
             PROMPT="你是一個專業的開源軟體日誌生成助手。請根據以下這段程式碼的實際變更內容（Git Diff，其中 + 代表新增，- 代表刪除），推斷並整理出繁體中文的更新日誌細項。
             
             程式碼變更內容 (Git Diff)：
@@ -88,7 +83,6 @@ jobs:
 
             JSON_PROMPT=$(NODE_OPTIONS="--no-warnings" node -e 'console.log(JSON.stringify(process.argv[1]))' -- "$PROMPT")
 
-            # 7. 呼叫 Google Gemma API
             echo "正在呼叫 Google Gemma API..."
             API_RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemma2-27b-it:generateContent" \
               -H "Content-Type: application/json" \
@@ -105,10 +99,8 @@ jobs:
               }
             ')
 
-            # 8. 格式化目前台北時間
             NOW_DATE=$(TZ="Asia/Taipei" date +'%Y/%m/%d %H:%M' | awk -F'/' '{printf "%s/%d/%d", $1, $2, $3}' | awk '{printf "%s %s\n", $1, $2}')
             
-            # 9. 將新內容置頂附加到 changelog.md 最上方
             mv changelog.md old_changelog.tmp 2>/dev/null || touch old_changelog.tmp
             
             echo "# 🚀 更新日誌：版本 $CURRENT_VERSION" > changelog.md
@@ -139,25 +131,42 @@ jobs:
             git config --local user.name "GitHub Action"
             git add changelog.md README.md
             CURRENT_VERSION=$(grep -oP 'id="appVersion"\s+data-version="\K[^"]+' index.html)
-            
-            # [關鍵優化]：在 Commit 訊息內加上 [skip ci]，讓這次 Push 回去時，絕對不會再次觸發 Actions 造成無限循環建置！
             git commit -m "chore: 更新版本 $CURRENT_VERSION [skip ci]"
             git push
           else
             echo "沒有變更需要提交。"
           fi
 
-      # -------------------------------------------------------------
-      # 以下為全新改版的專屬原生 Action 部署流程（不會產生額外的 Commit 觸發）
-      # -------------------------------------------------------------
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.' # 將目前目錄下的網頁產物打包
+          path: '.'
 
+      # -----------------------------------------------------------------
+      # 【優化處】：加上自動重試機制，若部署失敗會自動等待 10 秒並重試，最高 3 次
+      # -----------------------------------------------------------------
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        continue-on-error: true # 防止伺服器抽風導致整個工作流卡死報錯
+
+      - name: Retry Deployment if Failed
+        if: steps.deployment.outcome == 'failure'
+        run: |
+          echo "偵測到 GitHub Pages 伺服器未回應或部署失敗，開啟自動重設與重試機制..."
+          for i in {1..3}; do
+            echo "正在進行第 $i 次重新部署嘗試（等待 10 秒）..."
+            sleep 10
+            # 手動觸發再次呼叫，成功就退出迴圈
+            if gh api -X POST /repos/${{ github.repository }}/pages/deployments -f artifact_id=${{ steps.deployment.outputs.artifact_id || '8062732801' }}; then
+              echo "重新部署成功！"
+              exit 0
+            fi
+          done
+          echo "已重試 3 次皆失敗，可能為 GitHub 伺服器當機，請稍後手動重試。"
+          exit 1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
