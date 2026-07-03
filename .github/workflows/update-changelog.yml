@@ -3,7 +3,7 @@ name: Auto Changelog & Deploy Pages
 on:
   push:
     branches:
-      - main # 如果您的預設分支是 master，請改為 master
+      - main
 
 permissions:
   contents: write
@@ -15,13 +15,13 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build-and-changelog:
+  build-changelog-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2 # 僅取得最近 2 次提交以精準比對本次變更
+          fetch-depth: 2 # 取得最近 2 次提交以比對變更
 
       - name: Generate Changelog and Update Files
         env:
@@ -29,11 +29,11 @@ jobs:
         run: |
           TARGET_FILE="index.html"
           
-          # 1. 核心修正：移除 README.md，只偵測這 4 個檔案是否有被修改
+          # 1. 偵測這 4 個核心檔案是否有被修改
           FILES_CHANGED=$(git diff --name-only HEAD~1 HEAD | grep -E '^(index\.html|LICENSE|manifest\.json|sw\.js)$' || true)
           
           if [ -z "$FILES_CHANGED" ]; then
-            echo "指定的 4 個核心檔案皆無修改，跳過日誌生成與部署。"
+            echo "指定的 4 個核心檔案皆無修改，跳過日誌生成。"
             exit 0
           fi
 
@@ -49,10 +49,8 @@ jobs:
           # 3. 同時滿足「4檔其一有改」+「版本號有變」雙重檢查機制
           if [ "$CURRENT_VERSION" != "$OLD_VERSION" ] && [ ! -z "$OLD_VERSION" ]; then
             
-            # 建立空的 changelog.md 避免後續檢查出錯
             touch changelog.md
 
-            # 檢查舊的 changelog 標題，避免重複寫入
             if grep -q "# 🚀 更新日誌：版本 $CURRENT_VERSION" changelog.md; then
               echo "changelog.md 中已存在此版本，跳過。"
               exit 0
@@ -66,10 +64,10 @@ jobs:
 
             echo "版本已變更，正在擷取程式碼實際變更（Git Diff）..."
 
-            # 5. 僅撈取這 4 個檔案的實際程式碼變更內容（限制前 200 行防 Token 爆炸）
+            # 5. 撈取實際程式碼變更內容（限制前 200 行）
             GIT_DIFF_OUTPUT=$(git diff HEAD~1 HEAD -- index.html LICENSE manifest.json sw.js | head -n 200)
             
-            # 6. 設計給 Gemma 的 Prompt
+            # 6. 設計 Prompt
             PROMPT="你是一個專業的開源軟體日誌生成助手。請根據以下這段程式碼的實際變更內容（Git Diff，其中 + 代表新增，- 代表刪除），推斷並整理出繁體中文的更新日誌細項。
             
             程式碼變更內容 (Git Diff)：
@@ -90,7 +88,7 @@ jobs:
 
             JSON_PROMPT=$(NODE_OPTIONS="--no-warnings" node -e 'console.log(JSON.stringify(process.argv[1]))' -- "$PROMPT")
 
-            # 7. 安全呼叫 Google Gemma API
+            # 7. 呼叫 Google Gemma API
             echo "正在呼叫 Google Gemma API..."
             API_RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemma2-27b-it:generateContent" \
               -H "Content-Type: application/json" \
@@ -140,28 +138,26 @@ jobs:
             git config --local user.email "action@github.com"
             git config --local user.name "GitHub Action"
             git add changelog.md README.md
-            # 動態抓取目前版本號並帶入 Commit 訊息中
             CURRENT_VERSION=$(grep -oP 'id="appVersion"\s+data-version="\K[^"]+' index.html)
-            git commit -m "chore: 更新版本 $CURRENT_VERSION"
+            
+            # [關鍵優化]：在 Commit 訊息內加上 [skip ci]，讓這次 Push 回去時，絕對不會再次觸發 Actions 造成無限循環建置！
+            git commit -m "chore: 更新版本 $CURRENT_VERSION [skip ci]"
             git push
           else
             echo "沒有變更需要提交。"
           fi
 
+      # -------------------------------------------------------------
+      # 以下為全新改版的專屬原生 Action 部署流程（不會產生額外的 Commit 觸發）
+      # -------------------------------------------------------------
       - name: Setup Pages
         uses: actions/configure-pages@v4
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '.' # 將目前目錄下的網頁產物打包
 
-  deploy-pages:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build-and-changelog
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
