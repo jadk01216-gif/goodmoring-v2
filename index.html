@@ -1860,30 +1860,68 @@
             <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">開啟後，文字無法被拖曳到圖片外部；關閉則可自由拖曳至任何位置</p>
           </div>
 
-          <div class="panel-section">
-            <div class="section-title">選取框線設定</div>
-            <label class="field-label" style="margin-top:0;" id="selBoxWidthLabel">框線粗細（3.5px）</label>
-            <input type="range" id="selectionBoxWidthSlider" min="1" max="12" step="0.5" value="3.5"
-              oninput="selectionBoxWidth=+this.value; localStorage.setItem('gm_selection_box_width', this.value); document.getElementById('selBoxWidthLabel').textContent='框線粗細（'+this.value+'px）'; document.getElementById('selBoxPreview').style.borderWidth=this.value+'px'; drawCanvas();">
-            <div style="display:flex; gap:6px; margin-top:10px;">
-              <div
-                style="flex:1; height:24px; border-radius:4px; background:var(--surface2); border:1px solid var(--border); position:relative; overflow:hidden;">
-                <div id="selBoxPreview"
-                  style="position:absolute; inset:4px; border:3.5px dashed #f5a623; border-radius:3px; pointer-events:none;">
-                </div>
+          <div class="toggle-row" style="margin-top:10px;">
+            <span class="toggle-label" style="font-size:12px; font-weight:500;">啟用右下角縮放控制點</span>
+            <div class="toggle on" id="toggleResizeHandles" onclick="toggleResizeHandlesFeature()"></div>
+          </div>
+          <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">
+            開啟後，選取文字時右下角會出現一個控制點，可直接拖曳以放大或縮小文字尺寸。
+          </p>
+        </div>
+
+
+
+        <div class="panel-section">
+          <div class="section-title">選取框線設定</div>
+          <label class="field-label" style="margin-top:0;" id="selBoxWidthLabel">框線粗細（3.5px）</label>
+          <input type="range" id="selectionBoxWidthSlider" min="1" max="12" step="0.5" value="3.5"
+            oninput="selectionBoxWidth=+this.value; localStorage.setItem('gm_selection_box_width', this.value); document.getElementById('selBoxWidthLabel').textContent='框線粗細（'+this.value+'px）'; document.getElementById('selBoxPreview').style.borderWidth=this.value+'px'; drawCanvas();">
+          <div style="display:flex; gap:6px; margin-top:10px;">
+            <div
+              style="flex:1; height:24px; border-radius:4px; background:var(--surface2); border:1px solid var(--border); position:relative; overflow:hidden;">
+              <div id="selBoxPreview"
+                style="position:absolute; inset:4px; border:3.5px dashed #f5a623; border-radius:3px; pointer-events:none;">
               </div>
             </div>
-            <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">拖曳選取文字圖層時所顯示的虛線外框粗細</p>
           </div>
+          <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">拖曳選取文字圖層時所顯示的虛線外框粗細</p>
 
-          <div class="panel-section">
-            <div class="section-title">匯出儲存</div>
-            <div class="dl-row">
-              <button class="dl-btn png" onclick="exportImage('png')">PNG</button>
-              <button class="dl-btn jpg" onclick="exportImage('jpeg')">JPG</button>
-              <button class="dl-btn webp" onclick="exportImage('webp')">WebP</button>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 12px;">
+            <label class="field-label" style="margin-top:0;" id="resizeHandleRadiusLabel">縮放控制點大小 (8px)</label>
+            <button onclick="resetResizeHandleRadius()"
+              style="background: transparent; border: none; color: var(--text-muted); font-size: 11px; cursor: pointer; text-decoration: underline;">還原預設</button>
+          </div>
+          <input type="range" id="resizeHandleRadiusSlider" min="4" max="20" step="1" value="8"
+            oninput="updateResizeHandleRadius(this.value)">
+          <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">調整選取文字時，右下角縮放控制點的圓圈大小。</p>
+        </div>
+
+
+
+        <div class="panel-section">
+          <div class="section-title">選取框線設定</div>
+          <label class="field-label" style="margin-top:0;" id="selBoxWidthLabel">框線粗細（3.5px）</label>
+          <input type="range" id="selectionBoxWidthSlider" min="1" max="12" step="0.5" value="3.5"
+            oninput="selectionBoxWidth=+this.value; localStorage.setItem('gm_selection_box_width', this.value); document.getElementById('selBoxWidthLabel').textContent='框線粗細（'+this.value+'px）'; document.getElementById('selBoxPreview').style.borderWidth=this.value+'px'; drawCanvas();">
+          <div style="display:flex; gap:6px; margin-top:10px;">
+            <div
+              style="flex:1; height:24px; border-radius:4px; background:var(--surface2); border:1px solid var(--border); position:relative; overflow:hidden;">
+              <div id="selBoxPreview"
+                style="position:absolute; inset:4px; border:3.5px dashed #f5a623; border-radius:3px; pointer-events:none;">
+              </div>
             </div>
           </div>
+          <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">拖曳選取文字圖層時所顯示的虛線外框粗細</p>
+        </div>
+
+        <div class="panel-section">
+          <div class="section-title">匯出儲存</div>
+          <div class="dl-row">
+            <button class="dl-btn png" onclick="exportImage('png')">PNG</button>
+            <button class="dl-btn jpg" onclick="exportImage('jpeg')">JPG</button>
+            <button class="dl-btn webp" onclick="exportImage('webp')">WebP</button>
+          </div>
+        </div>
     </aside>
   </div>
 
@@ -2132,8 +2170,8 @@
       style="text-align: left; max-width: 480px; font-size: 12px; display: flex; flex-direction: column; padding: 0;">
       <div class="about-header" style="padding: 24px 24px 16px; text-align: center; flex-shrink: 0;">
         <h3 class="modal-title" style="font-size: 18px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
-        <p id="appVersion" data-version="v1.49"
-          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.49 </p>
+        <p id="appVersion" data-version="v1.50"
+          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.50 </p>
       </div>
 
       <div class="about-content"
@@ -2277,6 +2315,8 @@
     let enableTodayFunction = true; // 日期函數：{TODAY()} 替换為今天日期
     let enableConstrainText = true; // 文字拖曳限制在圖片範圍內（預設開啟）
     let isPinchZooming = false;
+    let enableResizeHandles = true; // 啟用右下角縮放控制點
+    let resizeHandleRadius = 8; // 縮放控制點的半徑大小
     let pinchStartDist = 0;
     let pinchStartZoom = 1;
     let currentPinchZoom = 1;
@@ -2292,6 +2332,7 @@
     // 歷史還原狀態機制 (Undo / Redo Stack)
     let undoStack = [];
     let redoStack = [];
+    let resizingLayer = null;
     const maxHistory = 30;
 
     // 拖曳排序暫存變數
@@ -3036,6 +3077,26 @@
       } else {
         enableConstrainText = true;
         if (constrainTextToggleEl) constrainTextToggleEl.classList.add('on');
+      }
+
+      const savedResizeHandles = localStorage.getItem('gm_enable_resize_handles');
+      const resizeHandlesToggleEl = document.getElementById('toggleResizeHandles');
+      if (savedResizeHandles === 'false') {
+        enableResizeHandles = false;
+        if (resizeHandlesToggleEl) resizeHandlesToggleEl.classList.remove('on');
+      } else {
+        enableResizeHandles = true;
+        if (resizeHandlesToggleEl) resizeHandlesToggleEl.classList.add('on');
+      }
+
+      const savedHandleRadius = localStorage.getItem('gm_resize_handle_radius');
+      if (savedHandleRadius) {
+        const radius = parseInt(savedHandleRadius, 10);
+        resizeHandleRadius = radius;
+        const slider = document.getElementById('resizeHandleRadiusSlider');
+        if (slider) slider.value = radius;
+        const label = document.getElementById('resizeHandleRadiusLabel');
+        if (label) label.textContent = `縮放控制點大小 (${radius}px)`;
       }
 
       const savedTodayFunction = localStorage.getItem('gm_enable_today_function');
@@ -3974,6 +4035,35 @@
       localStorage.setItem('gm_enable_constrain_text', enableConstrainText ? 'true' : 'false');
       showToast(enableConstrainText ? '文字拖曳已限制在圖片範圍內' : '文字拖曳限制已關閉，可自由拖曳');
     }
+
+    function toggleResizeHandlesFeature() {
+      enableResizeHandles = !enableResizeHandles;
+      const toggleEl = document.getElementById('toggleResizeHandles');
+      if (toggleEl) {
+        toggleEl.classList.toggle('on', enableResizeHandles);
+      }
+      localStorage.setItem('gm_enable_resize_handles', enableResizeHandles ? 'true' : 'false');
+      showToast(enableResizeHandles ? '右下角縮放控制點已啟用' : '右下角縮放控制點已關閉');
+      // 重繪畫布以顯示或隱藏控制點
+      drawCanvas();
+    }
+
+    function updateResizeHandleRadius(value) {
+      resizeHandleRadius = parseInt(value, 10);
+      const label = document.getElementById('resizeHandleRadiusLabel');
+      if (label) label.textContent = `縮放控制點大小 (${resizeHandleRadius}px)`;
+      localStorage.setItem('gm_resize_handle_radius', resizeHandleRadius);
+      drawCanvas();
+    }
+
+    function resetResizeHandleRadius() {
+      const slider = document.getElementById('resizeHandleRadiusSlider');
+      if (slider) slider.value = 8;
+      updateResizeHandleRadius(8);
+      showToast('縮放控制點大小已還原為預設值');
+    }
+
+
 
     function setZoomMode(mode) {
       zoomMode = mode;
@@ -5325,6 +5415,20 @@
           ctx.textBaseline = 'top';
           ctx.fillText(sizeText, labelX + 7, labelY + 2);
 
+          // 如果啟用，繪製右下角縮放控制點
+          if (enableResizeHandles) {
+            const handleX = box.x + box.w;
+            const handleY = box.y + box.h;
+            const handleRadius = resizeHandleRadius;
+            ctx.beginPath();
+            ctx.arc(handleX, handleY, handleRadius, 0, 2 * Math.PI);
+            ctx.fillStyle = '#f5a623';
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+          }
+
           ctx.restore();
         }
         ctx.restore();
@@ -5365,6 +5469,21 @@
 
         ctx.restore();
       }
+    }
+
+    function checkResizeHandleHit(pos) {
+      if (!enableResizeHandles || !activeLayerId) return null;
+      const l = layers.find(item => item.id === activeLayerId);
+      if (!l) return null;
+
+      const box = getLayerBoundingBox(l);
+      const handleX = box.x + box.w;
+      const handleY = box.y + box.h;
+      const handleSize = 20; // 點擊熱區大小
+      if (Math.abs(pos.x - handleX) < handleSize && Math.abs(pos.y - handleY) < handleSize) {
+        return l;
+      }
+      return null;
     }
 
     /* ─────────────── Interaction ─────────────── */
@@ -5418,6 +5537,19 @@
         return;
       }
 
+      // 檢查是否點擊到縮放控制點
+      const resizeHit = checkResizeHandleHit(pos);
+      if (resizeHit) {
+        pushToUndo();
+        resizingLayer = {
+          id: resizeHit.id,
+          startSize: resizeHit.size,
+          startPos: pos,
+          startDist: Math.hypot(pos.x - resizeHit.x, pos.y - resizeHit.y)
+        };
+        return;
+      }
+
       const hit = checkHit(pos);
       if (hit) {
         // 1. 按下瞬間立即啟動選取外框並準備拖曳，給予最即時的反饋
@@ -5457,6 +5589,22 @@
       if (inlineEditLayerId) {
         return;
       }
+
+      if (resizingLayer) {
+        const l = layers.find(item => item.id === resizingLayer.id);
+        if (l) {
+          const currentDist = Math.hypot(pos.x - l.x, pos.y - l.y);
+          const scale = currentDist / resizingLayer.startDist;
+          const newSize = Math.round(resizingLayer.startSize * scale);
+          l.size = Math.max(10, Math.min(1000, newSize)); // 限制最小/最大字體
+          drawCanvas();
+          // 即時更新側邊欄的 size-label
+          const sizeLabel = document.querySelector(`.layer-card[data-id="${l.id}"] .size-label`);
+          if (sizeLabel) sizeLabel.textContent = `大小 (${l.size}px)`;
+        }
+        return;
+      }
+
 
       // 判斷是否正在拖曳文字：若移動位移超過 8px，則視為「要移動位置」，取消放開後的直接編輯狀態
       if (pendingInlineEdit && pendingInlineEditStart) {
@@ -5551,6 +5699,7 @@
       pendingInlineEditStart = null;
       draggingLayer = null;
       cropDragging = null;
+      resizingLayer = null;
       cropStart = null;
       cropDragStartRect = null;
       drawCanvas();
@@ -5577,6 +5726,11 @@
         }
         return;
       }
+      // 檢查是否滑過縮放控制點
+      if (enableResizeHandles && checkResizeHandleHit(pos)) {
+        canvas.style.cursor = 'nwse-resize';
+        return;
+      }
       if (isAddingTextActive) {
         canvas.style.cursor = 'cell';
         return;
@@ -5599,7 +5753,7 @@
     canvas.addEventListener('mousedown', e => handleStart(getPos(e)));
     window.addEventListener('mousemove', e => {
       const pos = getPos(e);
-      updateCursorStyle(pos);
+      if (!resizingLayer) updateCursorStyle(pos); // 縮放時鎖定游標樣式
       handleMove(pos);
     });
     window.addEventListener('mouseup', () => handleEnd());
@@ -5676,7 +5830,7 @@
 
     window.addEventListener('touchmove', e => {
       if (isPinchZooming) return;
-      if (draggingLayer) {
+      if (draggingLayer || resizingLayer) {
         e.preventDefault();
         handleMove(getTouchPos(e));
       } else if (isCropping && cropStart) {
@@ -5965,6 +6119,8 @@
       localStorage.removeItem('gm_enable_pinch_zoom');
       localStorage.removeItem('gm_enable_today_function');
       localStorage.removeItem('gm_enable_constrain_text');
+      localStorage.removeItem('gm_enable_resize_handles');
+      localStorage.removeItem('gm_resize_handle_radius');
       localStorage.removeItem('gm_crop_border_width');
       localStorage.removeItem('gm_crop_handle_size');
 
@@ -5984,6 +6140,8 @@
       enablePinchZoom = false;
       enableTodayFunction = true;
       enableConstrainText = true;
+      enableResizeHandles = true;
+      resizeHandleRadius = 8;
       isPinchZooming = false;
       pinchStartDist = 0;
       pinchStartZoom = 1;
@@ -6038,6 +6196,14 @@
       if (toggleTodayFunction) toggleTodayFunction.classList.add('on');
       const toggleConstrainText = document.getElementById('toggleConstrainText');
       if (toggleConstrainText) toggleConstrainText.classList.add('on');
+      const toggleResizeHandles = document.getElementById('toggleResizeHandles');
+      if (toggleResizeHandles) toggleResizeHandles.classList.add('on');
+      const handleRadiusSlider = document.getElementById('resizeHandleRadiusSlider');
+      if (handleRadiusSlider) handleRadiusSlider.value = 8;
+      const handleRadiusLabel = document.getElementById('resizeHandleRadiusLabel');
+      if (handleRadiusLabel) handleRadiusLabel.textContent = '縮放控制點大小 (8px)';
+
+
       const pinchWrap = document.getElementById('canvasWrap');
       if (pinchWrap) pinchWrap.classList.remove('pinch-zoom-active');
       const defaultTextInput = document.getElementById('defaultNewTextInput');
