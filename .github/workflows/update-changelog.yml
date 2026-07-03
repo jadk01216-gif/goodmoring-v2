@@ -55,7 +55,6 @@ jobs:
 
             if [ -f "README.md" ]; then
               echo "正在自動將 README.md 中的版本更新為 $CURRENT_VERSION..."
-              # 【已修復】移除後方黏連的錯誤註解，確保 sed 指令正常執行
               sed -i -E "s/## 🌅 早安圖製作工具[[:space:]]+版本[[:space:]]+v[0-9\.]+/## 🌅 早安圖製作工具 版本 $CURRENT_VERSION/g" README.md
             fi
 
@@ -99,6 +98,7 @@ jobs:
               }
             ')
 
+            # 2026 年最新格式化台北時間
             NOW_DATE=$(TZ="Asia/Taipei" date +'%Y/%m/%d %H:%M' | awk -F'/' '{printf "%s/%d/%d", $1, $2, $3}' | awk '{printf "%s %s\n", $1, $2}')
             
             mv changelog.md old_changelog.tmp 2>/dev/null || touch old_changelog.tmp
@@ -145,24 +145,7 @@ jobs:
         with:
           path: '.'
 
+      # 回歸最經典的原生部署，讓 GitHub Deployments 狀態面板能百分之百正確同步
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-        continue-on-error: true
-
-      - name: Retry Deployment if Failed
-        if: steps.deployment.outcome == 'failure'
-        run: |
-          echo "偵測到 GitHub Pages 伺服器未回應或部署失敗，開啟自動重設與重試機制..."
-          for i in {1..3}; do
-            echo "正在進行第 $i 次重新部署嘗試（等待 10 秒）..."
-            sleep 10
-            if gh api -X POST /repos/${{ github.repository }}/pages/deployments -f artifact_id=${{ steps.deployment.outputs.artifact_id }}; then
-              echo "重新部署成功！"
-              exit 0
-            fi
-          done
-          echo "已重試 3 次皆失敗，可能為 GitHub 伺服器當機，請稍後手動重試。"
-          exit 1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
