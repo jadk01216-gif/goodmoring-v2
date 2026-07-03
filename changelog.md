@@ -1,3 +1,38 @@
+# 🚀 更新日誌：版本 v1.47
+
+### 感謝您持續使用本產品！我們很高興向您宣佈 v1.47 版本的更新。
+
+*   Role: Professional open-source software changelog generator.
+    *   Input: Git Diff.
+    *   Task: Infer and summarize meaningful changes in Traditional Chinese.
+    *   Constraints:
+        *   Bullet points (`*`).
+        *   No category headers.
+        *   No intro/outro/greetings/headers.
+        *   Direct output.
+
+    *   File modified: `index.html`
+    *   Line change:
+        `- <p id="appVersion" data-version="v1.46" ...>版本 v1.46 </p>`
+        `+ <p id="appVersion" data-version="v1.47" ...>版本 v1.47 </p>`
+    *   Meaning: The version number of the "早安圖製作工具" (Good Morning Image Maker) has been updated from v1.46 to v1.47.
+
+    *   Meaning: 更新版本至 v1.47 (Update version to v1.47).
+    *   Context: 早安圖製作工具.
+
+    *   Bullet point: `* 更新版本至 v1.47`
+
+    *   Bullet points? Yes.
+    *   No category headers? Yes.
+    *   No intro/outro? Yes.
+    *   Traditional Chinese? Yes.
+
+<div align="right">
+    早安圖製作工具作者於 2026/7/3 19:02 發布
+</div>
+
+---
+
 # 🚀 更新日誌：版本 v1.43
 
 ### 感謝您持續使用本產品！我們很高興向您宣佈 v1.43 版本的更新。
