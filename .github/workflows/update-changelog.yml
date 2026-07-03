@@ -62,7 +62,6 @@ jobs:
 
             GIT_DIFF_OUTPUT=$(git diff HEAD~1 HEAD -- index.html LICENSE manifest.json sw.js | head -n 200)
             
-            # 【提示詞優化】拿掉分類限制，改為讓 AI 自由條列重點
             PROMPT="你是一個專業的開源軟體日誌生成助手。請根據以下這段程式碼的實際變更內容（Git Diff，其中 + 代表新增，- 代表刪除），推斷、整理並直接輸出繁體中文的更新日誌重點。
             
             程式碼變更內容 (Git Diff)：
@@ -90,12 +89,10 @@ jobs:
               }
             ')
 
-            # 格式化台北時間 (自動處理 2026/07/03 18:19 這種格式)
-            NOW_DATE=$(TZ="Asia/Taipei" date +'%Y/%m/%d %H:%M' | awk -F'/' '{printf "%s/%d/%d", $1, $2, $3}' | awk '{printf "%s %s\n", $1, $2}')
+            NOW_DATE=$(TZ="Asia/Taipei" date +'%Y/%-m/%-d %H:%M')
             
             mv changelog.md old_changelog.tmp 2>/dev/null || touch old_changelog.tmp
             
-            # 組合出乾淨、流暢的置頂日誌
             echo "# 🚀 更新日誌：版本 $CURRENT_VERSION" > changelog.md
             echo "" >> changelog.md
             echo "### 感謝您持續使用本產品！我們很高興向您宣佈 $CURRENT_VERSION 版本的更新。" >> changelog.md
@@ -138,18 +135,12 @@ jobs:
         with:
           path: '.'
 
-      # =================================================================
-      # 【第一輪部署】
-      # =================================================================
       - name: Deploy to GitHub Pages (Attempt 1)
         id: deploy_1
         uses: actions/deploy-pages@v4
         timeout-minutes: 2
         continue-on-error: true
 
-      # =================================================================
-      # 【自動重試冷卻時間】
-      # =================================================================
       - name: Wait for server recovery if Attempt 1 failed
         if: steps.deploy_1.outcome == 'failure'
         run: |
@@ -157,9 +148,6 @@ jobs:
           echo "⏳ 正在等待 20 秒讓伺服器稍微消化快取，隨後將自動進行重試..."
           sleep 20
 
-      # =================================================================
-      # 【第二輪備援部署】
-      # =================================================================
       - name: Deploy to GitHub Pages (Attempt 2 - Retry)
         if: steps.deploy_1.outcome == 'failure'
         uses: actions/deploy-pages@v4
