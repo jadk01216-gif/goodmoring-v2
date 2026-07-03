@@ -1,3 +1,34 @@
+# 🚀 更新日誌：版本 v1.46
+
+### 感謝您持續使用本產品！我們很高興向您宣佈 v1.46 版本的更新。
+
+*   Role: Professional open-source software changelog generator.
+    *   Input: Git Diff of a project.
+    *   Task: Infer and summarize the main meaningful changes in Traditional Chinese.
+    *   Constraints:
+        *   Use bullet points (`*`).
+        *   No category headers (e.g., "### Features").
+        *   No intro/outro, greetings, or top-level Markdown headers.
+        *   Direct output of the update items.
+
+    ```diff
+    -        <p id="appVersion" data-version="v1.45"
+    -          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.45 </p>
+    +        <p id="appVersion" data-version="v1.46"
+    +          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.46 </p>
+    ```
+
+    *   The only change is updating the version number from `v1.45` to `v1.46` in `index.html`.
+
+    *   Version update: v1.45 $\rightarrow$ v1.46.
+    *   Translate to Traditional Chinese: 版本更新至 v1.46。
+
+<div align="right">
+    早安圖製作工具作者於 2026/7/3 18:55 發布
+</div>
+
+---
+
 # 🚀 更新日誌：版本 v1.43
 
 ### 感謝您持續使用本產品！我們很高興向您宣佈 v1.43 版本的更新。
