@@ -62,23 +62,15 @@ jobs:
 
             GIT_DIFF_OUTPUT=$(git diff HEAD~1 HEAD -- index.html LICENSE manifest.json sw.js | head -n 200)
             
-            PROMPT="你是一個專業的開源軟體日誌生成助手。請根據以下這段程式碼的實際變更內容（Git Diff，其中 + 代表新增，- 代表刪除），推斷並整理出繁體中文的更新日誌細項。
+            # 【提示詞優化】拿掉分類限制，改為讓 AI 自由條列重點
+            PROMPT="你是一個專業的開源軟體日誌生成助手。請根據以下這段程式碼的實際變更內容（Git Diff，其中 + 代表新增，- 代表刪除），推斷、整理並直接輸出繁體中文的更新日誌重點。
             
             程式碼變更內容 (Git Diff)：
             $GIT_DIFF_OUTPUT
             
-            你的任務是挑選出有意義的變更，並嚴格分為以下三類輸出（如果某類別沒有內容，請寫「* 無」）：
-            
-            ### ✨ 功能更新
-            * [這裡寫新增的功能，若無則寫 * 無]
-            
-            ### 🐛 Bug 修復
-            * [這裡寫修復的錯誤，若無則寫 * 無]
-            
-            ### 🎨 排版變更
-            * [這裡寫介面或排版調整，若無則寫 * 無]
-            
-            注意：請直接且只輸出上述三個標題和底下的條列項目即可，不要加上任何其他的前言、後語、問候語或外層 Markdown 標題。"
+            你的任務：
+            請直接以 Markdown 的條列式符號（*）列出這次版本最主要、有意義的變更點即可。
+            請勿自己加上額外的「### 功能分類」標題，也不要加上任何前言、後語、問候語或外層 Markdown 大標題，直接輸出更新項目。"
 
             JSON_PROMPT=$(NODE_OPTIONS="--no-warnings" node -e 'console.log(JSON.stringify(process.argv[1]))' -- "$PROMPT")
 
@@ -94,15 +86,16 @@ jobs:
               if(data.candidates && data.candidates[0].content.parts[0].text) {
                 console.log(data.candidates[0].content.parts[0].text);
               } else {
-                console.log("### ✨ 功能更新\n\n* 無\n\n### 🐛 Bug 修復\n\n* 無\n\n### 🎨 排版變更\n\n* 無");
+                console.log("* 優化內部程式碼結構與穩定性。");
               }
             ')
 
-            # 格式化台北時間
+            # 格式化台北時間 (自動處理 2026/07/03 18:19 這種格式)
             NOW_DATE=$(TZ="Asia/Taipei" date +'%Y/%m/%d %H:%M' | awk -F'/' '{printf "%s/%d/%d", $1, $2, $3}' | awk '{printf "%s %s\n", $1, $2}')
             
             mv changelog.md old_changelog.tmp 2>/dev/null || touch old_changelog.tmp
             
+            # 組合出乾淨、流暢的置頂日誌
             echo "# 🚀 更新日誌：版本 $CURRENT_VERSION" > changelog.md
             echo "" >> changelog.md
             echo "### 感謝您持續使用本產品！我們很高興向您宣佈 $CURRENT_VERSION 版本的更新。" >> changelog.md
@@ -146,7 +139,7 @@ jobs:
           path: '.'
 
       # =================================================================
-      # 【第一輪部署】設定 2 分鐘逾時防護。如果失敗，允許工作流繼續往下走
+      # 【第一輪部署】
       # =================================================================
       - name: Deploy to GitHub Pages (Attempt 1)
         id: deploy_1
@@ -155,7 +148,7 @@ jobs:
         continue-on-error: true
 
       # =================================================================
-      # 【自動重試冷卻時間】只有當第一輪失敗/逾時，才會觸發此步驟，先等待 20 秒
+      # 【自動重試冷卻時間】
       # =================================================================
       - name: Wait for server recovery if Attempt 1 failed
         if: steps.deploy_1.outcome == 'failure'
@@ -165,7 +158,7 @@ jobs:
           sleep 20
 
       # =================================================================
-      # 【第二輪備援部署】只有當第一輪失敗時才啟動，這次直接接管並作為最終結果
+      # 【第二輪備援部署】
       # =================================================================
       - name: Deploy to GitHub Pages (Attempt 2 - Retry)
         if: steps.deploy_1.outcome == 'failure'
