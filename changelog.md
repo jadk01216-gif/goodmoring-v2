@@ -4,7 +4,7 @@
 
 ### ✨ 功能更新
 
-* 加入license
+* 加入MIT license
 
 
 ### 🐛 Bug 修復
