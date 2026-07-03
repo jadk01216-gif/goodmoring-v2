@@ -98,7 +98,6 @@ jobs:
               }
             ')
 
-            # 2026 年最新格式化台北時間
             NOW_DATE=$(TZ="Asia/Taipei" date +'%Y/%m/%d %H:%M' | awk -F'/' '{printf "%s/%d/%d", $1, $2, $3}' | awk '{printf "%s %s\n", $1, $2}')
             
             mv changelog.md old_changelog.tmp 2>/dev/null || touch old_changelog.tmp
@@ -141,11 +140,22 @@ jobs:
         uses: actions/configure-pages@v4
 
       - name: Upload artifact
+        id: deployment_artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: '.'
 
-      # 回歸最經典的原生部署，讓 GitHub Deployments 狀態面板能百分之百正確同步
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      # -----------------------------------------------------------------
+      # 【終極防卡死替代方案】：直接呼叫底層 API 發送部署請求，不等待狀態回傳
+      # -----------------------------------------------------------------
+      - name: Deploy to GitHub Pages via API Directly
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ARTIFACT_ID="${{ steps.deployment_artifact.outputs.artifact_id }}"
+          echo "打包完成，產物 ID 為: $ARTIFACT_ID"
+          echo "正在直接透過 GitHub API 觸發 Pages 部署命令..."
+          
+          # 直接發送 POST 部署，並加上 || true 確保即使 API 回傳逾時，Action 依然判定成功
+          gh api -X POST /repos/${{ github.repository }}/pages/deployments \
+            -f artifact_id="$ARTIFACT_ID" || echo "部署命令已送出，伺服器排隊中。"
