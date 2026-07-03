@@ -26,6 +26,15 @@ jobs:
       - name: Generate Changelog and Update Files
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          AI_PROMPT: |
+            Role: Professional open-source software changelog generator.
+            Input: Git Diff of a project.
+            Task: Infer and summarize the main meaningful changes in Traditional Chinese.
+            Constraints:
+            * Use bullet points (*).
+            * No category headers (e.g., "### Features").
+            * No intro/outro, greetings, or top-level Markdown headers.
+            * Direct output of the update items.
         run: |
           TARGET_FILE="index.html"
           
@@ -60,19 +69,11 @@ jobs:
 
             echo "版本已變更，正在擷取程式碼實際變更（Git Diff）..."
 
-            GIT_DIFF_OUTPUT=$(git diff HEAD~1 HEAD -- index.html LICENSE manifest.json sw.js | head -n 200)
+            export GIT_DIFF_OUTPUT=$(git diff HEAD~1 HEAD -- index.html LICENSE manifest.json sw.js | head -n 200)
             
-            PROMPT="你是一個專業的開源軟體日誌生成助手。請根據以下這段程式碼的實際變更內容（Git Diff，其中 + 代表新增，- 代表刪除），推斷、整理並直接輸出繁體中文的更新日誌重點。
-            
-            程式碼變更內容 (Git Diff)：
-            $GIT_DIFF_OUTPUT
-            
-            你的任務：
-            請直接以 Markdown 的條列式符號（*）列出這次版本最主要、有意義的變更點即可。
-            請勿自己加上額外的「### 功能分類」標題，也不要加上任何前言、後語、問候語或外層 Markdown 大標題，直接輸出更新項目。"
-
-            # 使用 jq 安全建立 JSON 請求檔案
-            jq -n --arg msg "$PROMPT" '{"contents": [{"parts": [{"text": $msg}]}]}' > gemini_request.json
+            # 將字串組合的任務完全交給 jq，避免在 shell 中處理複雜的多行字串，從而解決 YAML 解析問題
+            jq -n --arg prompt_base "$AI_PROMPT" --arg git_diff "$GIT_DIFF_OUTPUT" \
+              '{"contents": [{"parts": [{"text": ($prompt_base + "\n\nGit Diff:\n" + $git_diff)}]}]}' > gemini_request.json
 
             echo "正在呼叫 Google Gemma API..."
             
