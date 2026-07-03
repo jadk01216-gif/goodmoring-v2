@@ -1,0 +1,200 @@
+name: Auto Changelog & Deploy Pages
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-changelog-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Generate Changelog and Update Files
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          AI_PROMPT: |
+            Role: Professional open-source software changelog generator.
+            Input: Git Diff of a project.
+            Task: Infer and summarize the main meaningful changes in Traditional Chinese.
+            Constraints:
+            * Use bullet points (*).
+            * No category headers (e.g., "### Features").
+            * No intro/outro, greetings, or top-level Markdown headers.
+            * Direct output of the update items.
+        run: |
+          TARGET_FILE="index.html"
+          
+          FILES_CHANGED=$(git diff --name-only HEAD~1 HEAD | grep -E '^(index\.html|LICENSE|manifest\.json|sw\.js)$' || true)
+          
+          if [ -z "$FILES_CHANGED" ]; then
+            echo "指定的 4 個核心檔案皆無修改，跳過日誌生成。"
+            exit 0
+          fi
+
+          CURRENT_VERSION=$(grep -oP 'id="appVersion"\s+data-version="\K[^"]+' "$TARGET_FILE" || true)
+          if [ -z "$CURRENT_VERSION" ]; then
+            echo "找不到目前的 appVersion，結束流程。"
+            exit 0
+          fi
+
+          OLD_VERSION=$(git show HEAD~1:"$TARGET_FILE" | grep -oP 'id="appVersion"\s+data-version="\K[^"]+' || true)
+          
+          if [ "$CURRENT_VERSION" != "$OLD_VERSION" ] && [ ! -z "$OLD_VERSION" ]; then
+            
+            touch changelog.md
+
+            if grep -q "# 🚀 更新日誌：版本 $CURRENT_VERSION" changelog.md; then
+              echo "changelog.md 中已存在此版本，跳過。"
+              exit 0
+            fi
+
+            if [ -f "README.md" ]; then
+              echo "正在自動將 README.md 中的版本更新為 $CURRENT_VERSION..."
+              sed -i -E "s/## 🌅 早安圖製作工具[[:space:]]+版本[[:space:]]+v[0-9\.]+/## 🌅 早安圖製作工具 版本 $CURRENT_VERSION/g" README.md
+            fi
+
+            echo "版本已變更，正在擷取程式碼實際變更（Git Diff）..."
+
+            export GIT_DIFF_OUTPUT=$(git diff HEAD~1 HEAD -- index.html LICENSE manifest.json sw.js | head -n 200)
+            
+            # 將字串組合的任務完全交給 jq，避免在 shell 中處理複雜的多行字串，從而解決 YAML 解析問題
+            jq -n --arg prompt_base "$AI_PROMPT" --arg git_diff "$GIT_DIFF_OUTPUT" \
+              '{"contents": [{"parts": [{"text": ($prompt_base + "\n\nGit Diff:\n" + $git_diff)}]}]}' > gemini_request.json
+
+            echo "正在呼叫 Google Gemma API..."
+            
+            HTTP_STATUS=$(curl -s -o gemini_response.json -w "%{http_code}" -X POST \
+              "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${GEMINI_API_KEY}" \
+              -H "Content-Type: application/json" \
+              -d @gemini_request.json)
+
+            echo "API 回傳狀態碼: $HTTP_STATUS"
+
+            if [ "$HTTP_STATUS" -eq 200 ] && [ -s gemini_response.json ]; then
+              AI_CONTENT=$(jq -r '.candidates[0].content.parts[0].text' gemini_response.json 2>/dev/null || echo "error")
+              if [ "$AI_CONTENT" = "error" ] || [ -z "$AI_CONTENT" ] || [ "$AI_CONTENT" = "null" ]; then
+                echo "⚠️ JSON 解析失敗或內容為空，啟用預設更新日誌。"
+                AI_CONTENT="* 優化內部程式碼結構與穩定性。"
+              fi
+            else
+              echo "⚠️ API 呼叫失敗，啟用預設更新日誌。"
+              AI_CONTENT="* 優化內部程式碼結構與穩定性。"
+            fi
+
+            rm -f gemini_request.json gemini_response.json
+
+            NOW_DATE=$(TZ="Asia/Taipei" date +'%Y/%-m/%-d %H:%M')
+            
+            mv changelog.md old_changelog.tmp 2>/dev/null || touch old_changelog.tmp
+            
+            echo "# 🚀 更新日誌：版本 $CURRENT_VERSION" > changelog.md
+            echo "" >> changelog.md
+            echo "### 感謝您持續使用本產品！我們很高興向您宣佈 $CURRENT_VERSION 版本的更新。" >> changelog.md
+            echo "" >> changelog.md
+            echo "$AI_CONTENT" >> changelog.md
+            echo "" >> changelog.md
+            echo '<div align="right">' >> changelog.md
+            echo "    早安圖製作工具作者於 $NOW_DATE 發布" >> changelog.md
+            echo "</div>" >> changelog.md
+            echo "" >> changelog.md
+            echo "---" >> changelog.md
+            echo "" >> changelog.md
+            
+            cat old_changelog.tmp >> changelog.md
+            rm -f old_changelog.tmp
+            echo "changelog.md 最新版本已成功置頂寫入！"
+            
+          else
+            echo "雖然檔案有變更，但版本號未改變（仍為 $CURRENT_VERSION），跳過日誌生成。"
+          fi
+
+      - name: Commit and Push changes
+        run: |
+          if git diff --name-only | grep -qE '^(changelog\.md|README\.md)$'; then
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            git add changelog.md README.md
+            CURRENT_VERSION=$(grep -oP 'id="appVersion"\s+data-version="\K[^"]+' index.html)
+            git commit -m "chore: 更新版本 $CURRENT_VERSION [skip ci]"
+            git push
+          else
+            echo "沒有變更需要提交。"
+          fi
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      # =================================================================
+      # 🔄 【自動重試機制】最多嘗試 5 次標準 Pages 部署動作 (語法完全修正版)
+      # =================================================================
+      
+      # 🚀 第 1 次嘗試
+      - name: Deploy to GitHub Pages (Attempt 1)
+        id: deploy_1
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+
+      # ⏳ 失敗則等待 20 秒
+      - name: Wait for Retry 2
+        if: steps.deploy_1.outcome == 'failure'
+        run: sleep 20
+
+      # 🚀 第 2 次嘗試
+      - name: Deploy to GitHub Pages (Attempt 2)
+        id: deploy_2
+        if: steps.deploy_1.outcome == 'failure'
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+
+      # ⏳ 失敗則等待 20 秒
+      - name: Wait for Retry 3
+        if: steps.deploy_2.outcome == 'failure'
+        run: sleep 20
+
+      # 🚀 第 3 次嘗試
+      - name: Deploy to GitHub Pages (Attempt 3)
+        id: deploy_3
+        if: steps.deploy_2.outcome == 'failure'
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+
+      # ⏳ 失敗則等待 20 秒
+      - name: Wait for Retry 4
+        if: steps.deploy_3.outcome == 'failure'
+        run: sleep 20
+
+      # 🚀 第 4 次嘗試
+      - name: Deploy to GitHub Pages (Attempt 4)
+        id: deploy_4
+        if: steps.deploy_3.outcome == 'failure'
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+
+      # ⏳ 失敗則等待 20 秒
+      - name: Wait for Retry 5
+        if: steps.deploy_4.outcome == 'failure'
+        run: sleep 20
+
+      # 🚀 第 5 次嘗試 (最後一次不加 continue-on-error，失敗就真正報錯結束)
+      - name: Deploy to GitHub Pages (Attempt 5)
+        if: steps.deploy_4.outcome == 'failure'
+        uses: actions/deploy-pages@v4
