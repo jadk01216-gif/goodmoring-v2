@@ -98,6 +98,7 @@ jobs:
               }
             ')
 
+            # 格式化台北時間
             NOW_DATE=$(TZ="Asia/Taipei" date +'%Y/%m/%d %H:%M' | awk -F'/' '{printf "%s/%d/%d", $1, $2, $3}' | awk '{printf "%s %s\n", $1, $2}')
             
             mv changelog.md old_changelog.tmp 2>/dev/null || touch old_changelog.tmp
@@ -144,11 +145,29 @@ jobs:
         with:
           path: '.'
 
-      # -----------------------------------------------------------------
-      # 使用官方標準部署，並加入「超時防護」與「失敗自動放行」
-      # -----------------------------------------------------------------
-      - name: Deploy to GitHub Pages
-        id: deployment
+      # =================================================================
+      # 【第一輪部署】設定 2 分鐘逾時防護。如果失敗，允許工作流繼續往下走
+      # =================================================================
+      - name: Deploy to GitHub Pages (Attempt 1)
+        id: deploy_1
         uses: actions/deploy-pages@v4
-        timeout-minutes: 2      # 限制最多在原地排隊等待 2 分鐘，避免動作卡死
-        continue-on-error: true # 就算 GitHub 伺服器忙碌而逾時，也強制判定成功放行
+        timeout-minutes: 2
+        continue-on-error: true
+
+      # =================================================================
+      # 【自動重試冷卻時間】只有當第一輪失敗/逾時，才會觸發此步驟，先等待 20 秒
+      # =================================================================
+      - name: Wait for server recovery if Attempt 1 failed
+        if: steps.deploy_1.outcome == 'failure'
+        run: |
+          echo "⚠️ 第一輪部署因 GitHub 伺服器忙碌而失敗或逾時。"
+          echo "⏳ 正在等待 20 秒讓伺服器稍微消化快取，隨後將自動進行重試..."
+          sleep 20
+
+      # =================================================================
+      # 【第二輪備援部署】只有當第一輪失敗時才啟動，這次直接接管並作為最終結果
+      # =================================================================
+      - name: Deploy to GitHub Pages (Attempt 2 - Retry)
+        if: steps.deploy_1.outcome == 'failure'
+        uses: actions/deploy-pages@v4
+        timeout-minutes: 3
