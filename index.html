@@ -1891,6 +1891,18 @@
             <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">
               開啟後，選取文字時右下角會出現一個控制點，可直接拖曳以放大或縮小文字尺寸。
             </p>
+            <div style="margin-top: 12px; margin-bottom: 6px;">
+              <label class="field-label" style="margin-top:0; font-size:12px; font-weight:500;">編輯文字時顯示內容</label>
+              <select id="textSelectionDisplayModeSelect" onchange="updateTextSelectionDisplayMode(this.value)">
+                <option value="both">兩個都要</option>
+                <option value="outline">只顯示外框</option>
+                <option value="handle">只顯示調整右角縮放點點</option>
+                <option value="none">關閉</option>
+              </select>
+            </div>
+            <p style="font-size:11px; color:var(--text-muted); margin-top:4px; margin-bottom:12px;">
+              僅在進入文字編輯時套用；選取文字時一律顯示外框與縮放控制點。（顯示控制點前提是需啟用上方「啟用右下角縮放控制點」）
+            </p>
             <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 12px;">
               <label class="field-label" style="margin-top:0;" id="resizeHandleRadiusLabel">縮放控制點大小 (8px)</label>
               <button onclick="resetResizeHandleRadius()"
@@ -2110,7 +2122,17 @@
           </div>
         </div>
 
-        <!-- 4. 關於本程式連結 -->
+        <!-- 4. 更新設定 -->
+        <div style="margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+          <label class="field-label" style="margin-top:0; font-weight:600; color:var(--text); margin-bottom: 6px;">📢
+            更新設定</label>
+          <div class="switch-row" style="margin: 0; padding: 4px 0;">
+            <span class="toggle-label" style="font-size:12px; color:var(--text)">更新之後隱藏更新框</span>
+            <div class="toggle" id="toggleHideUpdateModal" onclick="toggleHideUpdateModalFeature()"></div>
+          </div>
+        </div>
+
+        <!-- 5. 關於本程式連結 -->
         <div style="margin-bottom: 12px;">
           <button onclick="openAboutPage(); closeMoreSettings();"
             style="width: 100%; text-align: center; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s;">ℹ️
@@ -2148,8 +2170,8 @@
       style="text-align: left; max-width: 480px; font-size: 12px; display: flex; flex-direction: column; padding: 0;">
       <div class="about-header" style="padding: 24px 24px 16px; text-align: center; flex-shrink: 0;">
         <h3 class="modal-title" style="font-size: 18px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
-        <p id="appVersion" data-version="v1.54"
-          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.54 </p>
+        <p id="appVersion" data-version="v1.55"
+          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.55 </p>
       </div>
 
       <div class="about-content"
@@ -2295,6 +2317,8 @@
     let isPinchZooming = false;
     let enableResizeHandles = true; // 啟用右下角縮放控制點
     let resizeHandleRadius = 8; // 縮放控制點的半徑大小
+    let enableHideUpdateModal = false; // 更新之後隱藏更新框
+    let textSelectionDisplayMode = 'both'; // 編輯文字時顯示內容：both, outline, handle, none
     let pinchStartDist = 0;
     let pinchStartZoom = 1;
     let currentPinchZoom = 1;
@@ -2570,6 +2594,10 @@
       const lastSeenVersion = localStorage.getItem('gm_last_seen_version');
 
       if (!lastSeenVersion || lastSeenVersion !== currentVersion) {
+        if (enableHideUpdateModal) {
+          localStorage.setItem('gm_last_seen_version', currentVersion);
+          return;
+        }
         const modal = document.getElementById('changelogModal');
         const contentEl = document.getElementById('changelogContent');
         if (modal && contentEl) {
@@ -3085,6 +3113,26 @@
       } else {
         enableTodayFunction = true;
         if (todayToggleEl) todayToggleEl.classList.add('on');
+      }
+
+      const savedHideUpdateModal = localStorage.getItem('gm_enable_hide_update_modal');
+      const hideUpdateToggleEl = document.getElementById('toggleHideUpdateModal');
+      if (savedHideUpdateModal === 'true') {
+        enableHideUpdateModal = true;
+        if (hideUpdateToggleEl) hideUpdateToggleEl.classList.add('on');
+      } else {
+        enableHideUpdateModal = false;
+        if (hideUpdateToggleEl) hideUpdateToggleEl.classList.remove('on');
+      }
+
+      const savedTextSelectionDisplayMode = localStorage.getItem('gm_text_selection_display_mode');
+      const textSelectionDisplayModeSelect = document.getElementById('textSelectionDisplayModeSelect');
+      if (savedTextSelectionDisplayMode) {
+        textSelectionDisplayMode = savedTextSelectionDisplayMode;
+        if (textSelectionDisplayModeSelect) textSelectionDisplayModeSelect.value = textSelectionDisplayMode;
+      } else {
+        textSelectionDisplayMode = 'both';
+        if (textSelectionDisplayModeSelect) textSelectionDisplayModeSelect.value = 'both';
       }
 
       // 還原自訂預設文字設定
@@ -4039,6 +4087,28 @@
       if (slider) slider.value = 8;
       updateResizeHandleRadius(8);
       showToast('縮放控制點大小已還原為預設值');
+    }
+
+    function toggleHideUpdateModalFeature() {
+      enableHideUpdateModal = !enableHideUpdateModal;
+      const toggleEl = document.getElementById('toggleHideUpdateModal');
+      if (toggleEl) {
+        toggleEl.classList.toggle('on', enableHideUpdateModal);
+      }
+      localStorage.setItem('gm_enable_hide_update_modal', enableHideUpdateModal ? 'true' : 'false');
+      showToast(enableHideUpdateModal ? '更新之後隱藏更新框已開啟' : '更新之後隱藏更新框已關閉');
+    }
+
+    function updateTextSelectionDisplayMode(value) {
+      textSelectionDisplayMode = value;
+      localStorage.setItem('gm_text_selection_display_mode', value);
+      drawCanvas();
+
+      let displayLabel = '兩個都要';
+      if (value === 'outline') displayLabel = '只顯示外框';
+      if (value === 'handle') displayLabel = '只顯示調整右角縮放點點';
+      if (value === 'none') displayLabel = '關閉';
+      showToast(`編輯文字顯示設定已變更為：${displayLabel}`);
     }
 
 
@@ -5333,6 +5403,10 @@
       return null;
     }
 
+    function isLayerEditing(layer) {
+      return !!layer && (inlineEditLayerId === layer.id || quickEditLayerId === layer.id);
+    }
+
     /* ─────────────── Draw ─────────────── */
     function drawCanvas() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -5344,57 +5418,66 @@
 
       layers.forEach(l => {
         if (!l.visible) return;
-        if (inlineEditLayerId === l.id) return; // 正在編輯時，不渲染此層至畫布，防止重複疊影
-        ctx.save();
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.font = `${l.size}px "${l.font}", "Microsoft JhengHei", "PingFang TC", "DFKai-SB", sans-serif`;
-        if (l.shadow) { ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10; }
 
-        const lines = resolveTextVariables(l.text).split('\n');
-        const lineH = l.size * 1.2;
-        const startY = l.y - ((lines.length - 1) * lineH) / 2;
+        // 正在編輯時，不渲染此層的文字至畫布，防止重複疊影。但選取外框還是要畫！
+        if (inlineEditLayerId !== l.id) {
+          ctx.save();
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.font = `${l.size}px "${l.font}", "Microsoft JhengHei", "PingFang TC", "DFKai-SB", sans-serif`;
+          if (l.shadow) { ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10; }
 
-        lines.forEach((line, i) => {
-          const ly = startY + i * lineH;
-          if (l.stroke) { ctx.lineWidth = l.strokeWidth; ctx.strokeStyle = l.strokeColor; ctx.strokeText(line, l.x, ly); }
-          ctx.fillStyle = l.color;
-          ctx.fillText(line, l.x, ly);
-        });
+          const lines = resolveTextVariables(l.text).split('\n');
+          const lineH = l.size * 1.2;
+          const startY = l.y - ((lines.length - 1) * lineH) / 2;
+
+          lines.forEach((line, i) => {
+            const ly = startY + i * lineH;
+            if (l.stroke) { ctx.lineWidth = l.strokeWidth; ctx.strokeStyle = l.strokeColor; ctx.strokeText(line, l.x, ly); }
+            ctx.fillStyle = l.color;
+            ctx.fillText(line, l.x, ly);
+          });
+          ctx.restore();
+        }
 
         if (activeLayerId === l.id && !isCropping) {
           ctx.save();
           const box = getLayerBoundingBox(l);
 
-          ctx.strokeStyle = '#f5a623';
-          ctx.setLineDash([6, 4]);
-          ctx.lineWidth = selectionBoxWidth;
-          ctx.shadowColor = 'transparent';
-          ctx.shadowBlur = 0;
-          ctx.strokeRect(box.x, box.y, box.w, box.h);
+          const editing = isLayerEditing(l);
+          const shouldDrawOutline = !editing || (textSelectionDisplayMode === 'both' || textSelectionDisplayMode === 'outline');
+          if (shouldDrawOutline) {
+            ctx.strokeStyle = '#f5a623';
+            ctx.setLineDash([6, 4]);
+            ctx.lineWidth = selectionBoxWidth;
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.strokeRect(box.x, box.y, box.w, box.h);
 
-          const boxW = Math.round(box.w);
-          const boxH = Math.round(box.h);
-          const sizeText = `${boxW} × ${boxH} px`;
-          ctx.setLineDash([]);
-          ctx.font = `bold ${Math.max(14, Math.round(l.size * 0.22))}px "Noto Sans TC", sans-serif`;
-          const textW = ctx.measureText(sizeText).width;
-          const textH = Math.max(14, Math.round(l.size * 0.22));
-          const labelX = box.x;
-          const labelY = box.y - textH - 6;
+            const boxW = Math.round(box.w);
+            const boxH = Math.round(box.h);
+            const sizeText = `${boxW} × ${boxH} px`;
+            ctx.setLineDash([]);
+            ctx.font = `bold ${Math.max(14, Math.round(l.size * 0.22))}px "Noto Sans TC", sans-serif`;
+            const textW = ctx.measureText(sizeText).width;
+            const textH = Math.max(14, Math.round(l.size * 0.22));
+            const labelX = box.x;
+            const labelY = box.y - textH - 6;
 
-          ctx.fillStyle = 'rgba(245, 166, 35, 0.85)';
-          ctx.beginPath();
-          ctx.roundRect(labelX, labelY - 2, textW + 14, textH + 8, 4);
-          ctx.fill();
+            ctx.fillStyle = 'rgba(245, 166, 35, 0.85)';
+            ctx.beginPath();
+            ctx.roundRect(labelX, labelY - 2, textW + 14, textH + 8, 4);
+            ctx.fill();
 
-          ctx.fillStyle = '#1a1a2e';
-          ctx.textAlign = 'left';
-          ctx.textBaseline = 'top';
-          ctx.fillText(sizeText, labelX + 7, labelY + 2);
+            ctx.fillStyle = '#1a1a2e';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText(sizeText, labelX + 7, labelY + 2);
+          }
 
-          // 如果啟用，繪製右下角縮放控制點
-          if (enableResizeHandles) {
+          // 如果啟用且模式允許，繪製右下角縮放控制點
+          const shouldDrawHandle = (!editing || (textSelectionDisplayMode === 'both' || textSelectionDisplayMode === 'handle')) && enableResizeHandles;
+          if (shouldDrawHandle) {
             const handleX = box.x + box.w;
             const handleY = box.y + box.h;
             const scale = getCanvasScale();
@@ -5410,7 +5493,6 @@
 
           ctx.restore();
         }
-        ctx.restore();
       });
 
       if (isCropping && cropRect) {
@@ -5451,9 +5533,11 @@
     }
 
     function checkResizeHandleHit(pos) {
-      if (!enableResizeHandles || !activeLayerId) return null;
       const l = layers.find(item => item.id === activeLayerId);
       if (!l) return null;
+      const editing = isLayerEditing(l);
+      const shouldDrawHandle = (!editing || (textSelectionDisplayMode === 'both' || textSelectionDisplayMode === 'handle')) && enableResizeHandles;
+      if (!shouldDrawHandle) return null;
 
       const box = getLayerBoundingBox(l);
       const handleX = box.x + box.w;
@@ -5531,6 +5615,7 @@
 
       const hit = checkHit(pos);
       if (hit) {
+
         // 1. 按下瞬間立即啟動選取外框並準備拖曳，給予最即時的反饋
         pushToUndo();
         draggingLayer = { id: hit.id, ox: pos.x - hit.x, oy: pos.y - hit.y };
@@ -5718,7 +5803,8 @@
         canvas.style.cursor = 'cell';
         return;
       }
-      if (checkHit(pos)) {
+      const hitLayer = checkHit(pos);
+      if (hitLayer) {
         canvas.style.cursor = 'move';
         return;
       }
@@ -6106,6 +6192,8 @@
       localStorage.removeItem('gm_resize_handle_radius');
       localStorage.removeItem('gm_crop_border_width');
       localStorage.removeItem('gm_crop_handle_size');
+      localStorage.removeItem('gm_enable_hide_update_modal');
+      localStorage.removeItem('gm_text_selection_display_mode');
 
       // 2. 恢復核心變數預設值
       bgImage = null;
@@ -6125,6 +6213,8 @@
       enableConstrainText = true;
       enableResizeHandles = true;
       resizeHandleRadius = 8;
+      enableHideUpdateModal = false;
+      textSelectionDisplayMode = 'both';
       isPinchZooming = false;
       pinchStartDist = 0;
       pinchStartZoom = 1;
@@ -6186,6 +6276,10 @@
       const handleRadiusLabel = document.getElementById('resizeHandleRadiusLabel');
       if (handleRadiusLabel) handleRadiusLabel.textContent = '縮放控制點大小 (8px)';
 
+      const toggleHideUpdateModal = document.getElementById('toggleHideUpdateModal');
+      if (toggleHideUpdateModal) toggleHideUpdateModal.classList.remove('on');
+      const textSelectionDisplayModeSelect = document.getElementById('textSelectionDisplayModeSelect');
+      if (textSelectionDisplayModeSelect) textSelectionDisplayModeSelect.value = 'both';
 
       const pinchWrap = document.getElementById('canvasWrap');
       if (pinchWrap) pinchWrap.classList.remove('pinch-zoom-active');
