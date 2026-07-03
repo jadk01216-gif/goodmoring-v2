@@ -55,12 +55,12 @@ jobs:
 
             if [ -f "README.md" ]; then
               echo "正在自動將 README.md 中的版本更新為 $CURRENT_VERSION..."
-              sed -i -E "s/## 🌅 早安圖製作工具[[:space:]]+版本[[:space:]]+v[0-9\.]+/## 🌅 早安圖製作工具 版本 $CURRENT_VERSION/g" README.md[cite: 1]
+              # 【已修復】移除後方黏連的錯誤註解，確保 sed 指令正常執行
+              sed -i -E "s/## 🌅 早安圖製作工具[[:space:]]+版本[[:space:]]+v[0-9\.]+/## 🌅 早安圖製作工具 版本 $CURRENT_VERSION/g" README.md
             fi
 
             echo "版本已變更，正在擷取程式碼實際變更（Git Diff）..."
 
-            # 限制 200 行防 Token 爆炸
             GIT_DIFF_OUTPUT=$(git diff HEAD~1 HEAD -- index.html LICENSE manifest.json sw.js | head -n 200)
             
             PROMPT="你是一個專業的開源軟體日誌生成助手。請根據以下這段程式碼的實際變更內容（Git Diff，其中 + 代表新增，- 代表刪除），推斷並整理出繁體中文的更新日誌細項。
@@ -145,13 +145,10 @@ jobs:
         with:
           path: '.'
 
-      # -----------------------------------------------------------------
-      # 【優化處】：加上自動重試機制，若部署失敗會自動等待 10 秒並重試，最高 3 次
-      # -----------------------------------------------------------------
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-        continue-on-error: true # 防止伺服器抽風導致整個工作流卡死報錯
+        continue-on-error: true
 
       - name: Retry Deployment if Failed
         if: steps.deployment.outcome == 'failure'
@@ -160,8 +157,7 @@ jobs:
           for i in {1..3}; do
             echo "正在進行第 $i 次重新部署嘗試（等待 10 秒）..."
             sleep 10
-            # 手動觸發再次呼叫，成功就退出迴圈
-            if gh api -X POST /repos/${{ github.repository }}/pages/deployments -f artifact_id=${{ steps.deployment.outputs.artifact_id || '8062732801' }}; then
+            if gh api -X POST /repos/${{ github.repository }}/pages/deployments -f artifact_id=${{ steps.deployment.outputs.artifact_id }}; then
               echo "重新部署成功！"
               exit 0
             fi
