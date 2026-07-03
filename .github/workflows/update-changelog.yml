@@ -58,10 +58,10 @@ jobs:
               exit 0
             fi
 
-            # 4. 自動修改 README.md 中的版本標題（不用 AI 處理，防止無限循環）
+            # 4. 自動修改 README.md 中的版本標題
             if [ -f "README.md" ]; then
-              echo "正在自動將 README.md 中的版本從 $OLD_VERSION 更新為 $CURRENT_VERSION..."
-              sed -i "s/## 🌅 早安圖製作工具 版本 $OLD_VERSION/## 🌅 早安圖製作工具 版本 $CURRENT_VERSION/g" README.md
+              echo "正在自動將 README.md 中的版本更新為 $CURRENT_VERSION..."
+              sed -i -E "s/## 🌅 早安圖製作工具[[:space:]]+版本[[:space:]]+v[0-9\.]+/## 🌅 早安圖製作工具 版本 $CURRENT_VERSION/g" README.md
             fi
 
             echo "版本已變更，正在擷取程式碼實際變更（Git Diff）..."
@@ -69,7 +69,7 @@ jobs:
             # 5. 僅撈取這 4 個檔案的實際程式碼變更內容（限制前 200 行防 Token 爆炸）
             GIT_DIFF_OUTPUT=$(git diff HEAD~1 HEAD -- index.html LICENSE manifest.json sw.js | head -n 200)
             
-            # 6. 設計給 Gemma 的 Prompt，讓它僅看程式碼差值寫日誌
+            # 6. 設計給 Gemma 的 Prompt
             PROMPT="你是一個專業的開源軟體日誌生成助手。請根據以下這段程式碼的實際變更內容（Git Diff，其中 + 代表新增，- 代表刪除），推斷並整理出繁體中文的更新日誌細項。
             
             程式碼變更內容 (Git Diff)：
@@ -88,7 +88,6 @@ jobs:
             
             注意：請直接且只輸出上述三個標題和底下的條列項目即可，不要加上任何其他的前言、後語、問候語或外層 Markdown 標題。"
 
-            # 【修正處】：將 echo 改為 console.log 轉義 JSON 字串
             JSON_PROMPT=$(NODE_OPTIONS="--no-warnings" node -e 'console.log(JSON.stringify(process.argv[1]))' -- "$PROMPT")
 
             # 7. 安全呼叫 Google Gemma API
@@ -141,8 +140,9 @@ jobs:
             git config --local user.email "action@github.com"
             git config --local user.name "GitHub Action"
             git add changelog.md README.md
+            # 動態抓取目前版本號並帶入 Commit 訊息中
             CURRENT_VERSION=$(grep -oP 'id="appVersion"\s+data-version="\K[^"]+' index.html)
-            git commit -m "chore: auto update changelog.md & README.md for version $CURRENT_VERSION"
+            git commit -m "chore: 更新版本 $CURRENT_VERSION"
             git push
           else
             echo "沒有變更需要提交。"
