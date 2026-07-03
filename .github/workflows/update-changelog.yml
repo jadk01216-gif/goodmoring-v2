@@ -140,22 +140,15 @@ jobs:
         uses: actions/configure-pages@v4
 
       - name: Upload artifact
-        id: deployment_artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: '.'
 
       # -----------------------------------------------------------------
-      # 【終極防卡死替代方案】：直接呼叫底層 API 發送部署請求，不等待狀態回傳
+      # 使用官方標準部署，並加入「超時防護」與「失敗自動放行」
       # -----------------------------------------------------------------
-      - name: Deploy to GitHub Pages via API Directly
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          ARTIFACT_ID="${{ steps.deployment_artifact.outputs.artifact_id }}"
-          echo "打包完成，產物 ID 為: $ARTIFACT_ID"
-          echo "正在直接透過 GitHub API 觸發 Pages 部署命令..."
-          
-          # 直接發送 POST 部署，並加上 || true 確保即使 API 回傳逾時，Action 依然判定成功
-          gh api -X POST /repos/${{ github.repository }}/pages/deployments \
-            -f artifact_id="$ARTIFACT_ID" || echo "部署命令已送出，伺服器排隊中。"
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        timeout-minutes: 2      # 限制最多在原地排隊等待 2 分鐘，避免動作卡死
+        continue-on-error: true # 就算 GitHub 伺服器忙碌而逾時，也強制判定成功放行
