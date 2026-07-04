@@ -2172,8 +2172,8 @@
       style="text-align: left; max-width: 480px; font-size: 12px; display: flex; flex-direction: column; padding: 0;">
       <div class="about-header" style="padding: 24px 24px 16px; text-align: center; flex-shrink: 0;">
         <h3 class="modal-title" style="font-size: 18px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
-        <p id="appVersion" data-version="v1.62"
-          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.62 </p>
+        <p id="appVersion" data-version="v1.63"
+          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.63 </p>
       </div>
 
       <div class="about-content"
@@ -2197,18 +2197,9 @@
           </div>
 
           <div style="background: var(--surface2); padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
-            <p style="font-weight: 700; color: var(--gold); margin-bottom: 4px; font-size: 12px;">🔒 系統內建與專有字型聲明
-              (Proprietary)</p>
+            <p style="font-weight: 700; color: var(--gold); margin-bottom: 4px; font-size: 12px;">🔒 隱私與安全</p>
             <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">
-              為確保平台無縫運作與字體未載入時的退路，本工具亦宣告呼叫部分系統內建字型：</p>
-            <ul
-              style="padding-left: 14px; font-size: 11px; color: var(--text); display: flex; flex-direction: column; gap: 3px;">
-              <li><strong>微軟正黑體 (Microsoft JhengHei)：</strong>版權屬於 <strong>Microsoft Corporation</strong> 所有。</li>
-              <li><strong>蘋方體-繁 (PingFang TC)：</strong>版權屬於 <strong>Apple Inc.</strong> 所有。</li>
-              <li><strong>標楷體、新細明體：</strong>版權屬於其對應之原始開發單位所有。</li>
-            </ul>
-            <p style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">* 本程式僅進行 CSS
-              渲染宣告，不包含任何上述閉源字型檔案的複製、散佈或商業再利用行為。</p>
+              本工具所有操作均在您的本機瀏覽器完成，您的圖片與設計不會上傳至任何伺服器，確保您的隱私安全。</p>
           </div>
 
           <p
@@ -2453,10 +2444,6 @@
       { value: 'BIZ UDGothic', label: 'BIZ 經典設計黑體' },
       { value: 'BIZ UDPMincho', label: 'BIZ 經典明朝體' },
       { value: 'Darumadrop One', label: '達摩落體 (手稿美術)' },
-      { value: 'Microsoft JhengHei', label: '微軟正黑體 (本機系統)' },
-      { value: 'DFKai-SB', label: '標楷體 (本機系統)' },
-      { value: 'PingFang TC', label: '蘋方-繁 (本機系統)' },
-      { value: 'PMingLiU', label: '新細明體 (本機系統)' }
     ];
 
     const ENGLISH_FONTS = [
@@ -4222,7 +4209,7 @@
     }
 
     /* ─────────────── 確保圖層字體就緒 ─────────────── */
-    const systemFonts = new Set(['Microsoft JhengHei', 'DFKai-SB', 'PingFang TC', 'PMingLiU']);
+    const systemFonts = new Set([]);
 
     async function ensureLayerFontsReady() {
       const needed = [...new Set(layers.filter(l => l.visible).map(l => l.font))];
@@ -5383,7 +5370,7 @@
           ctx.save();
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.font = `${l.size}px "${l.font}", "Microsoft JhengHei", "PingFang TC", "DFKai-SB", sans-serif`;
+          ctx.font = `${l.size}px "${l.font}", "Noto Sans TC", "sans-serif"`;
           if (l.shadow) { ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10; }
 
           const lines = resolveTextVariables(l.text).split('\n');
