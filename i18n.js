@@ -138,7 +138,10 @@ const translations = {
     "快速編輯": "Quick Edit",
     "裁切": "Crop",
     "匯出 PNG": "Export PNG",
-    "回到中間": "Back to Center"
+    "回到中間": "Back to Center",
+    "更多選項": "More Options",
+    "設定": "Settings",
+    "變更顏色": "Change Color"
   }
 };
 
@@ -352,6 +355,12 @@ document.addEventListener('DOMContentLoaded', () => {
 // 8. 翻譯輔助函式 - 用於動態內容
 function t(text) {
   if (!text) return text;
+
+  const currentLang = document.documentElement.lang || 'zh-TW';
+  if (currentLang !== 'en') {
+    // 如果當前語言不是英文，直接返回原始中文文字
+    return text;
+  }
   
   // 處理框線粗細（Nxpx）格式
   if (text.match(/框線粗細（[\d.]+px）/)) {
@@ -365,6 +374,20 @@ function t(text) {
     const match = text.match(/縮放控制點大小 \(([\d.]+px)\)/);
     if (match) {
       return 'Resize Handle Size (' + match[1] + ')';
+    }
+  }
+  // 處理裁切外框粗細（Nx）格式
+  if (text.match(/裁切外框粗細（[\d.]+px）/)) {
+    const match = text.match(/裁切外框粗細（([\d.]+px)）/);
+    if (match) {
+      return 'Crop Border Width (' + match[1] + ')';
+    }
+  }
+  // 處理裁切把手大小（Nx）格式
+  if (text.match(/裁切把手大小（[\d.]+px）/)) {
+    const match = text.match(/裁切把手大小（([\d.]+px)）/);
+    if (match) {
+      return 'Crop Handle Size (' + match[1] + ')';
     }
   }
   

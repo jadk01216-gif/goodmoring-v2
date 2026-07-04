@@ -1668,242 +1668,240 @@
     <aside class="side-panel" ondragover="handlePanelDragOver(event)" ondragleave="clearAutoScroll()">
       <div class="panel-section layers-section">
         <div class="section-title">文字圖層</div>
-<button class="add-layer-btn" id="addLayerBtn" onclick="onAddLayerClick()"
-            style="margin-top: 0; margin-bottom: 12px;">+ 新增文字</button>
+        <button class="add-layer-btn" id="addLayerBtn" onclick="onAddLayerClick()"
+          style="margin-top: 0; margin-bottom: 12px;">+ 新增文字</button>
 
         <div id="layersList" class="layers-list"></div>
 
         <div id="newTextSettingsPanel"
-           style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 10px; border-radius: 8px; margin-top: 12px;">
-           <div class="toggle-row" style="margin-top: 0; margin-bottom: 8px;">
-             <span class="toggle-label" style="font-size:11px; font-weight:600; color:var(--text)">✍️ 新增時帶入預設文字</span>
-             <div class="toggle on" id="toggleDefaultNewText" onclick="toggleDefaultNewTextFeature()"></div>
-           </div>
-           <div class="toggle-row" style="margin-top: 0; margin-bottom: 8px;">
-             <span class="toggle-label" style="font-size:11px; font-weight:600; color:var(--text)">🧪
-               實驗性：直接在圖片上編輯文字</span>
-             <div class="toggle" id="toggleInlineTextEdit" onclick="toggleInlineTextEditFeature()"></div>
-           </div>
-           <div id="defaultNewTextConfig" style="display: block;">
-<label class="field-label"
-                style="margin-top:0; font-size:10px; color:var(--text-muted)">自訂新增時的預設文字</label>
-              <input type="text" id="defaultNewTextInput" value="🌞 早安！" oninput="updateDefaultNewText(this.value)"
-                style="font-size:12px; padding:6px 8px;">
-            </div>
+          style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 10px; border-radius: 8px; margin-top: 12px;">
+          <div class="toggle-row" style="margin-top: 0; margin-bottom: 8px;">
+            <span class="toggle-label" style="font-size:11px; font-weight:600; color:var(--text)">✍️ 新增時帶入預設文字</span>
+            <div class="toggle on" id="toggleDefaultNewText" onclick="toggleDefaultNewTextFeature()"></div>
+          </div>
+          <div class="toggle-row" style="margin-top: 0; margin-bottom: 8px;">
+            <span class="toggle-label" style="font-size:11px; font-weight:600; color:var(--text)">🧪
+              實驗性：直接在圖片上編輯文字</span>
+            <div class="toggle" id="toggleInlineTextEdit" onclick="toggleInlineTextEditFeature()"></div>
+          </div>
+          <div id="defaultNewTextConfig" style="display: block;">
+            <label class="field-label" style="margin-top:0; font-size:10px; color:var(--text-muted)">自訂新增時的預設文字</label>
+            <input type="text" id="defaultNewTextInput" value="🌞 早安！" oninput="updateDefaultNewText(this.value)"
+              style="font-size:12px; padding:6px 8px;">
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title">圖片</div>
+        <div id="uploadArea"
+          style="border:2px dashed var(--border); padding:20px; text-align:center; border-radius:12px; cursor:pointer;">
+          <input type="file" id="imageUpload" accept="image/*" style="display:none">
+          <div style="font-size:24px; margin-bottom:5px;">🖼️</div>
+          <p id="uploadAreaText" style="font-size:12px; color:var(--text-muted);">點擊上傳圖片</p>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title">專案存檔</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button onclick="openProjectExportDialog()" class="theme-btn" style="flex:1; min-width:120px;">⬇️ 匯出專案
+            (.gm)</button>
+          <button onclick="document.getElementById('projectFileInput').click()" class="theme-btn"
+            style="flex:1; min-width:120px;">⬆️ 匯入專案 (.gm)</button>
+        </div>
+        <input type="file" id="projectFileInput" accept=".gm" style="display:none">
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title">字型選單管理</div>
+        <div class="toggle-row">
+          <span class="toggle-label" style="font-size:12px; font-weight:500;">啟用英文字型選單</span>
+          <div class="toggle" id="toggleEnableEnglishFonts" onclick="toggleEnglishFonts()"></div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title">畫布比例與裁切</div>
+        <button id="btnEnterCrop" class="align-btn"
+          style="width:100%; padding:10px; background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text); font-weight:bold; cursor:pointer;">✂️
+          進入圖片裁切模式</button>
+
+        <!-- ↕️ 上下比例一鍵重置按鈕 -->
+        <button onclick="resetSplitterRatio()" class="align-btn"
+          style="width:100%; padding:8px; background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text-muted); font-size:12px; margin-top:8px; cursor:pointer;">↕️
+          重置視窗拖曳比例</button>
+
+        <div id="cropMenu"
+          style="display:none; margin-top:10px; background:rgba(255,255,255,0.03); padding:12px; border-radius:8px; border:1px solid var(--border);">
+          <p style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">1. 選擇裁切比例</p>
+          <div class="size-presets" id="cropRatios">
+            <button class="sp-btn active" data-ratio="free">自由大小</button>
+            <button class="sp-btn" data-ratio="1">1:1 (正方)</button>
+            <button class="sp-btn" data-ratio="1.7778">16:9 (橫式)</button>
+            <button class="sp-btn" data-ratio="0.5625">9:16 (直式)</button>
+          </div>
+          <p style="font-size:11px; color:var(--gold); margin-top:12px; margin-bottom:8px;">2. 拖曳畫布上的虛線框調整範圍</p>
+          <label class="field-label" style="margin-top:0; font-size:10px;" id="cropBorderWidthLabel">裁切外框粗細（3px）</label>
+          <input type="range" id="cropBorderWidthSlider" min="1" max="8" step="0.5" value="3"
+            oninput="cropBorderWidth=+this.value; localStorage.setItem('gm_crop_border_width', this.value); document.getElementById('cropBorderWidthLabel').textContent='裁切外框粗細（'+this.value+'px）'; drawCanvas();">
+          <label class="field-label" style="margin-top:8px; font-size:10px;"
+            id="cropHandleSizeLabel">裁切把手大小（16px）</label>
+          <input type="range" id="cropHandleSizeSlider" min="10" max="40" step="2" value="16"
+            oninput="cropHandleSize=+this.value; localStorage.setItem('gm_crop_handle_size', this.value); document.getElementById('cropHandleSizeLabel').textContent='裁切把手大小（'+this.value+'px）'; drawCanvas();">
+          <div class="row-2">
+            <button class="align-btn" onclick="cancelCrop()"
+              style="padding:10px; background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text); cursor:pointer;">取消</button>
+            <button class="align-btn" onclick="applyDirectCrop()"
+              style="padding:10px; background:var(--gold); border:none; border-radius:6px; color:#fff; font-weight:bold; cursor:pointer;">確認套用裁切</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title">載入自訂字體</div>
+        <p style="font-size:11px; color:var(--text-muted); margin-bottom:12px;">您可以貼上 Google Fonts
+          連結，或上傳自己電腦中的字型檔。字體會永久儲存在您的本機瀏覽器中。</p>
+
+        <div style="margin-bottom:12px;">
+          <label class="field-label" style="margin-top:0;">1. Google Fonts 連結</label>
+          <div style="display:flex; gap:6px;">
+            <input type="text" id="gfontUrl" placeholder="貼上 Noto / Roboto 連結..." style="font-size:12px;">
+            <button onclick="addGoogleFont()"
+              style="padding:8px 12px; background:var(--gold); border:none; border-radius:6px; color:white; font-weight:bold; font-size:12px; cursor:pointer;">載入</button>
           </div>
         </div>
 
-        <div class="panel-section">
-            <div class="section-title">圖片</div>
-            <div id="uploadArea"
-              style="border:2px dashed var(--border); padding:20px; text-align:center; border-radius:12px; cursor:pointer;">
-              <input type="file" id="imageUpload" accept="image/*" style="display:none">
-              <div style="font-size:24px; margin-bottom:5px;">🖼️</div>
-              <p id="uploadAreaText" style="font-size:12px; color:var(--text-muted);">點擊上傳圖片</p>
+        <div>
+          <label class="field-label" style="margin-top:0;">2. 上傳本機字體檔</label>
+          <input type="file" id="fontFileInput" accept=".ttf,.otf,.woff,.woff2" style="display:none;"
+            onchange="loadLocalFontFile(this)">
+          <button onclick="document.getElementById('fontFileInput').click()"
+            style="width:100%; padding:8px; background:var(--surface2); border:1.5px dashed var(--border); border-radius:6px; color:var(--text); font-size:12px; cursor:pointer; font-weight:500;">📂
+            選擇電腦中的字體檔案 (.ttf, .otf)</button>
+        </div>
+
+        <div id="customFontsList" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:12px;"></div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title">我的模板庫</div>
+        <p style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">設計好您的排版與文字後，可在下方儲存。下次上傳新圖片時即可一鍵套用！
+        </p>
+        <div id="templateList" style="display:flex; flex-direction:column; gap:6px;"></div>
+        <div style="margin-top:10px; display:flex; gap:6px;">
+          <input type="text" id="newTemplateName" placeholder="輸入模板名稱..." style="flex:1;">
+          <button onclick="saveCurrentAsTemplate()"
+            style="padding:8px 12px; background:var(--gold); border:none; border-radius:6px; color:white; font-weight:bold; font-size:12px; cursor:pointer; white-space:nowrap;">儲存設計</button>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title">手機友善編輯</div>
+        <div class="toggle-row">
+          <span class="toggle-label" style="font-size:12px; font-weight:500;">📱 啟用手機友善編輯模式（Google 相簿風格）</span>
+          <div class="toggle" id="toggleMobileEditingMode" onclick="toggleMobileEditingModeFeature()"></div>
+        </div>
+        <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">
+          開啟後會在畫布下方顯示大按鈕工具列，讓新增文字、裁切與快速編輯更適合手機單手操作。<b>（極不穩定實驗性功能）</b>
+        </p>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title">快速編輯功能</div>
+        <div class="toggle-row">
+          <span class="toggle-label" style="font-size:12px; font-weight:500;">啟用雙擊快速編輯</span>
+          <div class="toggle" id="toggleQuickEdit" onclick="toggleQuickEditFeature()"></div>
+        </div>
+        <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">開啟後，在畫布文字上「快速點擊兩下（雙擊）」即可跳出快速編輯面板</p>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title">日期函數</div>
+        <div class="toggle-row">
+          <span class="toggle-label" style="font-size:12px; font-weight:500;">啟用 {TODAY()} 與 {TODAY(NOYEAR)}
+            日期函數</span>
+          <div class="toggle on" id="toggleTodayFunction" onclick="toggleTodayFunctionFeature()"></div>
+        </div>
+        <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">在文字內容輸入 {TODAY()} 會自動替換為今天的日期
+          (YYYY/MM/DD)；{TODAY(NOYEAR)} 則只顯示月/日 (MM/DD)</p>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title">實驗性操作設定</div>
+        <div class="toggle-row">
+          <span class="toggle-label" style="font-size:12px; font-weight:500;">啟用自適應文字比例</span>
+          <div class="toggle" id="toggleProportionalFont" onclick="toggleProportionalFontFeature()"></div>
+        </div>
+        <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">開啟後，文字尺寸會依圖片寬度等比縮放（保持 100%
+          滿版），且裁切時文字位置與比例會自動同步，在手機與電腦版皆無需重複調整！</p>
+
+        <div class="toggle-row" style="margin-top:10px;">
+          <span class="toggle-label" style="font-size:12px; font-weight:500;">🧪 實驗性：手勢縮放（雙指捏合放大縮小文字）</span>
+          <div class="toggle" id="togglePinchZoom" onclick="togglePinchZoomFeature()"></div>
+        </div>
+        <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">
+          開啟後，在畫布區域用兩指捏合即可直接放大或縮小文字；此模式會暫時關閉拖曳與文字編輯，不會互相干擾</p>
+
+        <div class="toggle-row" style="margin-top:10px;">
+          <span class="toggle-label" style="font-size:12px; font-weight:500;">限制文字拖曳在圖片範圍內</span>
+          <div class="toggle on" id="toggleConstrainText" onclick="toggleConstrainTextFeature()"></div>
+        </div>
+        <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">開啟後，文字無法被拖曳到圖片外部；關閉則可自由拖曳至任何位置</p>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title">匯出儲存</div>
+        <div class="dl-row">
+          <button class="dl-btn png" onclick="exportImage('png')">PNG</button>
+          <button class="dl-btn jpg" onclick="exportImage('jpeg')">JPG</button>
+          <button class="dl-btn webp" onclick="exportImage('webp')">WebP</button>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title">選取框線與控制點設定</div>
+        <label class="field-label" style="margin-top:0;" id="selBoxWidthLabel">框線粗細（3.5px）</label>
+        <input type="range" id="selectionBoxWidthSlider" min="1" max="12" step="0.5" value="3.5"
+          oninput="selectionBoxWidth=+this.value; localStorage.setItem('gm_selection_box_width', this.value); document.getElementById('selBoxWidthLabel').textContent='框線粗細（'+this.value+'px）'; document.getElementById('selBoxPreview').style.borderWidth=this.value+'px'; drawCanvas();">
+        <div style="display:flex; gap:6px; margin-top:10px;">
+          <div
+            style="flex:1; height:24px; border-radius:4px; background:var(--surface2); border:1px solid var(--border); position:relative; overflow:hidden;">
+            <div id="selBoxPreview"
+              style="position:absolute; inset:4px; border:3.5px dashed #f5a623; border-radius:3px; pointer-events:none;">
             </div>
           </div>
+        </div>
+        <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">拖曳選取文字圖層時所顯示的虛線外框粗細</p>
 
-          <div class="panel-section">
-            <div class="section-title">專案存檔</div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button onclick="openProjectExportDialog()" class="theme-btn" style="flex:1; min-width:120px;">⬇️ 匯出專案
-                (.gm)</button>
-              <button onclick="document.getElementById('projectFileInput').click()" class="theme-btn"
-                style="flex:1; min-width:120px;">⬆️ 匯入專案 (.gm)</button>
-            </div>
-            <input type="file" id="projectFileInput" accept=".gm" style="display:none">
-          </div>
-
-          <div class="panel-section">
-            <div class="section-title">字型選單管理</div>
-            <div class="toggle-row">
-              <span class="toggle-label" style="font-size:12px; font-weight:500;">啟用英文字型選單</span>
-              <div class="toggle" id="toggleEnableEnglishFonts" onclick="toggleEnglishFonts()"></div>
-            </div>
-          </div>
-
-          <div class="panel-section">
-            <div class="section-title">畫布比例與裁切</div>
-            <button id="btnEnterCrop" class="align-btn"
-              style="width:100%; padding:10px; background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text); font-weight:bold; cursor:pointer;">✂️
-              進入圖片裁切模式</button>
-
-            <!-- ↕️ 上下比例一鍵重置按鈕 -->
-            <button onclick="resetSplitterRatio()" class="align-btn"
-              style="width:100%; padding:8px; background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text-muted); font-size:12px; margin-top:8px; cursor:pointer;">↕️
-              重置視窗拖曳比例</button>
-
-            <div id="cropMenu"
-              style="display:none; margin-top:10px; background:rgba(255,255,255,0.03); padding:12px; border-radius:8px; border:1px solid var(--border);">
-              <p style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">1. 選擇裁切比例</p>
-              <div class="size-presets" id="cropRatios">
-                <button class="sp-btn active" data-ratio="free">自由大小</button>
-                <button class="sp-btn" data-ratio="1">1:1 (正方)</button>
-                <button class="sp-btn" data-ratio="1.7778">16:9 (橫式)</button>
-                <button class="sp-btn" data-ratio="0.5625">9:16 (直式)</button>
-              </div>
-              <p style="font-size:11px; color:var(--gold); margin-top:12px; margin-bottom:8px;">2. 拖曳畫布上的虛線框調整範圍</p>
-              <label class="field-label" style="margin-top:0; font-size:10px;"
-                id="cropBorderWidthLabel">裁切外框粗細（3px）</label>
-              <input type="range" id="cropBorderWidthSlider" min="1" max="8" step="0.5" value="3"
-                oninput="cropBorderWidth=+this.value; localStorage.setItem('gm_crop_border_width', this.value); document.getElementById('cropBorderWidthLabel').textContent='裁切外框粗細（'+this.value+'px）'; drawCanvas();">
-              <label class="field-label" style="margin-top:8px; font-size:10px;"
-                id="cropHandleSizeLabel">裁切把手大小（16px）</label>
-              <input type="range" id="cropHandleSizeSlider" min="10" max="40" step="2" value="16"
-                oninput="cropHandleSize=+this.value; localStorage.setItem('gm_crop_handle_size', this.value); document.getElementById('cropHandleSizeLabel').textContent='裁切把手大小（'+this.value+'px）'; drawCanvas();">
-              <div class="row-2">
-                <button class="align-btn" onclick="cancelCrop()"
-                  style="padding:10px; background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text); cursor:pointer;">取消</button>
-                <button class="align-btn" onclick="applyDirectCrop()"
-                  style="padding:10px; background:var(--gold); border:none; border-radius:6px; color:#fff; font-weight:bold; cursor:pointer;">確認套用裁切</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="panel-section">
-            <div class="section-title">載入自訂字體</div>
-            <p style="font-size:11px; color:var(--text-muted); margin-bottom:12px;">您可以貼上 Google Fonts
-              連結，或上傳自己電腦中的字型檔。字體會永久儲存在您的本機瀏覽器中。</p>
-
-            <div style="margin-bottom:12px;">
-              <label class="field-label" style="margin-top:0;">1. Google Fonts 連結</label>
-              <div style="display:flex; gap:6px;">
-                <input type="text" id="gfontUrl" placeholder="貼上 Noto / Roboto 連結..." style="font-size:12px;">
-                <button onclick="addGoogleFont()"
-                  style="padding:8px 12px; background:var(--gold); border:none; border-radius:6px; color:white; font-weight:bold; font-size:12px; cursor:pointer;">載入</button>
-              </div>
-            </div>
-
-            <div>
-              <label class="field-label" style="margin-top:0;">2. 上傳本機字體檔</label>
-              <input type="file" id="fontFileInput" accept=".ttf,.otf,.woff,.woff2" style="display:none;"
-                onchange="loadLocalFontFile(this)">
-              <button onclick="document.getElementById('fontFileInput').click()"
-                style="width:100%; padding:8px; background:var(--surface2); border:1.5px dashed var(--border); border-radius:6px; color:var(--text); font-size:12px; cursor:pointer; font-weight:500;">📂
-                選擇電腦中的字體檔案 (.ttf, .otf)</button>
-            </div>
-
-            <div id="customFontsList" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:12px;"></div>
-          </div>
-
-          <div class="panel-section">
-            <div class="section-title">我的模板庫</div>
-            <p style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">設計好您的排版與文字後，可在下方儲存。下次上傳新圖片時即可一鍵套用！
-            </p>
-            <div id="templateList" style="display:flex; flex-direction:column; gap:6px;"></div>
-            <div style="margin-top:10px; display:flex; gap:6px;">
-              <input type="text" id="newTemplateName" placeholder="輸入模板名稱..." style="flex:1;">
-              <button onclick="saveCurrentAsTemplate()"
-                style="padding:8px 12px; background:var(--gold); border:none; border-radius:6px; color:white; font-weight:bold; font-size:12px; cursor:pointer; white-space:nowrap;">儲存設計</button>
-            </div>
-          </div>
-
-          <div class="panel-section">
-            <div class="section-title">手機友善編輯</div>
-            <div class="toggle-row">
-              <span class="toggle-label" style="font-size:12px; font-weight:500;">📱 啟用手機友善編輯模式（Google 相簿風格）</span>
-              <div class="toggle" id="toggleMobileEditingMode" onclick="toggleMobileEditingModeFeature()"></div>
-            </div>
-            <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">
-              開啟後會在畫布下方顯示大按鈕工具列，讓新增文字、裁切與快速編輯更適合手機單手操作。<b>（極不穩定實驗性功能）</b>
-            </p>
-          </div>
-
-          <div class="panel-section">
-            <div class="section-title">快速編輯功能</div>
-            <div class="toggle-row">
-              <span class="toggle-label" style="font-size:12px; font-weight:500;">啟用雙擊快速編輯</span>
-              <div class="toggle" id="toggleQuickEdit" onclick="toggleQuickEditFeature()"></div>
-            </div>
-            <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">開啟後，在畫布文字上「快速點擊兩下（雙擊）」即可跳出快速編輯面板</p>
-          </div>
-
-          <div class="panel-section">
-            <div class="section-title">日期函數</div>
-            <div class="toggle-row">
-              <span class="toggle-label" style="font-size:12px; font-weight:500;">啟用 {TODAY()} 與 {TODAY(NOYEAR)}
-                日期函數</span>
-              <div class="toggle on" id="toggleTodayFunction" onclick="toggleTodayFunctionFeature()"></div>
-            </div>
-            <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">在文字內容輸入 {TODAY()} 會自動替換為今天的日期
-              (YYYY/MM/DD)；{TODAY(NOYEAR)} 則只顯示月/日 (MM/DD)</p>
-          </div>
-
-          <div class="panel-section">
-            <div class="section-title">實驗性操作設定</div>
-            <div class="toggle-row">
-              <span class="toggle-label" style="font-size:12px; font-weight:500;">啟用自適應文字比例</span>
-              <div class="toggle" id="toggleProportionalFont" onclick="toggleProportionalFontFeature()"></div>
-            </div>
-            <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">開啟後，文字尺寸會依圖片寬度等比縮放（保持 100%
-              滿版），且裁切時文字位置與比例會自動同步，在手機與電腦版皆無需重複調整！</p>
-
-            <div class="toggle-row" style="margin-top:10px;">
-              <span class="toggle-label" style="font-size:12px; font-weight:500;">🧪 實驗性：手勢縮放（雙指捏合放大縮小文字）</span>
-              <div class="toggle" id="togglePinchZoom" onclick="togglePinchZoomFeature()"></div>
-            </div>
-            <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">
-              開啟後，在畫布區域用兩指捏合即可直接放大或縮小文字；此模式會暫時關閉拖曳與文字編輯，不會互相干擾</p>
-
-            <div class="toggle-row" style="margin-top:10px;">
-              <span class="toggle-label" style="font-size:12px; font-weight:500;">限制文字拖曳在圖片範圍內</span>
-              <div class="toggle on" id="toggleConstrainText" onclick="toggleConstrainTextFeature()"></div>
-            </div>
-            <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">開啟後，文字無法被拖曳到圖片外部；關閉則可自由拖曳至任何位置</p>
-          </div>
-
-          <div class="panel-section">
-            <div class="section-title">匯出儲存</div>
-            <div class="dl-row">
-              <button class="dl-btn png" onclick="exportImage('png')">PNG</button>
-              <button class="dl-btn jpg" onclick="exportImage('jpeg')">JPG</button>
-              <button class="dl-btn webp" onclick="exportImage('webp')">WebP</button>
-            </div>
-          </div>
-
-          <div class="panel-section">
-            <div class="section-title">選取框線與控制點設定</div>
-            <label class="field-label" style="margin-top:0;" id="selBoxWidthLabel">框線粗細（3.5px）</label>
-            <input type="range" id="selectionBoxWidthSlider" min="1" max="12" step="0.5" value="3.5"
-              oninput="selectionBoxWidth=+this.value; localStorage.setItem('gm_selection_box_width', this.value); document.getElementById('selBoxWidthLabel').textContent='框線粗細（'+this.value+'px）'; document.getElementById('selBoxPreview').style.borderWidth=this.value+'px'; drawCanvas();">
-            <div style="display:flex; gap:6px; margin-top:10px;">
-              <div
-                style="flex:1; height:24px; border-radius:4px; background:var(--surface2); border:1px solid var(--border); position:relative; overflow:hidden;">
-                <div id="selBoxPreview"
-                  style="position:absolute; inset:4px; border:3.5px dashed #f5a623; border-radius:3px; pointer-events:none;">
-                </div>
-              </div>
-            </div>
-            <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">拖曳選取文字圖層時所顯示的虛線外框粗細</p>
-
-            <div class="toggle-row" style="margin-top:12px;">
-              <span class="toggle-label" style="font-size:12px; font-weight:500;">啟用右下角縮放控制點</span>
-              <div class="toggle on" id="toggleResizeHandles" onclick="toggleResizeHandlesFeature()"></div>
-            </div>
-            <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">
-              開啟後，選取文字時右下角會出現一個控制點，可直接拖曳以放大或縮小文字尺寸。
-            </p>
-            <div style="margin-top: 12px; margin-bottom: 6px;">
-              <label class="field-label" style="margin-top:0; font-size:12px; font-weight:500;">編輯文字時顯示內容</label>
-              <select id="textSelectionDisplayModeSelect" onchange="updateTextSelectionDisplayMode(this.value)">
-                <option value="both">兩個都要</option>
-                <option value="outline">只顯示外框</option>
-                <option value="handle">只顯示調整右角縮放點點</option>
-                <option value="none">關閉</option>
-              </select>
-            </div>
-            <p style="font-size:11px; color:var(--text-muted); margin-top:4px; margin-bottom:12px;">
-              僅在進入文字編輯時套用；選取文字時一律顯示外框與縮放控制點。（顯示控制點前提是需啟用上方「啟用右下角縮放控制點」）
-            </p>
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 12px;">
-              <label class="field-label" style="margin-top:0;" id="resizeHandleRadiusLabel">縮放控制點大小 (8px)</label>
-              <button onclick="resetResizeHandleRadius()"
-                style="background: transparent; border: none; color: var(--text-muted); font-size: 11px; cursor: pointer; text-decoration: underline;">還原預設</button>
-            </div>
-            <input type="range" id="resizeHandleRadiusSlider" min="4" max="20" step="1" value="8"
-              oninput="updateResizeHandleRadius(this.value)">
-            <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">調整選取文字時，右下角縮放控制點的圓圈大小。</p>
-          </div>
+        <div class="toggle-row" style="margin-top:12px;">
+          <span class="toggle-label" style="font-size:12px; font-weight:500;">啟用右下角縮放控制點</span>
+          <div class="toggle on" id="toggleResizeHandles" onclick="toggleResizeHandlesFeature()"></div>
+        </div>
+        <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">
+          開啟後，選取文字時右下角會出現一個控制點，可直接拖曳以放大或縮小文字尺寸。
+        </p>
+        <div style="margin-top: 12px; margin-bottom: 6px;">
+          <label class="field-label" style="margin-top:0; font-size:12px; font-weight:500;">編輯文字時顯示內容</label>
+          <select id="textSelectionDisplayModeSelect" onchange="updateTextSelectionDisplayMode(this.value)">
+            <option value="both">兩個都要</option>
+            <option value="outline">只顯示外框</option>
+            <option value="handle">只顯示調整右角縮放點點</option>
+            <option value="none">關閉</option>
+          </select>
+        </div>
+        <p style="font-size:11px; color:var(--text-muted); margin-top:4px; margin-bottom:12px;">
+          僅在進入文字編輯時套用；選取文字時一律顯示外框與縮放控制點。（顯示控制點前提是需啟用上方「啟用右下角縮放控制點」）
+        </p>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 12px;">
+          <label class="field-label" style="margin-top:0;" id="resizeHandleRadiusLabel">縮放控制點大小 (8px)</label>
+          <button onclick="resetResizeHandleRadius()"
+            style="background: transparent; border: none; color: var(--text-muted); font-size: 11px; cursor: pointer; text-decoration: underline;">還原預設</button>
+        </div>
+        <input type="range" id="resizeHandleRadiusSlider" min="4" max="20" step="1" value="8"
+          oninput="updateResizeHandleRadius(this.value)">
+        <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">調整選取文字時，右下角縮放控制點的圓圈大小。</p>
+      </div>
     </aside>
   </div>
 
@@ -2174,8 +2172,8 @@
       style="text-align: left; max-width: 480px; font-size: 12px; display: flex; flex-direction: column; padding: 0;">
       <div class="about-header" style="padding: 24px 24px 16px; text-align: center; flex-shrink: 0;">
         <h3 class="modal-title" style="font-size: 18px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
-        <p id="appVersion" data-version="v1.60"
-          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.60 </p>
+        <p id="appVersion" data-version="v1.61"
+          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.61 </p>
       </div>
 
       <div class="about-content"
@@ -4033,13 +4031,13 @@
       drawCanvas();
     }
 
-function updateResizeHandleRadius(value) {
-       resizeHandleRadius = parseInt(value, 10);
-       const label = document.getElementById('resizeHandleRadiusLabel');
-       if (label) label.textContent = t(`縮放控制點大小 (${resizeHandleRadius}px)`);
-       localStorage.setItem('gm_resize_handle_radius', resizeHandleRadius);
-       drawCanvas();
-     }
+    function updateResizeHandleRadius(value) {
+      resizeHandleRadius = parseInt(value, 10);
+      const label = document.getElementById('resizeHandleRadiusLabel');
+      if (label) label.textContent = t(`縮放控制點大小 (${resizeHandleRadius}px)`);
+      localStorage.setItem('gm_resize_handle_radius', resizeHandleRadius);
+      drawCanvas();
+    }
 
     function resetResizeHandleRadius() {
       const slider = document.getElementById('resizeHandleRadiusSlider');
@@ -5501,11 +5499,7 @@ function updateResizeHandleRadius(value) {
       // Iterate through visible layers in reverse order (top to bottom)
       const visibleLayers = [...layers].reverse().filter(item => item.visible);
       for (const l of visibleLayers) {
-        // Skip if currently inline editing this layer (unless handle mode is enabled)
-        const editing = isLayerEditing(l);
-        const shouldDrawHandle = !editing || (textSelectionDisplayMode === 'both' || textSelectionDisplayMode === 'handle');
-        if (!shouldDrawHandle) continue;
-
+        // 只要控制點可見，就應該能被點擊
         const box = getLayerBoundingBox(l);
         const handleX = box.x + box.w;
         const handleY = box.y + box.h;
@@ -6420,4 +6414,5 @@ function updateResizeHandleRadius(value) {
   </script>
   <script src="i18n.js"></script>
 </body>
+
 </html>
