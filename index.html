@@ -1669,7 +1669,7 @@
       <div class="panel-section layers-section">
         <div class="section-title">文字圖層</div>
 <button class="add-layer-btn" id="addLayerBtn" onclick="onAddLayerClick()"
-           style="margin-top: 0; margin-bottom: 12px;">+ 新增文字</button>
+            style="margin-top: 0; margin-bottom: 12px;">+ 新增文字</button>
 
         <div id="layersList" class="layers-list"></div>
 
@@ -2099,7 +2099,7 @@
             style="width: 100%; padding: 8px 12px; font-size: 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text);">
             <option value="system">系統語言</option>
             <option value="zh-TW">繁體中文 (台灣)</option>
-            <option value="en">English (英文)</option>
+            <option value="en">English</option>
           </select>
         </div>
 
@@ -2174,8 +2174,8 @@
       style="text-align: left; max-width: 480px; font-size: 12px; display: flex; flex-direction: column; padding: 0;">
       <div class="about-header" style="padding: 24px 24px 16px; text-align: center; flex-shrink: 0;">
         <h3 class="modal-title" style="font-size: 18px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
-        <p id="appVersion" data-version="v1.56"
-          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.56 </p>
+        <p id="appVersion" data-version="1.57"
+          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 1.57 </p>
       </div>
 
       <div class="about-content"
@@ -2285,6 +2285,12 @@
   </div>
 
   <script>
+    /* ─────────────── Translation Helper (will be enhanced by i18n.js) ─────────────── */
+    function t(chineseText) {
+      // Initial stub - will be replaced by i18n.js after loading
+      return chineseText;
+    }
+
     /* ─────────────── State ─────────────── */
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
@@ -2976,7 +2982,7 @@
         const slider = document.getElementById('selectionBoxWidthSlider');
         if (slider) slider.value = selectionBoxWidth;
         const label = document.getElementById('selBoxWidthLabel');
-        if (label) label.textContent = `框線粗細（${selectionBoxWidth}px）`;
+        if (label) label.textContent = t(`框線粗細（${selectionBoxWidth}px）`);
         const preview = document.getElementById('selBoxPreview');
         if (preview) preview.style.borderWidth = `${selectionBoxWidth}px`;
       }
@@ -3808,14 +3814,14 @@
       // 清理並建立簡潔、不重複的選單項
       content.innerHTML = `
     <div style="display:flex; gap:8px; justify-content:center; margin-bottom:10px;">
-      <button style="flex:1; padding:14px; font-size:18px; border-radius:10px; background:linear-gradient(90deg,#ff9c6e,#ff6b35); color:#111; font-weight:700;" onclick="slideLayerLeft()">◀ 向左</button>
-      <button style="flex:1; padding:14px; font-size:18px; border-radius:10px; background:linear-gradient(90deg,#2f54eb,#69c0ff); color:#fff; font-weight:700;" onclick="slideLayerRight()">向右 ▶</button>
+      <button style="flex:1; padding:14px; font-size:18px; border-radius:10px; background:linear-gradient(90deg,#ff9c6e,#ff6b35); color:#111; font-weight:700;" onclick="slideLayerLeft()">${t('◀')} ${t('向左')}</button>
+      <button style="flex:1; padding:14px; font-size:18px; border-radius:10px; background:linear-gradient(90deg,#2f54eb,#69c0ff); color:#fff; font-weight:700;" onclick="slideLayerRight()">${t('向右')} ${t('▶')}</button>
     </div>
     <div style="display:flex; flex-direction:column; gap:8px;">
-      <button style="padding:10px; border-radius:8px; background:var(--surface2); border:1px solid var(--border);" onclick="onAddLayerClick(); closeMobileTraditionalMenu();">✍️ 新增文字</button>
-      <button style="padding:10px; border-radius:8px; background:var(--surface2); border:1px solid var(--border);" onclick="openQuickEditForSelection(); closeMobileTraditionalMenu();">✨ 快速編輯</button>
-      <button style="padding:10px; border-radius:8px; background:var(--surface2); border:1px solid var(--border);" onclick="document.getElementById('btnEnterCrop').click(); closeMobileTraditionalMenu();">✂️ 裁切</button>
-      <button style="padding:10px; border-radius:8px; background:var(--surface2); border:1px solid var(--border);" onclick="exportImage('png'); closeMobileTraditionalMenu();">⬇️ 匯出 PNG</button>
+      <button style="padding:10px; border-radius:8px; background:var(--surface2); border:1px solid var(--border);" onclick="onAddLayerClick(); closeMobileTraditionalMenu();">✍️ ${t('新增文字')}</button>
+      <button style="padding:10px; border-radius:8px; background:var(--surface2); border:1px solid var(--border);" onclick="openQuickEditForSelection(); closeMobileTraditionalMenu();">✨ ${t('快速編輯')}</button>
+      <button style="padding:10px; border-radius:8px; background:var(--surface2); border:1px solid var(--border);" onclick="document.getElementById('btnEnterCrop').click(); closeMobileTraditionalMenu();">✂️ ${t('裁切')}</button>
+      <button style="padding:10px; border-radius:8px; background:var(--surface2); border:1px solid var(--border);" onclick="exportImage('png'); closeMobileTraditionalMenu();">⬇️ ${t('匯出 PNG')}</button>
     </div>
   `;
 
@@ -4027,13 +4033,13 @@
       drawCanvas();
     }
 
-    function updateResizeHandleRadius(value) {
-      resizeHandleRadius = parseInt(value, 10);
-      const label = document.getElementById('resizeHandleRadiusLabel');
-      if (label) label.textContent = `縮放控制點大小 (${resizeHandleRadius}px)`;
-      localStorage.setItem('gm_resize_handle_radius', resizeHandleRadius);
-      drawCanvas();
-    }
+function updateResizeHandleRadius(value) {
+       resizeHandleRadius = parseInt(value, 10);
+       const label = document.getElementById('resizeHandleRadiusLabel');
+       if (label) label.textContent = t(`縮放控制點大小 (${resizeHandleRadius}px)`);
+       localStorage.setItem('gm_resize_handle_radius', resizeHandleRadius);
+       drawCanvas();
+     }
 
     function resetResizeHandleRadius() {
       const slider = document.getElementById('resizeHandleRadiusSlider');
@@ -4542,7 +4548,7 @@
           btn.style.background = 'rgba(245,166,35,0.15)';
           btn.style.borderColor = 'var(--gold)';
           btn.style.color = 'var(--gold)';
-          btn.textContent = '⚡ 請點擊圖片任意處新增... (點此取消)';
+          btn.textContent = t('⚡ 請點擊圖片任意處新增... (點此取消)');
         }
         if (headerBtn) {
           headerBtn.style.background = 'var(--gold)';
@@ -4563,7 +4569,7 @@
         btn.style.background = 'transparent';
         btn.style.borderColor = 'var(--border)';
         btn.style.color = 'var(--gold)';
-        btn.textContent = '+ 新增文字';
+        btn.textContent = t('+ 新增文字');
       }
       if (headerBtn) {
         headerBtn.style.background = 'var(--surface2)';
@@ -4633,15 +4639,15 @@
         </div>
       </div>
       <div class="layer-editor" onmouseenter="this.parentElement.draggable=false;" onmouseleave="this.parentElement.draggable=true;" ontouchstart="this.parentElement.draggable=false;" ontouchend="this.parentElement.draggable=true;" ontouchcancel="this.parentElement.draggable=true;">
-        <label class="field-label">文字內容</label>
+        <label class="field-label">${t('文字內容')}</label>
         <textarea onfocus="pushToUndo()" oninput="updateProp(${l.id},'text',this.value)">${l.text}</textarea>
         
-        <label class="field-label">字體</label>
+        <label class="field-label">${t('字體')}</label>
         <select onmousedown="pushToUndo()" onchange="updateProp(${l.id},'font',this.value)">
           ${fontsList.map(f => `<option value="${f.value}" ${f.value === l.font ? 'selected' : ''}>${f.label}</option>`).join('')}
         </select>
 
-        <label class="field-label size-label">大小 (${l.size}px)</label>
+        <label class="field-label" style="margin-top: 12px;">${t('大小')} (${l.size}px)</label>
         <input type="range" min="10" max="500" value="${l.size}" onmousedown="pushToUndo()" ontouchstart="pushToUndo()" oninput="updateProp(${l.id},'size',+this.value)">
 
         <!-- 精緻調色盤觸發按鈕組 -->
@@ -4649,7 +4655,7 @@
           <div onclick="openColorPaletteModal(${l.id}, 'color')" style="cursor:pointer; background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 8px; border-radius: 8px; display: flex; align-items: center; gap: 8px; transition: border-color 0.2s;" onmouseenter="this.style.borderColor='var(--gold)'" onmouseleave="this.style.borderColor='var(--border)'">
             <div style="width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.25); background: ${l.color}; flex-shrink:0;"></div>
             <div style="overflow:hidden;">
-              <div style="font-size: 11px; font-weight: 600; color: var(--text)">🎨 文字主顏色</div>
+              <div style="font-size: 11px; font-weight: 600; color: var(--text)">${t('🎨 文字主顏色')}</div>
               <div style="font-size: 9px; font-family: monospace; color: var(--text-muted); text-transform:uppercase;">${l.color}</div>
             </div>
           </div>
@@ -4657,43 +4663,43 @@
           <div onclick="openColorPaletteModal(${l.id}, 'strokeColor')" style="cursor:pointer; background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 8px; border-radius: 8px; display: flex; align-items: center; gap: 8px; transition: border-color 0.2s;" onmouseenter="this.style.borderColor='var(--gold)'" onmouseleave="this.style.borderColor='var(--border)'">
             <div style="width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.25); background: ${l.strokeColor}; flex-shrink:0;"></div>
             <div style="overflow:hidden;">
-              <div style="font-size: 11px; font-weight: 600; color: var(--text)">🖌️ 描邊顏色</div>
+              <div style="font-size: 11px; font-weight: 600; color: var(--text)">${t('🖌️ 描邊顏色')}</div>
               <div style="font-size: 9px; font-family: monospace; color: var(--text-muted); text-transform:uppercase;">${l.strokeColor}</div>
             </div>
           </div>
         </div>
 
         <div class="toggle-row">
-          <span class="toggle-label">顯示描邊</span>
+          <span class="toggle-label">${t('顯示描邊')}</span>
           <div class="toggle ${l.stroke ? 'on' : ''}" onclick="pushToUndo(); updateProp(${l.id},'stroke',!${l.stroke})"></div>
         </div>
         
         <div class="toggle-row" style="margin-bottom: 8px;">
-          <span class="toggle-label">文字陰影</span>
+          <span class="toggle-label">${t('文字陰影')}</span>
           <div class="toggle ${l.shadow ? 'on' : ''}" onclick="pushToUndo(); updateProp(${l.id},'shadow',!${l.shadow})"></div>
         </div>
 
         <!-- 按鈕式圖層排序面板 -->
-        <label class="field-label" style="margin-top: 12px; margin-bottom: 4px;">圖層順序調整</label>
+        <label class="field-label" style="margin-top: 12px; margin-bottom: 4px;">${t('圖層順序調整')}</label>
         <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 10px; border-radius: 8px; margin-bottom: 12px;">
           <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; margin-bottom: 10px;">
-            <button class="sp-btn" style="padding: 6px 2px; font-weight: 600;" onclick="moveLayerToTop(${l.id})" title="移到最上層">🔝 最頂</button>
-            <button class="sp-btn" style="padding: 6px 2px; font-weight: 600;" onclick="moveLayerUp(${l.id})" title="往上移一層">🔼 上移</button>
-            <button class="sp-btn" style="padding: 6px 2px; font-weight: 600;" onclick="moveLayerDown(${l.id})" title="往下移一層">🔽 下移</button>
-            <button class="sp-btn" style="padding: 6px 2px; font-weight: 600;" onclick="moveLayerToBottom(${l.id})" title="移到最下層">⤓ 最底</button>
+            <button class="sp-btn" style="padding: 6px 2px; font-weight: 600;" onclick="moveLayerToTop(${l.id})" title="移到最上層">${t('🔝 最頂')}</button>
+            <button class="sp-btn" style="padding: 6px 2px; font-weight: 600;" onclick="moveLayerUp(${l.id})" title="往上移一層">${t('🔼 上移')}</button>
+            <button class="sp-btn" style="padding: 6px 2px; font-weight: 600;" onclick="moveLayerDown(${l.id})" title="往下移一層">${t('🔽 下移')}</button>
+            <button class="sp-btn" style="padding: 6px 2px; font-weight: 600;" onclick="moveLayerToBottom(${l.id})" title="移到最下層">${t('⤓ 最底')}</button>
           </div>
           <div style="display: flex; align-items: center; gap: 8px; justify-content: space-between;">
-            <span style="font-size: 11px; color: var(--text-muted); font-weight: 500;">移動特定步數：</span>
+            <span style="font-size: 11px; color: var(--text-muted); font-weight: 500;">${t('移動特定步數：')}</span>
             <div style="display: flex; align-items: center; gap: 4px;">
               <input type="number" id="layer-steps-${l.id}" min="1" max="${layers.length > 1 ? layers.length - 1 : 1}" value="1" style="width: 48px; text-align: center; padding: 4px; font-size: 11px; height: 26px; border-radius: 4px;">
-              <button class="theme-btn" style="padding: 4px 8px; font-size: 11px; height: 26px; line-height: 1;" onclick="moveLayerBySteps(${l.id}, 'up')">🔺 往上</button>
-              <button class="theme-btn" style="padding: 4px 8px; font-size: 11px; height: 26px; line-height: 1;" onclick="moveLayerBySteps(${l.id}, 'down')">🔻 往下</button>
+              <button class="theme-btn" style="padding: 4px 8px; font-size: 11px; height: 26px; line-height: 1;" onclick="moveLayerBySteps(${l.id}, 'up')">🔺 ${t('往上')}</button>
+              <button class="theme-btn" style="padding: 4px 8px; font-size: 11px; height: 26px; line-height: 1;" onclick="moveLayerBySteps(${l.id}, 'down')">🔻 ${t('往下')}</button>
             </div>
           </div>
         </div>
 
         <!-- 📍 回到中間按鈕 -->
-        <button class="align-btn" style="width:100%; margin-top:12px; background:var(--surface); border:1px solid var(--border); padding:8px; display:block; color:var(--text);" onclick="resetToCenter(${l.id})">📍 回到中間</button>
+        <button class="align-btn" style="width:100%; margin-top:12px; background:var(--surface); border:1px solid var(--border); padding:8px; display:block; color:var(--text);" onclick="resetToCenter(${l.id})">📍 ${t('回到中間')}</button>
       </div>
     `;
         el.appendChild(card);
@@ -5488,18 +5494,24 @@
     }
 
     function checkResizeHandleHit(pos) {
-      const l = layers.find(item => item.id === activeLayerId);
-      if (!l) return null;
-      const editing = isLayerEditing(l);
-      const shouldDrawHandle = (!editing || (textSelectionDisplayMode === 'both' || textSelectionDisplayMode === 'handle')) && enableResizeHandles;
-      if (!shouldDrawHandle) return null;
-
-      const box = getLayerBoundingBox(l);
-      const handleX = box.x + box.w;
-      const handleY = box.y + box.h;
+      if (!enableResizeHandles) return null;
       const handleSize = 20; // 點擊熱區大小
-      if (Math.abs(pos.x - handleX) < handleSize && Math.abs(pos.y - handleY) < handleSize) {
-        return l;
+
+      // Iterate through visible layers in reverse order (top to bottom)
+      const visibleLayers = [...layers].reverse().filter(item => item.visible);
+      for (const l of visibleLayers) {
+        // Skip if currently inline editing this layer (unless handle mode is enabled)
+        const editing = isLayerEditing(l);
+        const shouldDrawHandle = !editing || (textSelectionDisplayMode === 'both' || textSelectionDisplayMode === 'handle');
+        if (!shouldDrawHandle) continue;
+
+        const box = getLayerBoundingBox(l);
+        const handleX = box.x + box.w;
+        const handleY = box.y + box.h;
+
+        if (Math.abs(pos.x - handleX) < handleSize && Math.abs(pos.y - handleY) < handleSize) {
+          return l;
+        }
       }
       return null;
     }
@@ -5811,7 +5823,6 @@
       if (isPinchZooming) return;
       const pos = getTouchPos(e);
       const hit = checkHit(pos);
-      const resizeHit = checkResizeHandleHit(pos);
       const currentTime = Date.now();
       const tapInterval = currentTime - lastTapTime;
 
@@ -5822,7 +5833,26 @@
       }
       lastTapTime = currentTime;
 
-      if (isAddingTextActive || resizeHit || hit || isCropping) {
+      // Check for resize handle hit first (prioritize over layer hit for mobile)
+      const resizeHit = checkResizeHandleHit(pos);
+      if (resizeHit && enableResizeHandles) {
+        e.preventDefault();
+        canvas.style.touchAction = 'none';
+        // Set activeLayerId first if resize handle is hit
+        activeLayerId = resizeHit.id;
+        pushToUndo();
+        resizingLayer = {
+          id: resizeHit.id,
+          startSize: resizeHit.size,
+          startPos: pos,
+          startDist: Math.hypot(pos.x - resizeHit.x, pos.y - resizeHit.y)
+        };
+        // Update layers list to show active state
+        renderLayersList();
+        drawCanvas();
+        return;
+      }
+      if (isAddingTextActive || hit || isCropping) {
         e.preventDefault();
         canvas.style.touchAction = 'none';
         handleStart(pos);
