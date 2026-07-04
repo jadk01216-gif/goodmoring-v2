@@ -112,7 +112,7 @@ const translations = {
     "開放字型庫：感謝 Google Fonts 託管與分發之思源黑體/明體、粉圓體、芫荽體、霞鶩文楷，以及多款日系手寫、黑體與明朝體": "Open Font Library: Thanks to Google Fonts for hosting and distributing Noto Sans/Serif, Huninn, Iansui, LXGW WenKai and many Japanese handwriting fonts",
     "Web API 與本地儲存：字體本機永久儲存技術由 W3C IndexedDB 標準支援；離線與快取技術則採用 Service Worker 與 Web App Manifest 實現": "Web API & Local Storage: Font local storage uses W3C IndexedDB standard; offline and caching uses Service Worker and Web App Manifest",
     "系統內建與專有字型聲明 (Proprietary)": "System Built-in & Proprietary Fonts Declaration",
-    "為確保平台無縫遚作與字體未載入時的退路，本工具亦宣告呼叫部分系統內建字型": "To ensure seamless operation and fallback when fonts are not loaded, this tool also declares system built-in fonts",
+    "為確保平台無縫運作與字體未載入時的退路，本工具亦宣告呼叫部分系統內建字型": "To ensure seamless operation and fallback when fonts are not loaded, this tool also declares system built-in fonts",
     "微軟正黑體 (Microsoft JhengHei)": "Microsoft JhengHei",
     "蘋方體-繁 (PingFang TC)": "PingFang TC",
     "標楷體、新細明體": "DFKai-SB, PMingLiU",
@@ -308,8 +308,122 @@ const translations = {
   }
 };
 
-// 2. 核心翻譯引擎
+// 3. DFS 深度遍歷所有 Text Node 進行翻譯
+function translateTextNode(node) {
+  if (!node || !node.parentNode) return;
+
+  const text = node.nodeValue.trim();
+  if (!text || text.length === 0) return;
+
+  // 如果空白或純空白內容，跳過
+  if (/^\s+$/.test(node.nodeValue) && node.nodeValue.length > 0) {
+    // 保留原樣式，但翻譯其內容
+    const translated = translateTextWithAI(text) || text;
+    node.nodeValue = translated;
+    return;
+  }
+
+  // 優先使用內建 AI 翻譯 API (Chrome AI Translator)
+  const translated = translateTextWithAI(text) || translations['en'][text];
+  if (translated && translated !== text) {
+    node.nodeValue = node.nodeValue.replace(text, translated);
+  }
+}
+
+function dfsTranslate(element) {
+  const walker = document.createTreeWalker(
+    element || document.body,
+    NodeFilter.SHOW_TEXT,
+    {
+      acceptNode: function(node) {
+        // 跳過 script 和 style 標籤內的內容
+        const parent = node.parentNode;
+        if (!parent) return NodeFilter.FILTER_REJECT;
+        const tag = parent.nodeType === 1 ? parent.tagName.toLowerCase() : '';
+        if (tag === 'script' || tag === 'style' || tag === 'textarea' || tag === 'input') {
+          return NodeFilter.FILTER_REJECT;
+        }
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    },
+    false
+  );
+
+  const nodes = [];
+  let node;
+  while (node = walker.nextNode()) {
+    nodes.push(node);
+  }
+
+  // 批次翻譯所有文字節點
+  nodes.forEach(translateTextNode);
+
+  // 翻譯 placeholder 屬性
+  document.querySelectorAll('[placeholder]').forEach(el => {
+    const ph = el.getAttribute('placeholder');
+    if (ph && ph.trim()) {
+      const translated = translateTextWithAI(ph) || translations['en'][ph];
+      if (translated && translated !== ph) {
+        el.setAttribute('placeholder', translated);
+      }
+    }
+  });
+
+  // 翻譯 title 屬性
+  document.querySelectorAll('[title]').forEach(el => {
+    const title = el.getAttribute('title');
+    if (title && title.trim()) {
+      const translated = translateTextWithAI(title) || translations['en'][title];
+      if (translated && translated !== title) {
+        el.setAttribute('title', translated);
+      }
+    }
+  });
+}
+
+// 4. 嘻嘻嘻內建 AI 翻譯 API 或使用翻譯字典
+async function translateTextWithAI(text) {
+  // 檢查 Chrome AI Translator API 是否可用 (chrome.aiTranslator)
+  if (typeof chrome !== 'undefined' && chrome.aiTranslator && chrome.aiTranslator.translate) {
+    try {
+      return await chrome.aiTranslator.translate(text, {
+        targetLanguage: getBrowserLang() === 'zh-TW' ? 'en' : 'en'
+      });
+    } catch (e) {
+      console.warn('AI Translator failed, fallback to dictionary:', e);
+    }
+  }
+
+  // 檢查瀏覽器內建 Translator API (navigator.aiTranslator)
+  if (navigator.aiTranslator && typeof navigator.aiTranslator.translate === 'function') {
+    try {
+      return await navigator.aiTranslator.translate(text, { to: 'en' });
+    } catch (e) {
+      console.warn('navigator.aiTranslator failed, fallback to dictionary:', e);
+    }
+  }
+
+  // 檢查翻譯 API (translation API)
+  if (typeof translation !== 'undefined' && typeof translation.translate === 'function') {
+    try {
+      return translation.translate(text, 'en');
+    } catch (e) {
+      console.warn('translation API failed, fallback to dictionary:', e);
+    }
+  }
+
+  return null;
+}
+
+function translateTextSync(text) {
+  // 同步版本，只能用字典翻譯
+  return translations['en'][text] || null;
+}
+
+// 2. 核心翻譯引擎 (保留兼容性)
 function translatePage(lang) {
+  if (lang === 'zh-TW' || lang === 'zh') return;
+
   const dict = translations[lang];
   if (!dict) return;
 
@@ -332,21 +446,25 @@ function translatePage(lang) {
 
 // 3. 偵測瀏覽器語言並執行初始化
 function getBrowserLang() {
+  // 優先檢查 localStorage 中的語言設定
+  const savedLang = localStorage.getItem('gm_lang');
+  if (savedLang && (savedLang === 'zh-TW' || savedLang === 'en')) {
+    return savedLang;
+  }
+
   const browserLang = navigator.language || navigator.userLanguage || 'en';
   const langCode = browserLang.toLowerCase();
   
+  // 系統語言：檢查是否為繁體中文
   if (langCode.includes('zh') && (langCode.includes('tw') || langCode.includes('hant') || langCode === 'zh')) {
     return 'zh-TW';
   }
   
-  if (langCode.startsWith('en')) {
-    return 'en';
-  }
-  
+  // 預設為英文
   return 'en';
 }
 
-function initI18n() {
+async function initI18n() {
   const urlParams = new URLSearchParams(window.location.search);
   let lang = urlParams.get('lang');
 
@@ -358,12 +476,51 @@ function initI18n() {
 
   if (lang === 'zh-TW' || lang === 'zh') return;
 
-  translatePage(lang);
+  // 嘗試使用 AI 翻譯，若不可用則降級使用字典翻譯
+  if (isAITranslationSupported()) {
+    await dfsTranslate(document.body);
+  } else {
+    translatePage(lang);
+  }
 }
 
-// 4. 等網頁上的 DOM 載入完畢後，立即執行翻譯
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initI18n);
-} else {
-  initI18n();
+function isAITranslationSupported() {
+  return !!(
+    (typeof chrome !== 'undefined' && chrome.aiTranslator) ||
+    (navigator.aiTranslator) ||
+    (typeof translation !== 'undefined')
+  );
 }
+
+// 5. 語言選擇器初始化
+function initLanguageSelect() {
+  const langSelect = document.getElementById('langSelect');
+  if (!langSelect) return;
+
+  const savedLang = localStorage.getItem('gm_lang') || 'system';
+  
+  if (savedLang === 'system' || savedLang === 'en' || savedLang === 'zh-TW') {
+    langSelect.value = savedLang;
+  } else {
+    langSelect.value = 'system';
+  }
+}
+
+function changeLanguage(lang) {
+  localStorage.setItem('gm_lang', lang);
+  
+  // 重新整理頁面以套用語言變更
+  const url = new URL(window.location.href);
+  if (lang === 'system') {
+    url.searchParams.delete('lang');
+  } else {
+    url.searchParams.set('lang', lang);
+  }
+  window.location.href = url.toString();
+}
+
+// 6. 等網頁上的 DOM 載入完畢後，立即執行翻譯
+document.addEventListener('DOMContentLoaded', () => {
+  initI18n();
+  initLanguageSelect();
+});

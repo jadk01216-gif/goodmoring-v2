@@ -2091,6 +2091,18 @@
           </div>
         </div>
 
+        <!-- 1.5 語言選單 -->
+        <div style="margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+          <label class="field-label" style="margin-top:0; font-weight:600; color:var(--text); margin-bottom: 8px;">🌐
+            語言選單</label>
+          <select id="langSelect" onchange="changeLanguage(this.value)"
+            style="width: 100%; padding: 8px 12px; font-size: 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text);">
+            <option value="system">系統語言</option>
+            <option value="zh-TW">繁體中文 (台灣)</option>
+            <option value="en">English (英文)</option>
+          </select>
+        </div>
+
         <!-- 2. 畫面縮放與編輯模式 -->
         <div style="margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
           <label class="field-label" style="margin-top:0; font-weight:600; color:var(--text); margin-bottom: 8px;">🔍
@@ -3149,37 +3161,6 @@
       }
 
       initTheme();
-
-      layers = [];
-      layerCounter = 0;
-      activeLayerId = null;
-
-      const qeStroke = document.getElementById('qeStroke');
-      if (qeStroke) qeStroke.onclick = function () { this.classList.toggle('on'); };
-
-      const qeShadow = document.getElementById('qeShadow');
-      if (qeShadow) qeShadow.onclick = function () { this.classList.toggle('on'); };
-
-      const qeSize = document.getElementById('qeSize');
-      if (qeSize) {
-        qeSize.oninput = function () {
-          const label = document.getElementById('qeSizeLabel');
-          if (label) label.textContent = `大小 (${this.value}px)`;
-        };
-      }
-
-      await loadCustomFonts();
-      loadTemplates();
-
-      /* 🚫 Vercel 網頁版佈署：將 Capacitor 接收機制調用註解掉
-      checkSharedIntent();
-      */
-
-      // 偵測並處理來自 PWA 分享管道的圖片
-      checkPwaSharedImage();
-
-      // 初始化上下拖曳比例分割條功能
-      initDragSplitter();
       initPinchZoom();
 
       updateExportButtonsState();
