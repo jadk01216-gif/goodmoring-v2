@@ -2172,8 +2172,8 @@
       style="text-align: left; max-width: 480px; font-size: 12px; display: flex; flex-direction: column; padding: 0;">
       <div class="about-header" style="padding: 24px 24px 16px; text-align: center; flex-shrink: 0;">
         <h3 class="modal-title" style="font-size: 18px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
-        <p id="appVersion" data-version="v1.61"
-          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.61 </p>
+        <p id="appVersion" data-version="v1.62"
+          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.62 </p>
       </div>
 
       <div class="about-content"
@@ -3261,7 +3261,7 @@
       };
 
       splitter.addEventListener('mousedown', onDragStart);
-      splitter.addEventListener('touchstart', onDragStart, { passive: true });
+      splitter.addEventListener('touchstart', onDragStart, { passive: false });
 
       window.addEventListener('mousemove', onDragMove);
       window.addEventListener('touchmove', onDragMove, { passive: false });
