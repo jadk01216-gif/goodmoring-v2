@@ -2174,8 +2174,8 @@
       style="text-align: left; max-width: 480px; font-size: 12px; display: flex; flex-direction: column; padding: 0;">
       <div class="about-header" style="padding: 24px 24px 16px; text-align: center; flex-shrink: 0;">
         <h3 class="modal-title" style="font-size: 18px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
-        <p id="appVersion" data-version="v1.59"
-          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.59 </p>
+        <p id="appVersion" data-version="v1.60"
+          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.60 </p>
       </div>
 
       <div class="about-content"
@@ -5495,7 +5495,8 @@ function updateResizeHandleRadius(value) {
 
     function checkResizeHandleHit(pos) {
       if (!enableResizeHandles) return null;
-      const handleSize = 20; // 點擊熱區大小
+      const scale = getCanvasScale();
+      const handleSize = Math.max(40, resizeHandleRadius * scale * 1.5); // 動態調整點擊熱區大小，解決手機上點不中的問題
 
       // Iterate through visible layers in reverse order (top to bottom)
       const visibleLayers = [...layers].reverse().filter(item => item.visible);
