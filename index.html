@@ -2174,8 +2174,8 @@
       style="text-align: left; max-width: 480px; font-size: 12px; display: flex; flex-direction: column; padding: 0;">
       <div class="about-header" style="padding: 24px 24px 16px; text-align: center; flex-shrink: 0;">
         <h3 class="modal-title" style="font-size: 18px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
-        <p id="appVersion" data-version="1.57"
-          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 1.57 </p>
+        <p id="appVersion" data-version="v1.58"
+          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.58 </p>
       </div>
 
       <div class="about-content"
@@ -5825,8 +5825,9 @@ function updateResizeHandleRadius(value) {
       const hit = checkHit(pos);
       const currentTime = Date.now();
       const tapInterval = currentTime - lastTapTime;
+      const resizeHit = checkResizeHandleHit(pos);
 
-      if (enableQuickEdit && hit && tapInterval < 300 && tapInterval > 0) {
+      if (enableQuickEdit && hit && !resizeHit && tapInterval < 300 && tapInterval > 0) {
         e.preventDefault();
         openQuickEdit(hit);
         return;
@@ -5834,7 +5835,6 @@ function updateResizeHandleRadius(value) {
       lastTapTime = currentTime;
 
       // Check for resize handle hit first (prioritize over layer hit for mobile)
-      const resizeHit = checkResizeHandleHit(pos);
       if (resizeHit && enableResizeHandles) {
         e.preventDefault();
         canvas.style.touchAction = 'none';
