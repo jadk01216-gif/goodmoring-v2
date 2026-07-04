@@ -1668,40 +1668,32 @@
     <aside class="side-panel" ondragover="handlePanelDragOver(event)" ondragleave="clearAutoScroll()">
       <div class="panel-section layers-section">
         <div class="section-title">文字圖層</div>
-        <button class="add-layer-btn" id="addLayerBtn" onclick="onAddLayerClick()"
-          style="margin-top: 0; margin-bottom: 12px;">+ 新增文字</button>
+<button class="add-layer-btn" id="addLayerBtn" onclick="onAddLayerClick()"
+           style="margin-top: 0; margin-bottom: 12px;">+ 新增文字</button>
 
-        <!-- 新增文字預設設定面板 -->
-        <div <!-- 新增文字預設設定面板 (由 JS 動態填入) -->
-          <div id="newTextSettingsPanel"
-            style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 10px; border-radius: 8px; margin-bottom: 12px;">
-            <div class="toggle-row" style="margin-top: 0; margin-bottom: 8px;">
-              <span class="toggle-label" style="font-size:11px; font-weight:600; color:var(--text)">✍️ 新增時帶入預設文字</span>
-              <div class="toggle on" id="toggleDefaultNewText" onclick="toggleDefaultNewTextFeature()"></div>
-            </div>
-            <div class="toggle-row" style="margin-top: 0; margin-bottom: 8px;">
-              <span class="toggle-label" style="font-size:11px; font-weight:600; color:var(--text)">🧪
-                實驗性：直接在圖片上編輯文字</span>
-              <div class="toggle" id="toggleInlineTextEdit" onclick="toggleInlineTextEditFeature()"></div>
-            </div>
-            <div id="defaultNewTextConfig" style="display: block;">
-              <label class="field-label"
+        <div id="layersList" class="layers-list"></div>
+
+        <div id="newTextSettingsPanel"
+           style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 10px; border-radius: 8px; margin-top: 12px;">
+           <div class="toggle-row" style="margin-top: 0; margin-bottom: 8px;">
+             <span class="toggle-label" style="font-size:11px; font-weight:600; color:var(--text)">✍️ 新增時帶入預設文字</span>
+             <div class="toggle on" id="toggleDefaultNewText" onclick="toggleDefaultNewTextFeature()"></div>
+           </div>
+           <div class="toggle-row" style="margin-top: 0; margin-bottom: 8px;">
+             <span class="toggle-label" style="font-size:11px; font-weight:600; color:var(--text)">🧪
+               實驗性：直接在圖片上編輯文字</span>
+             <div class="toggle" id="toggleInlineTextEdit" onclick="toggleInlineTextEditFeature()"></div>
+           </div>
+           <div id="defaultNewTextConfig" style="display: block;">
+<label class="field-label"
                 style="margin-top:0; font-size:10px; color:var(--text-muted)">自訂新增時的預設文字</label>
               <input type="text" id="defaultNewTextInput" value="🌞 早安！" oninput="updateDefaultNewText(this.value)"
                 style="font-size:12px; padding:6px 8px;">
             </div>
-            <div id="layersList" class="layers-list"></div>
-            <!-- 新增文字預設設定面板 (已移至圖層列表下方) -->
-            <div id="newTextSettingsPanel"
-              style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 10px; border-radius: 8px; margin-top: 12px;">
-            </div>
-
-            <div id="layersList" class="layers-list"></div>
           </div>
+        </div>
 
-          <div id="layersList" class="layers-list"></div>
-
-          <div class="panel-section">
+        <div class="panel-section">
             <div class="section-title">圖片</div>
             <div id="uploadArea"
               style="border:2px dashed var(--border); padding:20px; text-align:center; border-radius:12px; cursor:pointer;">
@@ -2170,8 +2162,8 @@
       style="text-align: left; max-width: 480px; font-size: 12px; display: flex; flex-direction: column; padding: 0;">
       <div class="about-header" style="padding: 24px 24px 16px; text-align: center; flex-shrink: 0;">
         <h3 class="modal-title" style="font-size: 18px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
-        <p id="appVersion" data-version="v1.55"
-          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.55 </p>
+        <p id="appVersion" data-version="v1.56"
+          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.56 </p>
       </div>
 
       <div class="about-content"
@@ -3189,26 +3181,6 @@
       // 初始化上下拖曳比例分割條功能
       initDragSplitter();
       initPinchZoom();
-
-      // 將設定面板移動到正確位置
-      const newTextSettingsPanel = document.getElementById('newTextSettingsPanel');
-      if (newTextSettingsPanel) {
-        newTextSettingsPanel.innerHTML = `
-          <div class="toggle-row" style="margin-top: 0; margin-bottom: 8px;">
-            <span class="toggle-label" style="font-size:11px; font-weight:600; color:var(--text)">✍️ 新增時帶入預設文字</span>
-            <div class="toggle on" id="toggleDefaultNewText" onclick="toggleDefaultNewTextFeature()"></div>
-          </div>
-          <div class="toggle-row" style="margin-top: 0; margin-bottom: 8px;">
-            <span class="toggle-label" style="font-size:11px; font-weight:600; color:var(--text)">🧪
-              實驗性：直接在圖片上編輯文字</span>
-            <div class="toggle" id="toggleInlineTextEdit" onclick="toggleInlineTextEditFeature()"></div>
-          </div>
-          <div id="defaultNewTextConfig" style="display: block;">
-            <label class="field-label" style="margin-top:0; font-size:10px; color:var(--text-muted)">自訂新增時的預設文字</label>
-            <input type="text" id="defaultNewTextInput" value="🌞 早安！" oninput="updateDefaultNewText(this.value)"
-              style="font-size:12px; padding:6px 8px;">
-          </div>`;
-      }
 
       updateExportButtonsState();
       checkVersionUpdate();
@@ -4673,6 +4645,8 @@
           <div class="layer-preview">${resolveTextVariables(l.text)}</div>
         </div>
         <div class="layer-actions" onclick="event.stopPropagation()">
+          <button class="layer-btn" onclick="moveLayerUp(${l.id})" title="往上移一層">🔼</button>
+          <button class="layer-btn" onclick="moveLayerDown(${l.id})" title="往下移一層">🔽</button>
           <button class="layer-btn" onclick="toggleVis(${l.id})">${l.visible ? '👁' : '🙈'}</button>
           <button class="layer-btn danger" onclick="removeLayer(${l.id})">✕</button>
         </div>
@@ -5856,6 +5830,7 @@
       if (isPinchZooming) return;
       const pos = getTouchPos(e);
       const hit = checkHit(pos);
+      const resizeHit = checkResizeHandleHit(pos);
       const currentTime = Date.now();
       const tapInterval = currentTime - lastTapTime;
 
@@ -5866,7 +5841,7 @@
       }
       lastTapTime = currentTime;
 
-      if (isAddingTextActive || hit || isCropping) {
+      if (isAddingTextActive || resizeHit || hit || isCropping) {
         e.preventDefault();
         canvas.style.touchAction = 'none';
         handleStart(pos);
@@ -6431,6 +6406,6 @@
       }
     }
   </script>
+  <script src="i18n.js"></script>
 </body>
-
 </html>
