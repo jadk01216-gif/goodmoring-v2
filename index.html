@@ -377,6 +377,8 @@
       box-shadow: none;
       padding: 0;
       overflow: visible;
+      pointer-events: none;
+      /* 允許事件穿透容器 */
     }
 
     .inline-text-editor textarea {
@@ -390,6 +392,8 @@
       font-size: 13px;
       line-height: 1.4;
       font-family: inherit;
+      pointer-events: auto;
+      /* 但讓 textarea 本身可以接收事件 */
     }
 
     canvas {
@@ -2172,8 +2176,8 @@
       style="text-align: left; max-width: 480px; font-size: 12px; display: flex; flex-direction: column; padding: 0;">
       <div class="about-header" style="padding: 24px 24px 16px; text-align: center; flex-shrink: 0;">
         <h3 class="modal-title" style="font-size: 18px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
-        <p id="appVersion" data-version="v1.63"
-          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.63 </p>
+        <p id="appVersion" data-version="v1.65"
+          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.65 </p>
       </div>
 
       <div class="about-content"
@@ -4632,7 +4636,7 @@
           ${fontsList.map(f => `<option value="${f.value}" ${f.value === l.font ? 'selected' : ''}>${f.label}</option>`).join('')}
         </select>
 
-        <label class="field-label" style="margin-top: 12px;">${t('大小')} (${l.size}px)</label>
+        <label class="field-label size-label" style="margin-top: 12px;">${t('大小')} (${l.size}px)</label>
         <input type="range" min="10" max="500" value="${l.size}" onmousedown="pushToUndo()" ontouchstart="pushToUndo()" oninput="updateProp(${l.id},'size',+this.value)">
 
         <!-- 精緻調色盤觸發按鈕組 -->
@@ -5612,6 +5616,7 @@
           l.size = Math.max(10, Math.min(1000, newSize)); // 限制最小/最大字體
           drawCanvas();
           // 即時更新側邊欄的 size-label
+          // 即時更新側邊欄的 size-label 和 size-slider
           const sizeLabel = document.querySelector(`.layer-card[data-id="${l.id}"] .size-label`);
           if (sizeLabel) sizeLabel.textContent = `大小 (${l.size}px)`;
           // 同步更新側邊欄的 size-slider
