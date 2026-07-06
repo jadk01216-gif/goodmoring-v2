@@ -147,14 +147,15 @@ const translations = {
 
 // 2. DFS 深度遍歷所有 Text Node 進行暴力翻譯
 function translateTextNode(node) {
-  if (!node || !node.parentNode) return;
+  // 改寫後：只要 node 或 node.parentNode 任一個不存在，結果就是否定，直接 return
+  if (!node?.parentNode) return;
 
   let text = node.nodeValue.trim();
   if (!text || text.length === 0) return;
 
   // 嘗試完全匹配
   let translated = translations['en'][text];
-  
+
   // 若無完全匹配，嘗試包含匹配
   if (!translated) {
     for (const [key, value] of Object.entries(translations['en'])) {
@@ -164,70 +165,58 @@ function translateTextNode(node) {
       }
     }
   }
-  
+
   if (translated && translated !== text) {
     node.nodeValue = node.nodeValue.replace(text, translated);
   }
 }
 
-// 3. 處理動態值的翻譯（如框線粗細(Npx)）
+// 輔助函式 1：過濾不需要翻譯的 HTML 標籤
+function isIgnoredTag(node) {
+  const parent = node.parentNode;
+  if (!parent) return true;
+  if (parent.nodeType !== 1) return false;
+
+  const tag = parent.tagName.toLowerCase();
+  const ignoredTags = ['script', 'style', 'textarea', 'input'];
+  return ignoredTags.includes(tag);
+}
+
+// 輔助函式 2：定義翻譯規則對照表 (正則表達式與英文對應)
+const TRANSLATION_RULES = [
+  { regex: /大小 \(([\d.]+px)\)/, template: 'Size ($1)' },
+  { regex: /框線粗細（([\d.]+px)）/, template: 'Border Width ($1)' },
+  { regex: /縮放控制點大小 \(([\d.]+px)\)/, template: 'Resize Handle Size ($1)' },
+  { regex: /裁切外框粗細（([\d.]+px)）/, template: 'Crop Border Width ($1)' },
+  { regex: /裁切把手大小（([\d.]+px)）/, template: 'Crop Handle Size ($1)' }
+];
+
+// 主函式：認知複雜度降至極低（遠低於 15）
 function translateDynamicText(element) {
   const walker = document.createTreeWalker(
     element || document.body,
     NodeFilter.SHOW_TEXT,
     {
-      acceptNode: function(node) {
-        const parent = node.parentNode;
-        if (!parent) return NodeFilter.FILTER_REJECT;
-        const tag = parent.nodeType === 1 ? parent.tagName.toLowerCase() : '';
-        if (tag === 'script' || tag === 'style' || tag === 'textarea' || tag === 'input') {
-          return NodeFilter.FILTER_REJECT;
-        }
-        return NodeFilter.FILTER_ACCEPT;
+      acceptNode: function (node) {
+        return isIgnoredTag(node) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
       }
     },
     false
   );
 
   let node;
-  while (node = walker.nextNode()) {
+  while ((node = walker.nextNode())) {
     if (!node.parentNode) continue;
-    
+
     const text = node.nodeValue.trim();
-    
-    // 處理「大小 (Npx)」格式
-    if (text.match(/大小 \(([\d.]+px)\)/)) {
-      const match = text.match(/大小 \(([\d.]+px)\)/);
-      if (match) {
-        node.nodeValue = node.nodeValue.replace(/大小 \(([\d.]+px)\)/, 'Size (' + match[1] + ')');
-      }
-    }
-    // 處理「框線粗細（Nx）」格式
-    else if (text.match(/框線粗細（[\d.]+px）/)) {
-      const match = text.match(/框線粗細（([\d.]+px)）/);
-      if (match) {
-        node.nodeValue = node.nodeValue.replace(/框線粗細（([\d.]+px)）/, 'Border Width (' + match[1] + ')');
-      }
-    }
-    // 處理「縮放控制點大小 (Npx)」格式
-    else if (text.match(/縮放控制點大小 \([\d.]+px\)/)) {
-      const match = text.match(/縮放控制點大小 \(([\d.]+px)\)/);
-      if (match) {
-        node.nodeValue = node.nodeValue.replace(/縮放控制點大小 \(([\d.]+px)\)/, 'Resize Handle Size (' + match[1] + ')');
-      }
-    }
-    // 處理「裁切外框粗細（Nx）」格式
-    else if (text.match(/裁切外框粗細（[\d.]+px）/)) {
-      const match = text.match(/裁切外框粗細（([\d.]+px)）/);
-      if (match) {
-        node.nodeValue = node.nodeValue.replace(/裁切外框粗細（([\d.]+px)）/, 'Crop Border Width (' + match[1] + ')');
-      }
-    }
-    // 處理「裁切把手大小（Nx）」格式
-    else if (text.match(/裁切把手大小（[\d.]+px）/)) {
-      const match = text.match(/裁切把手大小（([\d.]+px)）/);
-      if (match) {
-        node.nodeValue = node.nodeValue.replace(/裁切把手大小（([\d.]+px)）/, 'Crop Handle Size (' + match[1] + ')');
+    if (!text) continue;
+
+    // 用一個簡單的迴圈走訪規則，取代原本龐大的 if-else 瀑布
+    for (const rule of TRANSLATION_RULES) {
+      if (rule.regex.test(text)) {
+        // 直接利用正則表達式的 replace 搭配字串模板（$1 代表第一個擷取群組），連 .match() 都不用呼叫！
+        node.nodeValue = node.nodeValue.replace(rule.regex, rule.template);
+        break; // 匹配成功就跳出，處理下一個節點
       }
     }
   }
@@ -238,7 +227,7 @@ function dfsTranslate(element) {
     element || document.body,
     NodeFilter.SHOW_TEXT,
     {
-      acceptNode: function(node) {
+      acceptNode: function (node) {
         const parent = node.parentNode;
         if (!parent) return NodeFilter.FILTER_REJECT;
         const tag = parent.nodeType === 1 ? parent.tagName.toLowerCase() : '';
@@ -286,7 +275,7 @@ function getBrowserLang() {
   if (savedLang && (savedLang === 'zh-TW' || savedLang === 'en')) {
     return savedLang;
   }
-  
+
   if (savedLang === 'system' || !savedLang) {
     const browserLang = navigator.language || navigator.userLanguage || 'en';
     const langCode = browserLang.toLowerCase();
@@ -336,7 +325,7 @@ function initLanguageSelect() {
 
 function changeLanguage(lang) {
   localStorage.setItem('gm_lang', lang);
-  
+
   const url = new URL(window.location.href);
   if (lang === 'system') {
     url.searchParams.delete('lang');
@@ -361,7 +350,7 @@ function t(text) {
     // 如果當前語言不是英文，直接返回原始中文文字
     return text;
   }
-  
+
   // 處理框線粗細（Nxpx）格式
   if (text.match(/框線粗細（[\d.]+px）/)) {
     const match = text.match(/框線粗細（([\d.]+px)）/);
@@ -390,6 +379,6 @@ function t(text) {
       return 'Crop Handle Size (' + match[1] + ')';
     }
   }
-  
+
   return translations['en'][text] || text;
 }

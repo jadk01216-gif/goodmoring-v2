@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>早安圖製作工具 </title>
   <!-- 引入 PWA Manifest 檔案 -->
   <link rel="manifest" href="manifest.json">
@@ -11,7 +11,8 @@
   <!-- 引入 marked.js 用於解析 Markdown -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <!-- 引入 JSZip 用於打包與讀取 .gm 專案檔案 -->
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+    integrity="sha256-rMfkFFWoB2W1/Zx+4bgHim0WC7vKRVrq6FTeZclH1Z4=" crossorigin="anonymous"></script>
   <!-- 網站 SVG Favicon 🌅 -->
   <link rel="icon"
     href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌅</text></svg>">
@@ -1397,6 +1398,19 @@
         padding: 12px;
         font-size: 13px;
       }
+
+      #aiAssistantModal .modal-box {
+        width: 94vw !important;
+      }
+
+      #aiAssistantModal .modal-box>div:last-child {
+        grid-template-columns: 1fr !important;
+      }
+
+      #aiAssistantModal .modal-box>div:last-child>div:first-child {
+        border-right: none !important;
+        border-bottom: 1px solid var(--border) !important;
+      }
     }
 
     .mobile-menu-sheet {
@@ -1558,6 +1572,8 @@
       <button onclick="onAddLayerClick()" id="headerAddLayerBtn" class="theme-btn"
         style="padding: 6px 6px; font-size: 11px; font-weight: bold; opacity: 0.4; cursor: not-allowed;" title="新增文字"
         disabled>✍️＋</button>
+      <button onclick="openAiAssistant()" id="headerAiBtn" class="theme-btn"
+        style="display:none; padding: 6px 8px; font-size: 11px; font-weight: bold;" title="AI 實驗功能">🤖 AI</button>
       <button onclick="undo()" id="undoBtn" class="history-btn" style="padding: 6px 6px; font-size: 11px;" title="上一步"
         disabled>↩️</button>
       <button onclick="redo()" id="redoBtn" class="history-btn" style="padding: 6px 8px; font-size: 12px;" title="下一步"
@@ -1624,6 +1640,8 @@
               title="編輯文字">✏️</button>
             <button class="mobile-edit-btn" id="mobileFontBtn" onclick="showFontModal(); closeMobileMoreMenu();"
               title="更換字體">🔤</button>
+            <button class="mobile-edit-btn" style="display:none;" onclick="openAiAssistant(); closeMobileMoreMenu();"
+              title="AI 實驗功能">🤖</button>
             <button class="mobile-edit-btn" id="mobileExitModeBtn" onclick="exitMobileMode()" title="離開手機模式">⤴️</button>
             <button class="mobile-edit-btn" onclick="toggleMobileMoreMenu()" title="更多">☰</button>
           </div>
@@ -1647,6 +1665,9 @@
                 PNG</button>
               <button class="mobile-menu-sheet__item" onclick="openMobileColorPicker(); closeMobileMoreMenu();">🎨
                 變更顏色</button>
+              <button class="mobile-menu-sheet__item" style="display:none;"
+                onclick="openAiAssistant(); closeMobileMoreMenu();">🤖
+                AI 實驗功能</button>
               <button class="mobile-menu-sheet__item" onclick="openMobileTraditionalMenu(); closeMobileMoreMenu();">📋
                 傳統選單</button>
             </div>
@@ -1946,6 +1967,72 @@
     </div>
   </div>
 
+  <!-- ⚠️ AI 實驗性功能警告 -->
+  <div id="aiWarningModal" class="modal-overlay">
+    <div class="modal-box" style="text-align: center; max-width: 420px; padding: 28px 24px;">
+      <div style="font-size: 40px; margin-bottom: 12px;">🧪</div>
+      <h3 class="modal-title" style="font-size: 18px; margin-bottom: 8px;">AI 實驗性功能</h3>
+      <p class="modal-subtitle" style="font-size: 13px; margin-bottom: 20px; line-height: 1.6; text-align: left;">
+        這項功能會連接外部 OpenAI 相容 API，並可能直接修改、加入、查看或刪除畫布上的內容。請先確認 API Base URL、模型與金鑰都正確，再決定是否啟用自動批准。
+      </p>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button class="modal-btn-primary" onclick="confirmEnableAiFeature()">⚠️ 繼續啟用 AI 實驗功能</button>
+        <button class="modal-btn-secondary" onclick="cancelEnableAiFeature()">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🤖 AI 操作面板 -->
+  <div id="aiAssistantModal" class="modal-overlay">
+    <div class="modal-box"
+      style="text-align: left; max-width: 780px; width: min(92vw, 780px); padding: 0; display: flex; flex-direction: column; max-height: 90vh;">
+      <div style="padding: 24px 24px 16px; border-bottom: 1px solid var(--border); flex-shrink:0;">
+        <h3 class="modal-title"
+          style="font-size: 18px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">🤖 AI 實驗面板</h3>
+        <p class="modal-subtitle" style="margin-bottom: 0; line-height: 1.5;">可讀取目前畫布比例與圖層狀態，並以批准模式或自動批准執行圖層操作。</p>
+      </div>
+      <div style="display:grid; grid-template-columns: 1.1fr 0.9fr; gap: 0; min-height: 0; flex:1;">
+        <div style="padding: 20px 24px; overflow:auto; border-right: 1px solid var(--border);">
+          <label class="field-label" style="margin-top:0; font-weight:600;">需求描述</label>
+          <textarea id="aiPromptInput" style="min-height: 120px;"
+            placeholder="例如：幫我把標題改成更溫暖的風格，新增一句祝福文字，然後刪除多餘的一層。"></textarea>
+
+          <div style="display:flex; gap:8px; margin-top: 12px; flex-wrap: wrap;">
+            <button class="modal-btn-primary" style="padding:10px 14px; flex:1; min-width: 120px;"
+              onclick="runAiAssistant()">送出 AI 指令</button>
+            <button class="modal-btn-secondary" style="padding:10px 14px; flex:1; min-width: 120px;"
+              onclick="refreshAiContextPreview()">更新預覽</button>
+          </div>
+
+          <div
+            style="margin-top: 16px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 10px; padding: 12px;">
+            <div style="font-size:12px; font-weight:700; color:var(--gold); margin-bottom: 8px;">目前畫布摘要</div>
+            <pre id="aiContextPreview"
+              style="margin:0; white-space:pre-wrap; word-break:break-word; font-size:11px; line-height:1.5; color:var(--text); max-height: 240px; overflow:auto;">尚未載入摘要</pre>
+          </div>
+        </div>
+        <div style="padding: 20px 24px; overflow:auto; min-height: 0;">
+          <div style="margin-bottom: 12px;">
+            <div style="font-size:12px; font-weight:700; color:var(--gold); margin-bottom: 8px;">執行模式</div>
+            <div id="aiApprovalBadge"
+              style="display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border-radius:999px; background: rgba(245,166,35,0.15); border: 1px solid var(--gold); color: var(--gold); font-size:12px; font-weight:700;">
+              手動批准</div>
+          </div>
+          <div style="margin-bottom: 12px;">
+            <div style="font-size:12px; font-weight:700; color:var(--gold); margin-bottom: 8px;">AI 回應</div>
+            <div id="aiResponseStatus" style="font-size:12px; color:var(--text-muted); margin-bottom: 8px;">尚未執行</div>
+            <pre id="aiResponsePreview"
+              style="margin:0; white-space:pre-wrap; word-break:break-word; font-size:11px; line-height:1.5; color:var(--text); min-height: 180px; max-height: 320px; overflow:auto; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 10px; padding: 12px;">等待 AI 指令...</pre>
+          </div>
+          <div class="row-2">
+            <button class="modal-btn-secondary" onclick="closeAiAssistant()" style="padding:10px;">關閉</button>
+            <button class="modal-btn-primary" onclick="approvePendingAiAction()" style="padding:10px;">批准並執行</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 現代化快速編輯文字彈窗 -->
   <div id="quickEditModal" class="modal-overlay">
     <div class="modal-box" style="text-align: left; max-width: 380px; padding: 24px;">
@@ -2158,6 +2245,51 @@
             style="width: 100%; text-align: center; background: rgba(255, 77, 79, 0.1); border: 1px solid rgba(255, 77, 79, 0.3); border-radius: 8px; color: #ff4d4f; padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s;">🔄
             回復初始設定</button>
         </div>
+
+        <!-- 6. AI 實驗功能 -->
+        <div style="margin-bottom: 16px; border-top: 1px solid var(--border); padding-top: 12px;">
+          <label class="field-label" style="margin-top:0; font-weight:600; color:var(--text); margin-bottom: 6px;">🤖 AI
+            實驗功能</label>
+          <div class="switch-row" style="margin: 0; padding: 4px 0;">
+            <span class="toggle-label" style="font-size:12px; color:var(--text)">啟用 AI 實驗功能（預設關閉）</span>
+            <div class="toggle" id="toggleEnableAi" onclick="toggleAiFeatureRequest()"></div>
+          </div>
+          <p style="font-size:11px; color:var(--text-muted); margin: 6px 0 10px 0; line-height:1.5;">可連接 OpenAI 相容
+            API，讀取目前畫布與圖片比例，並生成新增、查看、編輯、刪除等操作。此功能屬於實驗性質。</p>
+
+          <label class="field-label" style="margin-top:0;">API Base URL</label>
+          <input type="text" id="aiApiBaseUrl" placeholder="https://api.openai.com/v1">
+
+          <label class="field-label">API Key</label>
+          <input type="password" id="aiApiKey" placeholder="sk-...">
+
+          <label class="field-label">Model</label>
+          <input type="text" id="aiModel" placeholder="gpt-4.1-mini">
+
+          <label class="field-label">請求格式</label>
+          <select id="aiApiFormat">
+            <option value="auto">自動偵測</option>
+            <option value="responses">Responses API</option>
+            <option value="chat_completions">Chat Completions API</option>
+          </select>
+
+          <label class="field-label">批准模式</label>
+          <select id="aiApprovalMode">
+            <option value="manual">手動批准</option>
+            <option value="auto">自動批准</option>
+          </select>
+
+          <label class="field-label">最大回應長度</label>
+          <input type="number" id="aiMaxOutputTokens" min="64" max="8192" step="64" placeholder="1024">
+
+          <label class="field-label">自訂系統提示詞</label>
+          <textarea id="aiSystemPrompt" style="min-height:84px;" placeholder="可選：自訂 AI 系統提示詞"></textarea>
+
+          <div style="display:flex; gap:8px; margin-top: 10px; flex-wrap: wrap;">
+            <button class="theme-btn" style="flex:1; min-width: 120px;" onclick="openAiAssistant()">開啟 AI 面板</button>
+            <button class="theme-btn" style="flex:1; min-width: 120px;" onclick="testAiConnection()">測試連線</button>
+          </div>
+        </div>
       </div>
 
       <div class="settings-footer"
@@ -2176,8 +2308,8 @@
       style="text-align: left; max-width: 480px; font-size: 12px; display: flex; flex-direction: column; padding: 0;">
       <div class="about-header" style="padding: 24px 24px 16px; text-align: center; flex-shrink: 0;">
         <h3 class="modal-title" style="font-size: 18px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
-        <p id="appVersion" data-version="v1.65"
-          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.65 </p>
+        <p id="appVersion" data-version="v1.72"
+          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.72 </p>
       </div>
 
       <div class="about-content"
@@ -2321,6 +2453,21 @@
     let enableResizeHandles = true; // 啟用右下角縮放控制點
     let resizeHandleRadius = 8; // 縮放控制點的半徑大小
     let enableHideUpdateModal = false; // 更新之後隱藏更新框
+    let enableAiFeature = false; // 實驗性 AI 功能（預設關閉）
+    let aiApprovalMode = 'manual'; // manual / auto
+    let aiApiFormat = 'auto'; // auto / responses / chat_completions
+    let aiPendingEnable = false;
+    let aiPendingOpenAssistant = false;
+    let aiBusy = false;
+    let aiAssistantOpen = false;
+    let pendingAiAction = null;
+    let pendingAiRequest = null;
+    let aiConversation = [];
+    let aiMaxOutputTokens = 1024;
+    let aiApiBaseUrl = 'https://api.openai.com/v1';
+    let aiApiKey = '';
+    let aiModel = 'gpt-4.1-mini';
+    let aiSystemPrompt = '';
     let textSelectionDisplayMode = 'both'; // 編輯文字時顯示內容：both, outline, handle, none
     let pinchStartDist = 0;
     let pinchStartZoom = 1;
@@ -3154,6 +3301,20 @@
         defaultNewTextValue = savedDefaultTextVal;
         if (defaultTextInputEl) defaultTextInputEl.value = defaultNewTextValue;
       }
+
+      loadAiSettings();
+
+      const aiFieldIds = ['aiApiBaseUrl', 'aiApiKey', 'aiModel', 'aiApiFormat', 'aiApprovalMode', 'aiMaxOutputTokens', 'aiSystemPrompt'];
+      aiFieldIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('input', () => {
+          getAiConfigFromUi(false);
+        });
+        el.addEventListener('change', () => {
+          getAiConfigFromUi(id === 'aiApiFormat' || id === 'aiApprovalMode');
+        });
+      });
 
       initTheme();
       initPinchZoom();
@@ -5480,6 +5641,10 @@
 
         ctx.restore();
       }
+
+      if (aiAssistantOpen) {
+        refreshAiContextPreview();
+      }
     }
 
     function checkResizeHandleHit(pos) {
@@ -6167,6 +6332,7 @@
       localStorage.removeItem('gm_crop_handle_size');
       localStorage.removeItem('gm_enable_hide_update_modal');
       localStorage.removeItem('gm_text_selection_display_mode');
+      localStorage.removeItem('gm_ai_settings');
 
       // 2. 恢復核心變數預設值
       bgImage = null;
@@ -6187,6 +6353,21 @@
       enableResizeHandles = true;
       resizeHandleRadius = 8;
       enableHideUpdateModal = false;
+      enableAiFeature = false;
+      aiApprovalMode = 'manual';
+      aiApiFormat = 'auto';
+      aiPendingEnable = false;
+      aiPendingOpenAssistant = false;
+      aiBusy = false;
+      aiAssistantOpen = false;
+      pendingAiAction = null;
+      pendingAiRequest = null;
+      aiConversation = [];
+      aiMaxOutputTokens = 1024;
+      aiApiBaseUrl = 'https://api.openai.com/v1';
+      aiApiKey = '';
+      aiModel = 'gpt-4.1-mini';
+      aiSystemPrompt = '';
       textSelectionDisplayMode = 'both';
       isPinchZooming = false;
       pinchStartDist = 0;
@@ -6251,6 +6432,33 @@
 
       const toggleHideUpdateModal = document.getElementById('toggleHideUpdateModal');
       if (toggleHideUpdateModal) toggleHideUpdateModal.classList.remove('on');
+      const toggleAi = document.getElementById('toggleEnableAi');
+      if (toggleAi) toggleAi.classList.remove('on');
+      const aiApprovalModeEl = document.getElementById('aiApprovalMode');
+      if (aiApprovalModeEl) aiApprovalModeEl.value = 'manual';
+      const aiApiFormatEl = document.getElementById('aiApiFormat');
+      if (aiApiFormatEl) aiApiFormatEl.value = 'auto';
+      const aiBaseUrlEl = document.getElementById('aiApiBaseUrl');
+      if (aiBaseUrlEl) aiBaseUrlEl.value = 'https://api.openai.com/v1';
+      const aiApiKeyEl = document.getElementById('aiApiKey');
+      if (aiApiKeyEl) aiApiKeyEl.value = '';
+      const aiModelEl = document.getElementById('aiModel');
+      if (aiModelEl) aiModelEl.value = 'gpt-4.1-mini';
+      const aiMaxOutputTokensEl = document.getElementById('aiMaxOutputTokens');
+      if (aiMaxOutputTokensEl) aiMaxOutputTokensEl.value = '1024';
+      const aiSystemPromptEl = document.getElementById('aiSystemPrompt');
+      if (aiSystemPromptEl) aiSystemPromptEl.value = '';
+      const aiApprovalBadge = document.getElementById('aiApprovalBadge');
+      if (aiApprovalBadge) aiApprovalBadge.textContent = '手動批准';
+      const aiAssistantModal = document.getElementById('aiAssistantModal');
+      if (aiAssistantModal) aiAssistantModal.classList.remove('active');
+      const aiWarningModal = document.getElementById('aiWarningModal');
+      if (aiWarningModal) aiWarningModal.classList.remove('active');
+      if (typeof setAiEntrypointVisibility === 'function') {
+        setAiEntrypointVisibility(false);
+      }
+      updateAiResponsePreview('等待 AI 指令...', '尚未執行');
+      refreshAiContextPreview();
       const textSelectionDisplayModeSelect = document.getElementById('textSelectionDisplayModeSelect');
       if (textSelectionDisplayModeSelect) textSelectionDisplayModeSelect.value = 'both';
 
@@ -6393,7 +6601,7 @@
 
           hasUnsavedChanges = false;
           alert('您的設備不支援系統直接上傳。已先自動下載檔案，隨即為您開啟「Google 相簿」網頁，方便您直接上傳或拖曳！');
-          window.open('https://photos.google.com/', '_blank');
+          window.open('https://photos.google.com/', '_blank', 'noopener,noreferrer');
           closeExportModal();
 
           setTimeout(() => URL.revokeObjectURL(downloadUrl), 5000);
@@ -6404,6 +6612,7 @@
       }
     }
   </script>
+  <script src="ai.js"></script>
   <script src="i18n.js"></script>
 </body>
 
