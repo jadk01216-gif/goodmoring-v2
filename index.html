@@ -1994,8 +1994,29 @@
       <div style="display:grid; grid-template-columns: 1.1fr 0.9fr; gap: 0; min-height: 0; flex:1;">
         <div style="padding: 20px 24px; overflow:auto; border-right: 1px solid var(--border);">
           <label class="field-label" style="margin-top:0; font-weight:600;">需求描述</label>
-          <textarea id="aiPromptInput" style="min-height: 120px;"
-            placeholder="例如：幫我把標題改成更溫暖的風格，新增一句祝福文字，然後刪除多餘的一層。"></textarea>
+          <div style="display:flex; gap:8px; align-items:flex-start;">
+            <textarea id="aiPromptInput" style="min-height: 120px; flex:1;"
+              placeholder="例如：幫我把標題改成更溫暖的風格，新增一句祝福文字，然後刪除多餘的一層。"></textarea>
+            <button id="aiSpeechBtn" onclick="toggleAiSpeech()" class="theme-btn"
+              style="padding: 10px 12px; font-size: 16px; height: 40px; flex-shrink:0;"
+              title="語音輸入">🎤</button>
+          </div>
+
+          <div id="aiSpeechHelp" style="margin-top:8px; padding:10px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; font-size:11px; color:var(--text-muted); line-height:1.6; display:none;">
+            <div style="font-weight:700; color:var(--gold); margin-bottom:6px;">🎤 語音指令參考</div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:4px 12px;">
+              <div>「逗號」→ ，</div><div>「句號」→ 。</div>
+              <div>「頓號」→ 、</div><div>「問號」→ ？</div>
+              <div>「驚叹號」→ ！</div><div>「冒號」→ ：</div>
+              <div>「分號」→ ；</div><div>「波浪號」→ ～</div>
+              <div>「破折號」→ ——</div><div>「刪節號」→ …</div>
+              <div>「左引號」→ 「</div><div>「右引號」→ 」</div>
+              <div>「左雙引號」→ 『</div><div>「右雙引號」→ 』</div>
+              <div>「左括號」→ （</div><div>「右括號」→ ）</div>
+              <div>「左書名號」→ 《</div><div>「右書名號」→ 》</div>
+              <div>「換行」→ 換行</div><div>「空格」→ 空格</div>
+            </div>
+          </div>
 
           <div style="display:flex; gap:8px; margin-top: 12px; flex-wrap: wrap;">
             <button class="modal-btn-primary" style="padding:10px 14px; flex:1; min-width: 120px;"
@@ -2308,8 +2329,8 @@
       style="text-align: left; max-width: 480px; font-size: 12px; display: flex; flex-direction: column; padding: 0;">
       <div class="about-header" style="padding: 24px 24px 16px; text-align: center; flex-shrink: 0;">
         <h3 class="modal-title" style="font-size: 18px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
-        <p id="appVersion" data-version="v1.72"
-          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.72 </p>
+        <p id="appVersion" data-version="v1.73"
+          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.73 </p>
       </div>
 
       <div class="about-content"
@@ -2460,6 +2481,11 @@
     let aiPendingOpenAssistant = false;
     let aiBusy = false;
     let aiAssistantOpen = false;
+    let aiSpeechRecognition = null;
+    let aiSpeechRecognizing = false;
+    let aiSpeechUnsupported = false;
+    let aiSpeechAutoRestarting = false;
+    let aiSpeechBaseText = '';
     let pendingAiAction = null;
     let pendingAiRequest = null;
     let aiConversation = [];
