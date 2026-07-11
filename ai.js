@@ -291,6 +291,11 @@
 
   function closeAiAssistant() {
     aiAssistantOpen = false;
+    if (aiSpeechRecognizing) {
+      stopAiSpeechRecognition();
+    }
+    const help = document.getElementById('aiSpeechHelp');
+    if (help) help.style.display = 'none';
     const modal = document.getElementById('aiAssistantModal');
     if (modal) modal.classList.remove('active');
   }
@@ -709,6 +714,162 @@
     }
   }
 
+  function initAiSpeechRecognition() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      aiSpeechUnsupported = true;
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'zh-TW';
+    recognition.interimResults = true;
+    recognition.continuous = true;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      if (!aiSpeechAutoRestarting) {
+        const promptEl = document.getElementById('aiPromptInput');
+        if (promptEl) {
+          aiSpeechBaseText = promptEl.value || '';
+        }
+      }
+      aiSpeechAutoRestarting = false;
+    };
+
+    recognition.onresult = (event) => {
+      const lastResult = event.results[event.results.length - 1];
+      const transcript = lastResult ? lastResult[0].transcript : '';
+      const replaced = applyAiSpeechPunctuation(transcript);
+      const promptEl = document.getElementById('aiPromptInput');
+      if (promptEl) {
+        const base = aiSpeechBaseText || '';
+        promptEl.value = base + (base && !base.endsWith(' ') && replaced ? ' ' : '') + replaced;
+      }
+    };
+
+    recognition.onerror = (event) => {
+      console.error('語音辨識錯誤', event.error);
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        showToast('麥克風權限被拒絕，請允許瀏覽器存取麥克風');
+      }
+      stopAiSpeechRecognition();
+    };
+
+    recognition.onend = () => {
+      if (aiSpeechRecognizing) {
+        aiSpeechAutoRestarting = true;
+        const promptEl = document.getElementById('aiPromptInput');
+        if (promptEl) {
+          aiSpeechBaseText = promptEl.value || '';
+        }
+        recognition.start();
+      } else {
+        aiSpeechBaseText = '';
+        stopAiSpeechRecognition();
+      }
+    };
+
+    aiSpeechRecognition = recognition;
+  }
+
+  function applyAiSpeechPunctuation(text) {
+    if (typeof text !== 'string') return text;
+    let result = text;
+    result = result.replace(/逗號/g, '，');
+    result = result.replace(/句號/g, '。');
+    result = result.replace(/頓號/g, '、');
+    result = result.replace(/問號/g, '？');
+    result = result.replace(/驚嘆號|感嘆號/g, '！');
+    result = result.replace(/冒號/g, '：');
+    result = result.replace(/分號/g, '；');
+    result = result.replace(/波浪號/g, '～');
+    result = result.replace(/破折號/g, '—');
+    result = result.replace(/刪節號|點點點/g, '…');
+    result = result.replace(/左引號|下引號/g, '「');
+    result = result.replace(/右引號|上引號/g, '」');
+    result = result.replace(/左雙引號/g, '『');
+    result = result.replace(/右雙引號/g, '』');
+    result = result.replace(/左括號/g, '（');
+    result = result.replace(/右括號/g, '）');
+    result = result.replace(/左書名號/g, '《');
+    result = result.replace(/右書名號/g, '》');
+    result = result.replace(/換行|下一行/g, '\n');
+    result = result.replace(/空格|空一格/g, ' ');
+    return result;
+  }
+
+  function toggleAiSpeech() {
+    if (aiSpeechUnsupported) {
+      showToast('您的瀏覽器不支援語音輸入，請使用 Chrome 或 Edge');
+      return;
+    }
+    if (aiSpeechRecognizing) {
+      stopAiSpeechRecognition();
+      const help = document.getElementById('aiSpeechHelp');
+      if (help) help.style.display = 'none';
+    } else {
+      startAiSpeechRecognition();
+      const help = document.getElementById('aiSpeechHelp');
+      if (help) help.style.display = 'block';
+    }
+  }
+
+  function startAiSpeechRecognition() {
+    if (!aiSpeechRecognition) {
+      initAiSpeechRecognition();
+    }
+    if (!aiSpeechRecognition) {
+      showToast('語音辨識初始化失敗');
+      return;
+    }
+    if (!document.getElementById('aiPromptInput')) return;
+
+    aiSpeechRecognizing = true;
+    updateAiSpeechButtonState();
+    try {
+      aiSpeechRecognition.start();
+    } catch (e) {
+      console.error('啟動語音辨識失敗', e);
+      aiSpeechRecognizing = false;
+      updateAiSpeechButtonState();
+    }
+  }
+
+  function stopAiSpeechRecognition() {
+    aiSpeechRecognizing = false;
+    aiSpeechAutoRestarting = false;
+    aiSpeechBaseText = '';
+    if (aiSpeechRecognition) {
+      try {
+        aiSpeechRecognition.stop();
+      } catch (e) { }
+    }
+    updateAiSpeechButtonState();
+  }
+
+  function updateAiSpeechButtonState() {
+    const btn = document.getElementById('aiSpeechBtn');
+    if (btn) {
+      if (aiSpeechRecognizing) {
+        btn.style.background = 'rgba(255, 80, 80, 0.2)';
+        btn.style.borderColor = '#ff5050';
+        btn.style.color = '#ff5050';
+        btn.innerHTML = '⏹️';
+        btn.title = '停止語音輸入';
+      } else {
+        btn.style.background = '';
+        btn.style.borderColor = '';
+        btn.style.color = '';
+        btn.innerHTML = '🎤';
+        btn.title = '語音輸入';
+      }
+    }
+  }
+
+  function isAiSpeechUnsupported() {
+    return aiSpeechUnsupported;
+  }
+
   window.getCurrentImageRatioInfo = getCurrentImageRatioInfo;
   window.getAiContextSnapshot = getAiContextSnapshot;
   window.loadAiSettings = loadAiSettings;
@@ -733,6 +894,11 @@
   window.summarizeAiActions = summarizeAiActions;
   window.setAiEntrypointVisibility = setAiEntrypointVisibility;
   window.getAiLayerSnapshot = getAiLayerSnapshot;
+  window.toggleAiSpeech = toggleAiSpeech;
+  window.startAiSpeechRecognition = startAiSpeechRecognition;
+  window.stopAiSpeechRecognition = stopAiSpeechRecognition;
+  window.initAiSpeechRecognition = initAiSpeechRecognition;
+  window.isAiSpeechUnsupported = isAiSpeechUnsupported;
 
   document.addEventListener('DOMContentLoaded', () => {
     if (typeof loadAiSettings === 'function') {
