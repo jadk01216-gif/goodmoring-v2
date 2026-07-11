@@ -70,6 +70,9 @@
 
   function buildAiSystemPrompt() {
     const customPrompt = (aiSystemPrompt || '').trim();
+    const availableFonts = (typeof window.getAvailableFontValues === 'function'
+      ? window.getAvailableFontValues()
+      : (typeof CHINESE_FONTS !== 'undefined' ? CHINESE_FONTS.map(f => f.value) : []));
     const basePrompt = [
       '你是這個早安圖編輯器的操作助理。',
       '請根據使用者需求輸出嚴格 JSON，不要輸出 Markdown、程式碼區塊或額外說明文字。',
@@ -83,8 +86,11 @@
       '如果使用者沒有指定座標，新增文字預設放在畫布中央。',
       '需要考慮目前畫布比例與圖片長寬比，避免把內容放到畫布外。',
       '若要新增文字，請優先使用目前選取圖層的附近或畫布中央。',
-      '回傳的 JSON 必須可以直接被 parse。'
-    ].join(' ');
+      '回傳的 JSON 必須可以直接被 parse。',
+      availableFonts.length > 0
+        ? `可用字體值（font 欄位可填）：${availableFonts.join('、')}`
+        : ''
+    ].filter(Boolean).join(' ');
     return customPrompt ? `${basePrompt}\n\n使用者自訂系統提示詞：\n${customPrompt}` : basePrompt;
   }
 
