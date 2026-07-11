@@ -64,7 +64,9 @@
         approvalMode: aiApprovalMode,
         apiFormat: aiApiFormat,
         featureEnabled: enableAiFeature
-      }
+      },
+      bgFilter: (typeof bgFilter !== 'undefined') ? { ...bgFilter } : null,
+      filterPresets: (typeof FILTER_PRESETS !== 'undefined') ? FILTER_PRESETS.map(p => ({ id: p.id, name: p.name })) : []
     };
   }
 
@@ -77,12 +79,13 @@
       '你是這個早安圖編輯器的操作助理。',
       '請根據使用者需求輸出嚴格 JSON，不要輸出 Markdown、程式碼區塊或額外說明文字。',
       'JSON 格式必須是 { "summary": string, "actions": [ ... ] }。',
-      'actions 只允許使用 view_canvas, view_layer, add_layer, edit_layer, delete_layer, toggle_layer_visible。',
+      'actions 只允許使用 view_canvas, view_layer, add_layer, edit_layer, delete_layer, toggle_layer_visible, set_filter。',
       'view_canvas 與 view_layer 不修改資料，只用來表達要查看的目標。',
       'add_layer 需要 text，並可選 x, y, font, size, color, strokeColor, strokeWidth, stroke, shadow, visible。',
       'edit_layer 需要 id，patch 為可更新欄位物件。',
       'delete_layer 需要 id。',
       'toggle_layer_visible 需要 id 與 visible 布林值。',
+      'set_filter 用於調整背景圖片的濾鏡與色彩（亮度/對比度/飽和度/懷舊/色相/模糊/金光），可帶 preset（none、elderly、retroGold、vintage、fresh、cool）或 filter 物件（brightness、contrast、saturate、sepia、hue、blur、overlayAlpha 數值，overlayColor 為色碼字串）。',
       '如果使用者沒有指定座標，新增文字預設放在畫布中央。',
       '需要考慮目前畫布比例與圖片長寬比，避免把內容放到畫布外。',
       '若要新增文字，請優先使用目前選取圖層的附近或畫布中央。',
@@ -421,7 +424,29 @@
     }
   }
 
-  function sanitizeAiLayerPatch(patch) {
+    function sanitizeAiFilterPatch(patch) {
+      if (!patch || typeof patch !== 'object') return {};
+      const allowed = ['brightness', 'contrast', 'saturate', 'sepia', 'hue', 'blur', 'overlayColor', 'overlayAlpha'];
+      const out = {};
+      for (const key of allowed) {
+        if (Object.prototype.hasOwnProperty.call(patch, key)) {
+          out[key] = patch[key];
+        }
+      }
+      return out;
+    }
+
+    function applyAiFilterFromAction(action) {
+      if (typeof applyBgFilter !== 'function') return;
+      if (action && action.preset && typeof applyBgFilterPreset === 'function') {
+        applyBgFilterPreset(action.preset);
+        return;
+      }
+      const patch = sanitizeAiFilterPatch(action && (action.filter || action.patch) ? (action.filter || action.patch) : {});
+      applyBgFilter(patch);
+    }
+
+    function sanitizeAiLayerPatch(patch) {
     const allowed = ['text', 'font', 'size', 'color', 'strokeColor', 'strokeWidth', 'stroke', 'shadow', 'x', 'y', 'visible'];
     const output = {};
     if (!patch || typeof patch !== 'object') return output;
@@ -464,6 +489,8 @@
         return `刪除圖層 ${action.id ?? action.layerId ?? 'selected'}`;
       case 'toggle_layer_visible':
         return `切換圖層 ${action.id ?? action.layerId ?? 'selected'} 顯示`;
+      case 'set_filter':
+        return `調整背景濾鏡：${action.preset ? action.preset : '自訂參數'}`;
       default:
         return `未知動作：${action.type || 'unknown'}`;
     }
@@ -564,6 +591,15 @@
         }
         layer.visible = typeof action.visible === 'boolean' ? action.visible : !layer.visible;
         selectedLayer = layer;
+      }
+
+      if (action.type === 'set_filter') {
+        if (!mutated) {
+          pushToUndo();
+          mutated = true;
+        }
+        applyAiFilterFromAction(action);
+        continue;
       }
     }
 

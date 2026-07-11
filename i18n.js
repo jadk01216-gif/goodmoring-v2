@@ -112,36 +112,17 @@ const translations = {
     "大小": "Size",
     "框線粗細（3.5px）": "Border Width (3.5px)",
     "縮放控制點大小 (8px)": "Resize Handle Size (8px)",
-    "文字主題色": "Text Color",
-    "描邊顏色": "Stroke Color",
-    "顯示描邊": "Show Stroke",
-    "文字陰影": "Text Shadow",
-    "圖層順序調整": "Layer Order Adjustment",
-    "🔝 最頂": "Top",
-    "🔼 上移": "Move Up",
-    "🔽 下移": "Move Down",
-    "⤓ 最底": "Bottom",
-    "移動特定步數：": "Move N steps:",
-    "🔺 往上": "Up",
-    "🔻 往下": "Down",
-    "大小 (": "Size (",
-    "🎨 文字主顏色": "Text Color",
-    "🖌️ 描邊顏色": "Stroke Color",
-    "圖層 ": "Layer ",
-    "📍 回到中間": "📍 Back to Center",
-    "▲": "▲",
-    "▼": "▼",
-    "向左": "Left",
-    "向右": "Right",
-    "▶": "▶",
-    "◀": "◀",
-    "快速編輯": "Quick Edit",
-    "裁切": "Crop",
-    "匯出 PNG": "Export PNG",
-    "回到中間": "Back to Center",
-    "更多選項": "More Options",
-    "設定": "Settings",
-    "變更顏色": "Change Color"
+    "圖片濾鏡與色彩調整": "Image Filters & Color Adjustment",
+    "一鍵風格濾鏡": "One-Tap Style Filters",
+    "原圖": "Original",
+    "長輩·高對比高飽和": "Elderly · High Contrast & Saturation",
+    "復古金光": "Retro Gold",
+    "懷舊復古": "Vintage",
+    "清新明亮": "Fresh & Bright",
+    "冷調藍天": "Cool Blue Sky",
+    "復古金光疊色": "Retro Gold Overlay",
+    "重設濾鏡": "Reset Filter",
+    "調整背景圖的亮度、對比度、飽和度，或套用長輩圖常見的「高對比高飽和」、「復古金光」等風格。": "Adjust the background image's brightness, contrast, and saturation, or apply elderly-style presets like \"High Contrast & Saturation\" or \"Retro Gold\"."
   }
 };
 
@@ -188,7 +169,14 @@ const TRANSLATION_RULES = [
   { regex: /框線粗細（([\d.]+px)）/, template: 'Border Width ($1)' },
   { regex: /縮放控制點大小 \(([\d.]+px)\)/, template: 'Resize Handle Size ($1)' },
   { regex: /裁切外框粗細（([\d.]+px)）/, template: 'Crop Border Width ($1)' },
-  { regex: /裁切把手大小（([\d.]+px)）/, template: 'Crop Handle Size ($1)' }
+  { regex: /裁切把手大小（([\d.]+px)）/, template: 'Crop Handle Size ($1)' },
+  { regex: /亮度（([\d.]+)）/, template: 'Brightness ($1)' },
+  { regex: /對比度（([\d.]+)）/, template: 'Contrast ($1)' },
+  { regex: /飽和度（([\d.]+)）/, template: 'Saturation ($1)' },
+  { regex: /懷舊復古（([\d.]+)）/, template: 'Vintage ($1)' },
+  { regex: /色相旋轉（(-?[\d.]+)°）/, template: 'Hue Rotate ($1°)' },
+  { regex: /模糊（([\d.]+px)）/, template: 'Blur ($1)' },
+  { regex: /金光強度（([\d.]+)）/, template: 'Gold Glow ($1)' }
 ];
 
 // 主函式：認知複雜度降至極低（遠低於 15）
@@ -377,6 +365,56 @@ function t(text) {
     const match = text.match(/裁切把手大小（([\d.]+px)）/);
     if (match) {
       return 'Crop Handle Size (' + match[1] + ')';
+    }
+  }
+
+  // 處理金光強度（N）格式
+  if (text.match(/金光強度（[\d.]+）/)) {
+    const match = text.match(/金光強度（([\d.]+)）/);
+    if (match) {
+      return 'Gold Glow (' + match[1] + ')';
+    }
+  }
+  // 處理亮度（N）格式
+  if (text.match(/亮度（[\d.]+）/)) {
+    const match = text.match(/亮度（([\d.]+)）/);
+    if (match) {
+      return 'Brightness (' + match[1] + ')';
+    }
+  }
+  // 處理對比度（N）格式
+  if (text.match(/對比度（[\d.]+）/)) {
+    const match = text.match(/對比度（([\d.]+)）/);
+    if (match) {
+      return 'Contrast (' + match[1] + ')';
+    }
+  }
+  // 處理飽和度（N）格式
+  if (text.match(/飽和度（[\d.]+）/)) {
+    const match = text.match(/飽和度（([\d.]+)）/);
+    if (match) {
+      return 'Saturation (' + match[1] + ')';
+    }
+  }
+  // 處理懷舊復古（N）格式
+  if (text.match(/懷舊復古（[\d.]+）/)) {
+    const match = text.match(/懷舊復古（([\d.]+)）/);
+    if (match) {
+      return 'Vintage (' + match[1] + ')';
+    }
+  }
+  // 處理色相旋轉（N°）格式
+  if (text.match(/色相旋轉（-?[\d.]+°）/)) {
+    const match = text.match(/色相旋轉（(-?[\d.]+)°）/);
+    if (match) {
+      return 'Hue Rotate (' + match[1] + '°)';
+    }
+  }
+  // 處理模糊（Npx）格式
+  if (text.match(/模糊（[\d.]+px）/)) {
+    const match = text.match(/模糊（([\d.]+px)）/);
+    if (match) {
+      return 'Blur (' + match[1] + ')';
     }
   }
 

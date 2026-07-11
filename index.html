@@ -919,6 +919,11 @@
       background: rgba(245, 166, 35, .08);
     }
 
+    .filter-preset-btn {
+      flex: 0 1 auto;
+      white-space: nowrap;
+    }
+
     .size-presets {
       display: flex;
       gap: 6px;
@@ -1728,6 +1733,69 @@
       </div>
 
       <div class="panel-section">
+        <div class="section-title">圖片濾鏡與色彩調整</div>
+        <p style="font-size:11px; color:var(--text-muted); margin-bottom:10px;">
+          調整背景圖的亮度、對比度、飽和度，或套用長輩圖常見的「高對比高飽和」、「復古金光」等風格。</p>
+
+        <label class="field-label" style="margin-top:0; font-weight:600; color:var(--text);">一鍵風格濾鏡</label>
+        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:6px;">
+          <button class="sp-btn filter-preset-btn" data-filter-id="none"
+            onclick="applyBgFilterPreset('none')">原圖</button>
+          <button class="sp-btn filter-preset-btn" data-filter-id="elderly"
+            onclick="applyBgFilterPreset('elderly')">長輩·高對比高飽和</button>
+          <button class="sp-btn filter-preset-btn" data-filter-id="retroGold"
+            onclick="applyBgFilterPreset('retroGold')">復古金光</button>
+          <button class="sp-btn filter-preset-btn" data-filter-id="vintage"
+            onclick="applyBgFilterPreset('vintage')">懷舊復古</button>
+          <button class="sp-btn filter-preset-btn" data-filter-id="fresh"
+            onclick="applyBgFilterPreset('fresh')">清新明亮</button>
+          <button class="sp-btn filter-preset-btn" data-filter-id="cool"
+            onclick="applyBgFilterPreset('cool')">冷調藍天</button>
+        </div>
+
+        <label class="field-label" id="bgBrightnessLabel" style="margin-top:6px;">亮度（1.00）</label>
+        <input type="range" id="bgBrightness" min="0.2" max="2.5" step="0.01" value="1"
+          oninput="applyBgFilter({ brightness: +this.value })">
+
+        <label class="field-label" id="bgContrastLabel">對比度（1.00）</label>
+        <input type="range" id="bgContrast" min="0.2" max="2.5" step="0.01" value="1"
+          oninput="applyBgFilter({ contrast: +this.value })">
+
+        <label class="field-label" id="bgSaturateLabel">飽和度（1.00）</label>
+        <input type="range" id="bgSaturate" min="0" max="3" step="0.01" value="1"
+          oninput="applyBgFilter({ saturate: +this.value })">
+
+        <label class="field-label" id="bgSepiaLabel">懷舊復古（0.00）</label>
+        <input type="range" id="bgSepia" min="0" max="1" step="0.01" value="0"
+          oninput="applyBgFilter({ sepia: +this.value })">
+
+        <label class="field-label" id="bgHueLabel">色相旋轉（0°）</label>
+        <input type="range" id="bgHue" min="-180" max="180" step="1" value="0"
+          oninput="applyBgFilter({ hue: +this.value })">
+
+        <label class="field-label" id="bgBlurLabel">模糊（0.0px）</label>
+        <input type="range" id="bgBlur" min="0" max="20" step="0.5" value="0"
+          oninput="applyBgFilter({ blur: +this.value })">
+
+        <div style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">
+          <label class="field-label" style="margin-top:0; font-weight:600; color:var(--text);">復古金光疊色</label>
+          <div style="display:flex; gap:8px; align-items:center; margin-top:6px;">
+            <input type="color" id="bgOverlayColor" value="#ffc850" style="width:48px; height:36px; flex:none;"
+              oninput="applyBgFilter({ overlayColor: this.value, overlayAlpha: Math.max(0.05, +document.getElementById('bgOverlayAlpha').value) })">
+            <div style="flex:1;">
+              <label class="field-label" id="bgOverlayAlphaLabel" style="font-size:10px;">金光強度（0.00）</label>
+              <input type="range" id="bgOverlayAlpha" min="0" max="1" step="0.01" value="0"
+                oninput="applyBgFilter({ overlayAlpha: +this.value })">
+            </div>
+          </div>
+        </div>
+
+        <button onclick="resetBgFilter()" class="align-btn"
+          style="width:100%; padding:8px; background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text-muted); font-size:12px; margin-top:10px; cursor:pointer;">↺
+          重設濾鏡</button>
+      </div>
+
+      <div class="panel-section">
         <div class="section-title">專案存檔</div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
           <button onclick="openProjectExportDialog()" class="theme-btn" style="flex:1; min-width:120px;">⬇️ 匯出專案
@@ -1998,23 +2066,33 @@
             <textarea id="aiPromptInput" style="min-height: 120px; flex:1;"
               placeholder="例如：幫我把標題改成更溫暖的風格，新增一句祝福文字，然後刪除多餘的一層。"></textarea>
             <button id="aiSpeechBtn" onclick="toggleAiSpeech()" class="theme-btn"
-              style="padding: 10px 12px; font-size: 16px; height: 40px; flex-shrink:0;"
-              title="語音輸入">🎤</button>
+              style="padding: 10px 12px; font-size: 16px; height: 40px; flex-shrink:0;" title="語音輸入">🎤</button>
           </div>
 
-          <div id="aiSpeechHelp" style="margin-top:8px; padding:10px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; font-size:11px; color:var(--text-muted); line-height:1.6; display:none;">
+          <div id="aiSpeechHelp"
+            style="margin-top:8px; padding:10px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; font-size:11px; color:var(--text-muted); line-height:1.6; display:none;">
             <div style="font-weight:700; color:var(--gold); margin-bottom:6px;">🎤 語音指令參考</div>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:4px 12px;">
-              <div>「逗號」→ ，</div><div>「句號」→ 。</div>
-              <div>「頓號」→ 、</div><div>「問號」→ ？</div>
-              <div>「驚叹號」→ ！</div><div>「冒號」→ ：</div>
-              <div>「分號」→ ；</div><div>「波浪號」→ ～</div>
-              <div>「破折號」→ ——</div><div>「刪節號」→ …</div>
-              <div>「左引號」→ 「</div><div>「右引號」→ 」</div>
-              <div>「左雙引號」→ 『</div><div>「右雙引號」→ 』</div>
-              <div>「左括號」→ （</div><div>「右括號」→ ）</div>
-              <div>「左書名號」→ 《</div><div>「右書名號」→ 》</div>
-              <div>「換行」→ 換行</div><div>「空格」→ 空格</div>
+              <div>「逗號」→ ，</div>
+              <div>「句號」→ 。</div>
+              <div>「頓號」→ 、</div>
+              <div>「問號」→ ？</div>
+              <div>「驚叹號」→ ！</div>
+              <div>「冒號」→ ：</div>
+              <div>「分號」→ ；</div>
+              <div>「波浪號」→ ～</div>
+              <div>「破折號」→ ——</div>
+              <div>「刪節號」→ …</div>
+              <div>「左引號」→ 「</div>
+              <div>「右引號」→ 」</div>
+              <div>「左雙引號」→ 『</div>
+              <div>「右雙引號」→ 』</div>
+              <div>「左括號」→ （</div>
+              <div>「右括號」→ ）</div>
+              <div>「左書名號」→ 《</div>
+              <div>「右書名號」→ 》</div>
+              <div>「換行」→ 換行</div>
+              <div>「空格」→ 空格</div>
             </div>
           </div>
 
@@ -2329,8 +2407,8 @@
       style="text-align: left; max-width: 480px; font-size: 12px; display: flex; flex-direction: column; padding: 0;">
       <div class="about-header" style="padding: 24px 24px 16px; text-align: center; flex-shrink: 0;">
         <h3 class="modal-title" style="font-size: 18px; margin-bottom: 4px;">🌅 早安圖製作工具</h3>
-        <p id="appVersion" data-version="v1.74"
-          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.74 </p>
+        <p id="appVersion" data-version="v1.75"
+          style="font-size: 11px; color: var(--gold); margin-bottom: 0; font-weight: bold;">版本 v1.75 </p>
       </div>
 
       <div class="about-content"
@@ -2452,6 +2530,30 @@
     ];
 
     let bgImage = null;
+
+    // 背景圖片濾鏡與色彩調整狀態（亮度/對比度/飽和度/懷舊/色相/模糊/金光疊色）
+    const DEFAULT_BG_FILTER = {
+      brightness: 1,
+      contrast: 1,
+      saturate: 1,
+      sepia: 0,
+      hue: 0,
+      blur: 0,
+      overlayColor: '',
+      overlayAlpha: 0
+    };
+    let bgFilter = { ...DEFAULT_BG_FILTER };
+
+    // 長輩圖常見濾鏡預設
+    const FILTER_PRESETS = [
+      { id: 'none', name: '原圖', filter: { ...DEFAULT_BG_FILTER } },
+      { id: 'elderly', name: '長輩·高對比高飽和', filter: { brightness: 1.08, contrast: 1.45, saturate: 1.7, sepia: 0, hue: 0, blur: 0, overlayColor: '', overlayAlpha: 0 } },
+      { id: 'retroGold', name: '復古金光', filter: { brightness: 1.05, contrast: 1.18, saturate: 1.4, sepia: 0.45, hue: -8, blur: 0, overlayColor: '#ffc850', overlayAlpha: 0.18 } },
+      { id: 'vintage', name: '懷舊復古', filter: { brightness: 1.0, contrast: 1.1, saturate: 1.05, sepia: 0.6, hue: 0, blur: 0, overlayColor: '', overlayAlpha: 0 } },
+      { id: 'fresh', name: '清新明亮', filter: { brightness: 1.12, contrast: 0.96, saturate: 1.15, sepia: 0, hue: 0, blur: 0, overlayColor: '', overlayAlpha: 0 } },
+      { id: 'cool', name: '冷調藍天', filter: { brightness: 1.02, contrast: 1.1, saturate: 1.1, sepia: 0, hue: 10, blur: 0, overlayColor: '', overlayAlpha: 0 } }
+    ];
+
     let layers = [];
     let hasUnsavedChanges = false;
     let layerCounter = 0;
@@ -3330,6 +3432,10 @@
 
       loadAiSettings();
 
+      // 還原背景圖片濾鏡設定
+      loadBgFilter();
+      syncBgFilterUi();
+
       const aiFieldIds = ['aiApiBaseUrl', 'aiApiKey', 'aiModel', 'aiApiFormat', 'aiApprovalMode', 'aiMaxOutputTokens', 'aiSystemPrompt'];
       aiFieldIds.forEach(id => {
         const el = document.getElementById(id);
@@ -3626,6 +3732,9 @@
           layers = Array.isArray(projectState.layers) ? projectState.layers : [];
           canvas.width = projectState.canvasWidth || canvas.width;
           canvas.height = projectState.canvasHeight || canvas.height;
+          if (projectState.bgFilter) {
+            bgFilter = normalizeBgFilter(projectState.bgFilter);
+          }
           layerCounter = layers.reduce((max, item) => Math.max(max, item.id || 0), 0);
           activeLayerId = layers.length ? layers[layers.length - 1].id : null;
           uploadedFileName = projectState.uploadedFileName || 'goodmorning';
@@ -3648,6 +3757,7 @@
           renderLayersList();
           await ensureLayerFontsReady();
           drawCanvas();
+          syncBgFilterUi();
           saveSettings();
           updateHistoryButtons();
           updateExportButtonsState();
@@ -3693,6 +3803,7 @@
         canvasWidth: canvas.width,
         canvasHeight: canvas.height,
         layers,
+        bgFilter: { ...bgFilter },
         uploadedFileName
       };
 
@@ -5550,12 +5661,126 @@
     }
 
     /* ─────────────── Draw ─────────────── */
+
+    // 將濾鏡狀態轉為 canvas ctx.filter 可用的 CSS filter 字串
+    function buildFilterCss(f) {
+      const parts = [];
+      if (f.brightness !== 1) parts.push(`brightness(${f.brightness})`);
+      if (f.contrast !== 1) parts.push(`contrast(${f.contrast})`);
+      if (f.saturate !== 1) parts.push(`saturate(${f.saturate})`);
+      if (f.sepia) parts.push(`sepia(${f.sepia})`);
+      if (f.hue) parts.push(`hue-rotate(${f.hue}deg)`);
+      if (f.blur) parts.push(`blur(${f.blur}px)`);
+      return parts.length ? parts.join(' ') : 'none';
+    }
+
+    function normalizeBgFilter(f) {
+      const out = { ...DEFAULT_BG_FILTER, ...(f || {}) };
+      out.brightness = clampNum(out.brightness, 0.2, 2.5, 1);
+      out.contrast = clampNum(out.contrast, 0.2, 2.5, 1);
+      out.saturate = clampNum(out.saturate, 0, 3, 1);
+      out.sepia = clampNum(out.sepia, 0, 1, 0);
+      out.hue = clampNum(out.hue, -180, 180, 0);
+      out.blur = clampNum(out.blur, 0, 20, 0);
+      out.overlayAlpha = clampNum(out.overlayAlpha, 0, 1, 0);
+      if (!out.overlayColor) out.overlayColor = '';
+      return out;
+    }
+
+    function clampNum(value, min, max, fallback) {
+      const n = Number(value);
+      if (!Number.isFinite(n)) return fallback;
+      return Math.max(min, Math.min(max, n));
+    }
+
+    // 套用背景濾鏡（部分更新），重繪並儲存
+    function applyBgFilter(patch, { redraw = true, save = true } = {}) {
+      bgFilter = normalizeBgFilter({ ...bgFilter, ...(patch || {}) });
+      syncBgFilterUi();
+      if (redraw) drawCanvas();
+      if (save) saveBgFilter();
+    }
+
+    function resetBgFilter() {
+      applyBgFilter({ ...DEFAULT_BG_FILTER });
+      showToast('已重設圖片濾鏡');
+    }
+
+    function saveBgFilter() {
+      try { localStorage.setItem('gm_bg_filter', JSON.stringify(bgFilter)); } catch (e) { }
+      saveSettings();
+    }
+
+    function loadBgFilter() {
+      try {
+        const raw = localStorage.getItem('gm_bg_filter');
+        if (raw) {
+          bgFilter = normalizeBgFilter(JSON.parse(raw));
+        }
+      } catch (e) { }
+    }
+
+    function applyBgFilterPreset(id) {
+      const preset = FILTER_PRESETS.find(p => p.id === id) || FILTER_PRESETS[0];
+      applyBgFilter({ ...preset.filter });
+      document.querySelectorAll('.filter-preset-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filterId === id);
+      });
+    }
+
+    function syncBgFilterUi() {
+      const map = {
+        bgBrightness: 'brightness',
+        bgContrast: 'contrast',
+        bgSaturate: 'saturate',
+        bgSepia: 'sepia',
+        bgHue: 'hue',
+        bgBlur: 'blur',
+        bgOverlayAlpha: 'overlayAlpha'
+      };
+      for (const [elId, key] of Object.entries(map)) {
+        const el = document.getElementById(elId);
+        if (el) el.value = bgFilter[key];
+        const label = document.getElementById(elId + 'Label');
+        if (label) label.textContent = bgFilterLabels[key](bgFilter[key]);
+      }
+      const colorEl = document.getElementById('bgOverlayColor');
+      if (colorEl) colorEl.value = bgFilter.overlayColor || '#ffc850';
+      document.querySelectorAll('.filter-preset-btn').forEach(btn => {
+        const match = FILTER_PRESETS.find(p => p.id === btn.dataset.filterId);
+        const isMatch = match && ['brightness', 'contrast', 'saturate', 'sepia', 'hue', 'blur', 'overlayColor', 'overlayAlpha']
+          .every(k => match.filter[k] === bgFilter[k]);
+        btn.classList.toggle('active', !!isMatch);
+      });
+    }
+
+    const bgFilterLabels = {
+      brightness: v => t(`亮度（${Number(v).toFixed(2)}）`),
+      contrast: v => t(`對比度（${Number(v).toFixed(2)}）`),
+      saturate: v => t(`飽和度（${Number(v).toFixed(2)}）`),
+      sepia: v => t(`懷舊復古（${Number(v).toFixed(2)}）`),
+      hue: v => t(`色相旋轉（${Math.round(v)}°）`),
+      blur: v => t(`模糊（${Number(v).toFixed(1)}px）`),
+      overlayAlpha: v => t(`金光強度（${Number(v).toFixed(2)}）`)
+    };
+
     function drawCanvas() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       if (bgImage) {
+        const fCss = buildFilterCss(bgFilter);
+        if (fCss !== 'none') ctx.filter = fCss;
         const scale = Math.max(canvas.width / bgImage.width, canvas.height / bgImage.height);
         const sw = bgImage.width * scale, sh = bgImage.height * scale;
         ctx.drawImage(bgImage, (canvas.width - sw) / 2, (canvas.height - sh) / 2, sw, sh);
+        ctx.filter = 'none';
+        // 金光 / 暖色疊色層（長輩圖復古風常見）
+        if (bgFilter.overlayColor && bgFilter.overlayAlpha > 0) {
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, Math.min(1, bgFilter.overlayAlpha));
+          ctx.fillStyle = bgFilter.overlayColor;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.restore();
+        }
       }
 
       layers.forEach(l => {
@@ -6364,10 +6589,12 @@
       localStorage.removeItem('gm_enable_hide_update_modal');
       localStorage.removeItem('gm_text_selection_display_mode');
       localStorage.removeItem('gm_ai_settings');
+      localStorage.removeItem('gm_bg_filter');
 
       // 2. 恢復核心變數預設值
       bgImage = null;
       layers = [];
+      bgFilter = { ...DEFAULT_BG_FILTER };
       layerCounter = 0;
       activeLayerId = null;
       draggingLayer = null;
@@ -6526,6 +6753,7 @@
       // 7. 更新與重新渲染
       updateHistoryButtons();
       renderLayersList();
+      syncBgFilterUi();
       drawCanvas();
 
       showToast("已成功回復初始設定！");
